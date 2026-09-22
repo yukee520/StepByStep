@@ -9,14 +9,15 @@ on:
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Release APK
     runs-on: ubuntu-latest
 
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,17 +39,66 @@ jobs:
           accept-android-sdk-licenses: 'true'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
-      - name: Build Debug APK
+      - name: Force-install missing Metro and Babel packages
+        run: |
+          set -e
+          mkdir -p ~/pkgs
+          cd ~/pkgs
+          curl -fsLO https://registry.npmjs.org/@react-native/metro-config/-/metro-config-0.75.4.tgz
+          curl -fsLO https://registry.npmjs.org/babel-plugin-module-resolver/-/babel-plugin-module-resolver-5.0.3.tgz
+
+          cd $GITHUB_WORKSPACE
+          npm install --save-dev --legacy-peer-deps ~/pkgs/metro-config-0.75.4.tgz
+          npm install --save-dev --legacy-peer-deps ~/pkgs/babel-plugin-module-resolver-5.0.3.tgz
+
+          test -f node_modules/@react-native/metro-config/package.json
+          test -f node_modules/babel-plugin-module-resolver/package.json
+          echo "OK: both packages installed"
+
+      - name: Expose Node path to Gradle
+        run: |
+          echo "NODE_BINARY=$(which node)" >> $GITHUB_ENV
+          which node
+          node --version
+
+      - name: Pre-bundle JS (catches Metro errors early)
+        env:
+          NODE_ENV: production
+          NODE_BINARY: ${{ env.NODE_BINARY }}
+        run: |
+          mkdir -p ./bundletest
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output ./bundletest/index.android.bundle \
+            --assets-dest ./bundletest
+          ls -lh ./bundletest/index.android.bundle
+
+      - name: Build Release APK
         working-directory: android
+        env:
+          NODE_ENV: production
+          NODE_BINARY: ${{ env.NODE_BINARY }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew clean
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Verify bundle inside APK
+        working-directory: android
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          ls -lh "$APK"
+          unzip -l "$APK" | grep -E "index.android.bundle" || \
+            { echo "ERROR: bundle missing"; exit 1; }
+          echo "OK: JS bundle present in APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
