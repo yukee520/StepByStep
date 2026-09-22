@@ -1,10 +1,8 @@
 import RNFS from 'react-native-fs';
 import { builtInSongs } from '@/services/builtInSongs';
-import type { InstalledPack } from '@/types/songPack';
-import type { Song, SongPackManifest } from '@/types/songPack' extends never
-  ? never
-  : Song;
-import type { SongPackManifest as SongPackManifestType } from '@/types/songPack';
+import type { Song } from '@/types/song';
+import type { InstalledPack, SongPackManifest } from '@/types/songPack';
+
 
 export const SONGS_ROOT = `${RNFS.DocumentDirectoryPath}/StepByStep/songs`;
 export const BUILDER_ROOT = `${RNFS.DocumentDirectoryPath}/StepByStep/builder`;
@@ -63,7 +61,7 @@ export function pickCoverExt(url: string | undefined): string {
   return extFromUrl(url, 'png');
 }
 
-function manifestToSong(pack: InstalledPack, manifest: SongPackManifestType): Song {
+function manifestToSong(pack: InstalledPack, manifest: SongPackManifest): Song {
   return {
     id: manifest.id,
     title: manifest.title,
@@ -94,7 +92,7 @@ async function loadInstalledSong(pack: InstalledPack): Promise<Song | null> {
       return null;
     }
     const raw = await RNFS.readFile(pack.manifestPath, 'utf8');
-    const parsed = JSON.parse(raw) as SongPackManifestType;
+    const parsed = JSON.parse(raw) as SongPackManifest;
     if (!parsed || !Array.isArray(parsed.chart)) {
       return null;
     }
