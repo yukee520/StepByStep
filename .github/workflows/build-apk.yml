@@ -12,6 +12,10 @@ jobs:
     name: Build Release APK
     runs-on: ubuntu-latest
 
+    env:
+      # Silences the "Node 20 deprecated" runner warning while we still use Node 20.
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,23 +26,36 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # CHANGED: bumped to v5 (v4 is deprecated, still works but warns)
       - name: Setup JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # CHANGED: pin explicit, valid sdkmanager packages. The old default
+      # asked for the removed `tools` meta-package, which crashed the job.
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '12266719'
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0'
+          accept-android-sdk-licenses: 'true'
+          log-accepted-android-sdk-licenses: 'true'
 
       - name: Install dependencies
         run: npm ci
 
+      # CHANGED: only decode the keystore if the secret exists. Otherwise
+      # the release build step falls back to the debug key so PRs from forks
+      # and local runs still succeed.
       - name: Decode release keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          ls -lh android/app/release.keystore
 
       - name: Build Release APK
         working-directory: android
