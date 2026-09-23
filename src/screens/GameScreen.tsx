@@ -1,17 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Dimensions,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import ArrowButton from '@/components/ArrowButton';
 import Lane from '@/components/Lane';
+import ComboOverlay from '@/components/ComboOverlay';
 import GameHUD from '@/components/GameHUD';
 import CountdownOverlay from '@/components/CountdownOverlay';
 import PauseModal from '@/components/PauseModal';
@@ -36,9 +31,16 @@ type GameNav = NativeStackNavigationProp<RootStackParamList, 'Game'>;
 
 const LANE_COUNT = 4;
 const LANE_AREA_PADDING = 12;
-const HUD_HEIGHT_RATIO = 0.15;
-const BUTTON_ROW_TOP_RATIO = 0.7;
+const HUD_HEIGHT_RATIO = 0.12;
+const BUTTON_ROW_TOP_RATIO = 0.85;
 const BUTTON_GAP = 8;
+
+const LANE_COLORS: Record<Direction, string> = {
+  left: '#FF3366',
+  right: '#00E5FF',
+  up: '#00FF88',
+  down: '#FFD500',
+};
 
 export default function GameScreen(): React.ReactElement {
   const route = useRoute<GameRoute>();
@@ -61,7 +63,9 @@ export default function GameScreen(): React.ReactElement {
   const [showPause, setShowPause] = useState<boolean>(false);
   const [countdownActive, setCountdownActive] = useState<boolean>(false);
   const [audioReady, setAudioReady] = useState<boolean>(false);
+  const [pressedLane, setPressedLane] = useState<Direction | null>(null);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressedLaneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const audio = useAudio();
 
@@ -95,14 +99,8 @@ export default function GameScreen(): React.ReactElement {
       feedbackTimeoutRef.current = setTimeout(() => {
         setFeedback(null);
       }, 260);
-
-      if (fb.judgment === 'perfect' || fb.judgment === 'great') {
-        vibrate('light');
-      } else if (fb.judgment === 'miss') {
-        vibrate('heavy');
-      }
     },
-    [vibrate],
+    [],
   );
 
   const engine = useGameEngine({
@@ -187,6 +185,17 @@ export default function GameScreen(): React.ReactElement {
     }
   }, [audio, engine.status, song?.audioPath]);
 
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current !== null) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+      if (pressedLaneTimeoutRef.current !== null) {
+        clearTimeout(pressedLaneTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handlePause = useCallback((): void => {
     engine.pause();
     audio.pause();
@@ -215,12 +224,20 @@ export default function GameScreen(): React.ReactElement {
 
   const handleInput = useCallback(
     (direction: Direction): void => {
+      vibrate('light');
+      setPressedLane(direction);
+      if (pressedLaneTimeoutRef.current !== null) {
+        clearTimeout(pressedLaneTimeoutRef.current);
+      }
+      pressedLaneTimeoutRef.current = setTimeout(() => {
+        setPressedLane(null);
+      }, 260);
       if (engine.status !== 'playing') {
         return;
       }
       engine.hit(direction);
     },
-    [engine],
+    [engine, vibrate],
   );
 
   const handleRelease = useCallback(
@@ -314,9 +331,13 @@ export default function GameScreen(): React.ReactElement {
   const laneAreaWidth = SCREEN_W - LANE_AREA_PADDING * 2;
   const laneWidth = laneAreaWidth / LANE_COUNT;
   const noteSize = Math.min(laneWidth * 0.75, buttonSize * 0.9);
+  const buttonAreaHeight = SCREEN_H - buttonRowTop;
 
   return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
+    <SafeAreaView
+      className="flex-1 bg-background dark:bg-dark-background"
+      edges={['top', 'bottom']}
+    >
       <View style={{ height: laneAreaTop }}>
         <GameHUD
           title={song.title}
@@ -331,7 +352,6 @@ export default function GameScreen(): React.ReactElement {
       </View>
 
       <View style={{ flex: 1 }}>
-        {/* Lane area: notes fall from top to the button row */}
         <View
           pointerEvents="none"
           style={{
@@ -346,13 +366,13 @@ export default function GameScreen(): React.ReactElement {
             overflow: 'hidden',
           }}
         >
-          {DIRECTIONS.map((_dir, index) => {
+          {DIRECTIONS.map((dir, index) => {
             const laneNotes = engine.visibleNotes.filter(
-              (n) => n.note.direction === _dir,
+              (n) => n.note.direction === dir,
             );
             return (
               <Lane
-                key={index}
+                key={dir}
                 width={laneWidth}
                 left={index * laneWidth}
                 top={0}
@@ -360,12 +380,32 @@ export default function GameScreen(): React.ReactElement {
                 notes={laneNotes}
                 noteSize={noteSize}
                 isActive={laneNotes.length > 0}
+                isPressed={pressedLane === dir}
+                pressColor={LANE_COLORS[dir]}
               />
             );
           })}
         </View>
 
-        {/* Judgment feedback above the button row */}
+        {/* Combo overlay — top-center of the lane area */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: laneAreaTop + 12,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <ComboOverlay
+            combo={engine.combo}
+            accentColor={colors.primary}
+            mutedColor={colors.muted}
+            fontSize={SCREEN_H * 0.06}
+            labelSize={SCREEN_W * 0.032}
+          />
+        </View>
+
         {feedback ? (
           <View
             pointerEvents="none"
@@ -392,17 +432,18 @@ export default function GameScreen(): React.ReactElement {
           </View>
         ) : null}
 
-        {/* Button row */}
         <View
           style={{
             position: 'absolute',
             top: buttonRowTop,
             left: 0,
             right: 0,
+            height: buttonAreaHeight,
             paddingHorizontal: LANE_AREA_PADDING,
+            paddingTop: 8,
             flexDirection: 'row',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: 'flex-start',
           }}
         >
           <ArrowButton
@@ -430,44 +471,6 @@ export default function GameScreen(): React.ReactElement {
             size={buttonSize}
           />
         </View>
-
-        {/* Big center-screen combo */}
-        {engine.combo >= 2 ? (
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: buttonRowTop + buttonSize + 20,
-              left: 0,
-              right: 0,
-              alignItems: 'center',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: SCREEN_H * 0.06,
-                fontWeight: '900',
-                color: colors.primary,
-                letterSpacing: 4,
-                textShadowColor: colors.primary,
-                textShadowRadius: 16,
-              }}
-            >
-              {engine.combo}
-            </Text>
-            <Text
-              style={{
-                fontSize: SCREEN_W * 0.035,
-                fontWeight: '700',
-                color: colors.muted,
-                letterSpacing: 6,
-                marginTop: 4,
-              }}
-            >
-              COMBO
-            </Text>
-          </View>
-        ) : null}
       </View>
 
       <CountdownOverlay count={countdown.count} visible={countdownActive} />
