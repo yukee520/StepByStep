@@ -35,10 +35,7 @@ export default function Lane({
         top,
         width,
         height,
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderColor: isActive ? colors.primary : colors.border,
-        backgroundColor: isActive ? `${colors.primary}0D` : 'transparent',
+        backgroundColor: isActive ? `${colors.primary}0A` : 'transparent',
       }}
     >
       {notes.map(({ note, yRatio }) => (
@@ -48,6 +45,7 @@ export default function Lane({
           x={noteX}
           y={yRatio * height - noteSize / 2}
           size={noteSize}
+          opacity={yRatio < 0 ? 0.4 : yRatio > 1 ? 0.85 : 1}
         />
       ))}
     </View>
