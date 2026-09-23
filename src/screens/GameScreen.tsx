@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, Pressable, Text, View } from 'react-native';
+import { Dimensions, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,7 +22,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { useScoresStore } from '@/store/useScoresStore';
 import { useGameStore } from '@/store/useGameStore';
 import { DIRECTIONS, type Direction, type Song } from '@/types/song';
-import type { GameRunSummary, Judgment } from '@/types/game';
+import type { GameRunSummary } from '@/types/game';
 import type { RootStackParamList } from '@/types/navigation';
 import { accuracyToGrade } from '@/utils/grading';
 
@@ -34,6 +34,10 @@ const LANE_COUNT = 4;
 const LANE_AREA_PADDING = 12;
 const LANE_AREA_WIDTH = SCREEN_W - LANE_AREA_PADDING * 2;
 const LANE_WIDTH = LANE_AREA_WIDTH / LANE_COUNT;
+
+const HUD_HEIGHT = 110;
+const BUTTON_AREA_HEIGHT = 130;
+const LANE_AREA_TOP = HUD_HEIGHT + 20;
 
 export default function GameScreen(): React.ReactElement {
   const route = useRoute<GameRoute>();
@@ -90,9 +94,7 @@ export default function GameScreen(): React.ReactElement {
         setFeedback(null);
       }, 260);
 
-      if (fb.judgment === 'perfect') {
-        vibrate('light');
-      } else if (fb.judgment === 'great') {
+      if (fb.judgment === 'perfect' || fb.judgment === 'great') {
         vibrate('light');
       } else if (fb.judgment === 'miss') {
         vibrate('heavy');
@@ -298,9 +300,10 @@ export default function GameScreen(): React.ReactElement {
     );
   }
 
-  const laneAreaTop = 120;
-  const laneAreaHeight = SCREEN_H * 0.5;
-  const hitLineY = laneAreaTop + laneAreaHeight - 8;
+  const laneAreaTop = LANE_AREA_TOP;
+  const laneAreaHeight = SCREEN_H - LANE_AREA_TOP - BUTTON_AREA_HEIGHT - 24;
+  const hitLineY = laneAreaTop + laneAreaHeight - 12;
+  const buttonSize = Math.min(76, (SCREEN_W - LANE_AREA_PADDING * 2 - 36) / 4);
 
   return (
     <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
@@ -316,6 +319,7 @@ export default function GameScreen(): React.ReactElement {
       />
 
       <View style={{ flex: 1 }}>
+        {/* Lane area: four vertical columns where notes fall */}
         <View
           pointerEvents="none"
           style={{
@@ -348,6 +352,7 @@ export default function GameScreen(): React.ReactElement {
           })}
         </View>
 
+        {/* The horizontal target line notes must reach */}
         <View
           pointerEvents="none"
           style={{
@@ -360,12 +365,13 @@ export default function GameScreen(): React.ReactElement {
           <HitLine width={LANE_AREA_WIDTH} left={0} />
         </View>
 
+        {/* Judgment label overlay above the lane area */}
         {feedback ? (
           <View
             pointerEvents="none"
             style={{
               position: 'absolute',
-              top: laneAreaTop - 40,
+              top: laneAreaTop - 32,
               left: 0,
               right: 0,
               alignItems: 'center',
@@ -384,15 +390,17 @@ export default function GameScreen(): React.ReactElement {
           </View>
         ) : null}
 
+        {/* Four arrow buttons in a single row, aligned with the four lanes above */}
         <View
           style={{
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
-            paddingHorizontal: 16,
-            paddingBottom: 20,
+            height: BUTTON_AREA_HEIGHT,
+            paddingHorizontal: LANE_AREA_PADDING,
             paddingTop: 12,
+            paddingBottom: 20,
           }}
         >
           <View className="flex-row justify-between items-center">
@@ -400,27 +408,25 @@ export default function GameScreen(): React.ReactElement {
               direction="left"
               onPress={handleInput}
               onRelease={handleRelease}
-              size={72}
+              size={buttonSize}
             />
-            <View className="items-center space-y-3">
-              <ArrowButton
-                direction="up"
-                onPress={handleInput}
-                onRelease={handleRelease}
-                size={72}
-              />
-              <ArrowButton
-                direction="down"
-                onPress={handleInput}
-                onRelease={handleRelease}
-                size={72}
-              />
-            </View>
+            <ArrowButton
+              direction="down"
+              onPress={handleInput}
+              onRelease={handleRelease}
+              size={buttonSize}
+            />
+            <ArrowButton
+              direction="up"
+              onPress={handleInput}
+              onRelease={handleRelease}
+              size={buttonSize}
+            />
             <ArrowButton
               direction="right"
               onPress={handleInput}
               onRelease={handleRelease}
-              size={72}
+              size={buttonSize}
             />
           </View>
         </View>
@@ -434,22 +440,6 @@ export default function GameScreen(): React.ReactElement {
         onRestart={handleRestart}
         onQuit={handleQuit}
       />
-
-      {__DEV__ ? (
-        <Pressable
-          onPress={() => {
-            handleQuit();
-          }}
-          style={{
-            position: 'absolute',
-            top: 4,
-            right: 4,
-            padding: 6,
-          }}
-        >
-          <Text style={{ color: colors.muted, fontSize: 10 }}>skip</Text>
-        </Pressable>
-      ) : null}
     </SafeAreaView>
   );
 }
