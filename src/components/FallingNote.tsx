@@ -19,10 +19,10 @@ const ICON_NAMES: Record<Direction, string> = {
 };
 
 const COLORS: Record<Direction, string> = {
-  left: '#EF4444',
-  right: '#3B82F6',
-  up: '#10B981',
-  down: '#F59E0B',
+  left: '#FF3366',
+  right: '#00E5FF',
+  up: '#00FF88',
+  down: '#FFD500',
 };
 
 export default function FallingNote({
@@ -33,6 +33,8 @@ export default function FallingNote({
   opacity = 1,
 }: FallingNoteProps): React.ReactElement {
   const color = COLORS[direction];
+  const borderWidth = Math.max(2, size * 0.06);
+
   return (
     <View
       style={{
@@ -41,16 +43,21 @@ export default function FallingNote({
         top: y,
         width: size,
         height: size,
-        borderRadius: size / 4,
-        borderWidth: 2,
+        borderRadius: size / 5,
+        borderWidth,
         borderColor: color,
-        backgroundColor: `${color}33`,
+        backgroundColor: `${color}22`,
         alignItems: 'center',
         justifyContent: 'center',
         opacity,
+        shadowColor: color,
+        shadowOpacity: 0.9,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 0 },
+        elevation: 6,
       }}
     >
-      <Ionicons name={ICON_NAMES[direction]} size={size * 0.5} color={color} />
+      <Ionicons name={ICON_NAMES[direction]} size={size * 0.6} color={color} />
     </View>
   );
 }
