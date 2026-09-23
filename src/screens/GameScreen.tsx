@@ -1,12 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import {
+  Dimensions,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import ArrowButton from '@/components/ArrowButton';
 import Lane from '@/components/Lane';
-import HitLine from '@/components/HitLine';
 import GameHUD from '@/components/GameHUD';
 import CountdownOverlay from '@/components/CountdownOverlay';
 import PauseModal from '@/components/PauseModal';
@@ -29,20 +34,17 @@ import { accuracyToGrade } from '@/utils/grading';
 type GameRoute = RouteProp<RootStackParamList, 'Game'>;
 type GameNav = NativeStackNavigationProp<RootStackParamList, 'Game'>;
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const LANE_COUNT = 4;
 const LANE_AREA_PADDING = 12;
-const LANE_AREA_WIDTH = SCREEN_W - LANE_AREA_PADDING * 2;
-const LANE_WIDTH = LANE_AREA_WIDTH / LANE_COUNT;
-
-const HUD_HEIGHT = 110;
-const BUTTON_AREA_HEIGHT = 130;
-const LANE_AREA_TOP = HUD_HEIGHT + 20;
+const HUD_HEIGHT_RATIO = 0.15;
+const BUTTON_ROW_TOP_RATIO = 0.7;
+const BUTTON_GAP = 8;
 
 export default function GameScreen(): React.ReactElement {
   const route = useRoute<GameRoute>();
   const navigation = useNavigation<GameNav>();
   const { colors } = useTheme();
+  const { width: SCREEN_W, height: SCREEN_H } = useWindowDimensions();
   const { songs, isLoading, isError, error, refetch } = useSongs();
   const noteSpeed = useSettingsStore((s) => s.settings.noteSpeed);
   const inputOffsetMs = useSettingsStore((s) => s.settings.inputOffsetMs);
@@ -262,6 +264,12 @@ export default function GameScreen(): React.ReactElement {
     }
   }, [feedback]);
 
+  const buttonSize = useMemo(() => {
+    const available =
+      SCREEN_W - LANE_AREA_PADDING * 2 - BUTTON_GAP * (LANE_COUNT - 1);
+    return Math.min(90, available / LANE_COUNT);
+  }, [SCREEN_W]);
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-background dark:bg-dark-background">
@@ -300,33 +308,37 @@ export default function GameScreen(): React.ReactElement {
     );
   }
 
-  const laneAreaTop = LANE_AREA_TOP;
-  const laneAreaHeight = SCREEN_H - LANE_AREA_TOP - BUTTON_AREA_HEIGHT - 24;
-  const hitLineY = laneAreaTop + laneAreaHeight - 12;
-  const buttonSize = Math.min(76, (SCREEN_W - LANE_AREA_PADDING * 2 - 36) / 4);
+  const laneAreaTop = SCREEN_H * HUD_HEIGHT_RATIO;
+  const buttonRowTop = SCREEN_H * BUTTON_ROW_TOP_RATIO;
+  const laneAreaHeight = buttonRowTop - laneAreaTop;
+  const laneAreaWidth = SCREEN_W - LANE_AREA_PADDING * 2;
+  const laneWidth = laneAreaWidth / LANE_COUNT;
+  const noteSize = Math.min(laneWidth * 0.75, buttonSize * 0.9);
 
   return (
     <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
-      <GameHUD
-        title={song.title}
-        score={engine.score}
-        combo={engine.combo}
-        accuracy={engine.accuracy}
-        elapsedMs={engine.elapsedMs}
-        durationMs={engine.durationMs}
-        progress={engine.progress}
-        onPause={handlePause}
-      />
+      <View style={{ height: laneAreaTop }}>
+        <GameHUD
+          title={song.title}
+          score={engine.score}
+          combo={engine.combo}
+          accuracy={engine.accuracy}
+          elapsedMs={engine.elapsedMs}
+          durationMs={engine.durationMs}
+          progress={engine.progress}
+          onPause={handlePause}
+        />
+      </View>
 
       <View style={{ flex: 1 }}>
-        {/* Lane area: four vertical columns where notes fall */}
+        {/* Lane area: notes fall from top to the button row */}
         <View
           pointerEvents="none"
           style={{
             position: 'absolute',
             left: LANE_AREA_PADDING,
             top: laneAreaTop,
-            width: LANE_AREA_WIDTH,
+            width: laneAreaWidth,
             height: laneAreaHeight,
             borderRadius: 16,
             borderWidth: 1,
@@ -336,42 +348,30 @@ export default function GameScreen(): React.ReactElement {
         >
           {DIRECTIONS.map((_dir, index) => {
             const laneNotes = engine.visibleNotes.filter(
-              (n) => DIRECTIONS.indexOf(n.note.direction) === index,
+              (n) => n.note.direction === _dir,
             );
             return (
               <Lane
                 key={index}
-                width={LANE_WIDTH}
-                left={index * LANE_WIDTH}
+                width={laneWidth}
+                left={index * laneWidth}
                 top={0}
                 height={laneAreaHeight}
                 notes={laneNotes}
-                noteSize={Math.min(56, LANE_WIDTH * 0.75 * noteSpeed)}
+                noteSize={noteSize}
+                isActive={laneNotes.length > 0}
               />
             );
           })}
         </View>
 
-        {/* The horizontal target line notes must reach */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: LANE_AREA_PADDING,
-            top: hitLineY,
-            width: LANE_AREA_WIDTH,
-          }}
-        >
-          <HitLine width={LANE_AREA_WIDTH} left={0} />
-        </View>
-
-        {/* Judgment label overlay above the lane area */}
+        {/* Judgment feedback above the button row */}
         {feedback ? (
           <View
             pointerEvents="none"
             style={{
               position: 'absolute',
-              top: laneAreaTop - 32,
+              top: buttonRowTop - 60,
               left: 0,
               right: 0,
               alignItems: 'center',
@@ -380,9 +380,11 @@ export default function GameScreen(): React.ReactElement {
             <Text
               style={{
                 color: feedbackColor,
-                fontSize: 22,
+                fontSize: SCREEN_W * 0.08,
                 fontWeight: '800',
-                letterSpacing: 2,
+                letterSpacing: 3,
+                textShadowColor: feedbackColor,
+                textShadowRadius: 12,
               }}
             >
               {feedbackLabel}
@@ -390,46 +392,82 @@ export default function GameScreen(): React.ReactElement {
           </View>
         ) : null}
 
-        {/* Four arrow buttons in a single row, aligned with the four lanes above */}
+        {/* Button row */}
         <View
           style={{
             position: 'absolute',
-            bottom: 0,
+            top: buttonRowTop,
             left: 0,
             right: 0,
-            height: BUTTON_AREA_HEIGHT,
             paddingHorizontal: LANE_AREA_PADDING,
-            paddingTop: 12,
-            paddingBottom: 20,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          <View className="flex-row justify-between items-center">
-            <ArrowButton
-              direction="left"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
-            />
-            <ArrowButton
-              direction="down"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
-            />
-            <ArrowButton
-              direction="up"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
-            />
-            <ArrowButton
-              direction="right"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
-            />
-          </View>
+          <ArrowButton
+            direction="left"
+            onPress={handleInput}
+            onRelease={handleRelease}
+            size={buttonSize}
+          />
+          <ArrowButton
+            direction="down"
+            onPress={handleInput}
+            onRelease={handleRelease}
+            size={buttonSize}
+          />
+          <ArrowButton
+            direction="up"
+            onPress={handleInput}
+            onRelease={handleRelease}
+            size={buttonSize}
+          />
+          <ArrowButton
+            direction="right"
+            onPress={handleInput}
+            onRelease={handleRelease}
+            size={buttonSize}
+          />
         </View>
+
+        {/* Big center-screen combo */}
+        {engine.combo >= 2 ? (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: buttonRowTop + buttonSize + 20,
+              left: 0,
+              right: 0,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: SCREEN_H * 0.06,
+                fontWeight: '900',
+                color: colors.primary,
+                letterSpacing: 4,
+                textShadowColor: colors.primary,
+                textShadowRadius: 16,
+              }}
+            >
+              {engine.combo}
+            </Text>
+            <Text
+              style={{
+                fontSize: SCREEN_W * 0.035,
+                fontWeight: '700',
+                color: colors.muted,
+                letterSpacing: 6,
+                marginTop: 4,
+              }}
+            >
+              COMBO
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <CountdownOverlay count={countdown.count} visible={countdownActive} />
