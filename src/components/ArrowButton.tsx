@@ -1,7 +1,10 @@
-import React, { useCallback } from 'react';
-import { Pressable, View, type GestureResponderEvent } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import {
+  Pressable,
+  View,
+  type GestureResponderEvent,
+} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useTheme } from '@/hooks/useTheme';
 import type { Direction } from '@/types/song';
 
 export type ArrowButtonProps = {
@@ -19,35 +22,29 @@ const ICON_NAMES: Record<Direction, string> = {
   down: 'chevron-down',
 };
 
-const BG_TINTS: Record<Direction, string> = {
-  left: 'rgba(239,68,68,0.15)',
-  right: 'rgba(59,130,246,0.15)',
-  up: 'rgba(16,185,129,0.15)',
-  down: 'rgba(245,158,11,0.15)',
-};
-
-const BORDER_TINTS: Record<Direction, string> = {
-  left: '#EF4444',
-  right: '#3B82F6',
-  up: '#10B981',
-  down: '#F59E0B',
+const COLORS: Record<Direction, string> = {
+  left: '#FF3366',
+  right: '#00E5FF',
+  up: '#00FF88',
+  down: '#FFD500',
 };
 
 export default function ArrowButton({
   direction,
   onPress,
   onRelease,
-  size = 72,
+  size = 76,
   disabled = false,
 }: ArrowButtonProps): React.ReactElement {
-  const { colors } = useTheme();
-  const accent = BORDER_TINTS[direction];
+  const [pressed, setPressed] = useState<boolean>(false);
+  const color = COLORS[direction];
 
   const handlePressIn = useCallback(
     (_event: GestureResponderEvent): void => {
       if (disabled) {
         return;
       }
+      setPressed(true);
       onPress(direction);
     },
     [direction, disabled, onPress],
@@ -58,6 +55,7 @@ export default function ArrowButton({
       if (disabled) {
         return;
       }
+      setPressed(false);
       onRelease?.(direction);
     },
     [direction, disabled, onRelease],
@@ -70,19 +68,27 @@ export default function ArrowButton({
       disabled={disabled}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 4,
-        borderWidth: 2,
-        borderColor: accent,
-        backgroundColor: disabled ? colors.border : BG_TINTS[direction],
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
     >
-      <View>
-        <Ionicons name={ICON_NAMES[direction]} size={size * 0.5} color={accent} />
+      <View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 4,
+          borderWidth: pressed ? 4 : 3,
+          borderColor: color,
+          backgroundColor: pressed ? `${color}55` : `${color}18`,
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: disabled ? 0.4 : 1,
+          shadowColor: color,
+          shadowOpacity: pressed ? 1 : 0.5,
+          shadowRadius: pressed ? 20 : 8,
+          shadowOffset: { width: 0, height: 0 },
+          elevation: pressed ? 10 : 4,
+          transform: [{ scale: pressed ? 0.94 : 1 }],
+        }}
+      >
+        <Ionicons name={ICON_NAMES[direction]} size={size * 0.55} color={color} />
       </View>
     </Pressable>
   );
