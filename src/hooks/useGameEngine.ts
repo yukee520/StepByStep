@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   COMBO_BONUS_CAP,
   COMBO_BONUS_STEP,
-  DEFAULT_JUDGMENT_WINDOW,
+  DIFFICULTY_FALL_MULTIPLIER,
+  FALL_DURATION_MS,
   JUDGMENT_ACCURACY_WEIGHT,
   JUDGMENT_SCORE,
+  PIXEL_WINDOW,
 } from '@/types/game';
 import type {
   GameRunSummary,
@@ -16,13 +18,16 @@ import type { Direction, Note, Song } from '@/types/song';
 import { accuracyToGrade } from '@/utils/grading';
 import { genId } from '@/utils/id';
 
-const APPROACH_MS = 1800;
-
 export type HitFeedback = {
   direction: Direction;
   judgment: Judgment;
   key: string;
   timeMs: number;
+};
+
+export type VisibleNote = {
+  note: Note;
+  yRatio: number;
 };
 
 export type UseGameEngineOptions = {
@@ -42,10 +47,11 @@ export type UseGameEngineResult = {
   goodCount: number;
   missCount: number;
   accuracy: number;
-  visibleNotes: Array<{ note: Note; yRatio: number }>;
+  visibleNotes: VisibleNote[];
   elapsedMs: number;
   durationMs: number;
   progress: number;
+  fallDurationMs: number;
   start: () => void;
   pause: () => void;
   resume: () => void;
@@ -63,6 +69,9 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   );
   const durationMs = song.durationMs;
 
+  const fallDurationMs =
+    FALL_DURATION_MS * DIFFICULTY_FALL_MULTIPLIER[song.difficulty];
+
   const [status, setStatus] = useState<GameStatus>('idle');
   const [score, setScore] = useState<number>(0);
   const [combo, setCombo] = useState<number>(0);
@@ -72,15 +81,14 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const [goodCount, setGoodCount] = useState<number>(0);
   const [missCount, setMissCount] = useState<number>(0);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
-  const [visibleNotes, setVisibleNotes] = useState<
-    Array<{ note: Note; yRatio: number }>
-  >([]);
+  const [visibleNotes, setVisibleNotes] = useState<VisibleNote[]>([]);
 
   const startTimeRef = useRef<number>(0);
   const pausedElapsedRef = useRef<number>(0);
   const judgedRef = useRef<Set<string>>(new Set());
   const rafRef = useRef<number | null>(null);
   const statusRef = useRef<GameStatus>('idle');
+
   const statsRef = useRef({
     score: 0,
     combo: 0,
@@ -158,14 +166,30 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     onFinish(summary);
   }, [buildSummary, onFinish, stopLoop]);
 
+  /**
+   * Computes how far down the lane a note is, as a ratio:
+   *  - 0 = just spawned at the top of the lane
+   *  - 1 = at the button row (hit zone)
+   *  - >1 = passed the button row and heading off screen
+   */
+  const computeYRatio = useCallback(
+    (note: Note, now: number): number => {
+      const delta = note.timeMs - now;
+      const ratio = 1 - delta / fallDurationMs;
+      return ratio;
+    },
+    [fallDurationMs],
+  );
+
   const processMisses = useCallback(
     (now: number, withFeedback: boolean): void => {
-      const window = DEFAULT_JUDGMENT_WINDOW.good;
+      const missThreshold = 1 + PIXEL_WINDOW.good;
       for (const note of sortedNotes.current) {
         if (judgedRef.current.has(note.id)) {
           continue;
         }
-        if (now - note.timeMs > window) {
+        const ratio = computeYRatio(note, now);
+        if (ratio > missThreshold) {
           judgedRef.current.add(note.id);
           statsRef.current.combo = 0;
           statsRef.current.miss += 1;
@@ -182,40 +206,38 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         }
       }
     },
-    [onNoteHit],
+    [computeYRatio, onNoteHit],
   );
 
   const loop = useCallback((): void => {
     if (statusRef.current !== 'playing') {
       return;
     }
-    const now = Date.now() - startTimeRef.current;
+    const now = Date.now() - startTimeRef.current - inputOffsetMs;
     setElapsedMs(now);
 
-    const upcoming = sortedNotes.current.filter((note) => {
+    const upcoming: VisibleNote[] = [];
+    for (const note of sortedNotes.current) {
       if (judgedRef.current.has(note.id)) {
-        return false;
+        continue;
       }
-      const delta = note.timeMs - now;
-      return delta <= APPROACH_MS && delta > -DEFAULT_JUDGMENT_WINDOW.good;
-    });
-
-    setVisibleNotes(
-      upcoming.map((note) => ({
-        note,
-        yRatio: Math.max(0, Math.min(1, 1 - (note.timeMs - now) / APPROACH_MS)),
-      })),
-    );
+      const ratio = computeYRatio(note, now);
+      // Keep notes that are approaching or just past the hit zone
+      if (ratio > -0.1 && ratio < 1 + PIXEL_WINDOW.good + 0.05) {
+        upcoming.push({ note, yRatio: ratio });
+      }
+    }
+    setVisibleNotes(upcoming);
 
     processMisses(now, true);
 
-    if (now >= durationMs + 800) {
+    if (now >= durationMs + 1200) {
       finish();
       return;
     }
 
     rafRef.current = requestAnimationFrame(loop);
-  }, [durationMs, finish, processMisses]);
+  }, [computeYRatio, durationMs, finish, inputOffsetMs, processMisses]);
 
   const start = useCallback((): void => {
     resetStats();
@@ -267,7 +289,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   }, [buildSummary, onFinish, stopLoop]);
 
   const applyJudgment = useCallback(
-    (judgment: Judgment, note: Note, deltaMs: number): void => {
+    (judgment: Judgment, note: Note, deltaRatio: number): void => {
       const stats = statsRef.current;
       const base = JUDGMENT_SCORE[judgment];
       const comboBonus = Math.min(
@@ -309,7 +331,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
           noteId: note.id,
           direction: note.direction,
           judgment,
-          deltaMs,
+          deltaPx: deltaRatio,
           timeMs: Date.now(),
           comboAfter: stats.combo,
           scoreAwarded: awarded,
@@ -330,8 +352,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (statusRef.current !== 'playing') {
         return;
       }
-      const now = Date.now() - startTimeRef.current + inputOffsetMs;
-      const window = DEFAULT_JUDGMENT_WINDOW;
+      const now = Date.now() - startTimeRef.current - inputOffsetMs;
 
       let bestNote: Note | null = null;
       let bestDelta = Number.POSITIVE_INFINITY;
@@ -343,7 +364,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         if (note.direction !== direction) {
           continue;
         }
-        const delta = Math.abs(note.timeMs - now);
+        const ratio = computeYRatio(note, now);
+        const delta = Math.abs(ratio - 1);
         if (delta < bestDelta) {
           bestDelta = delta;
           bestNote = note;
@@ -353,15 +375,15 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (!bestNote) {
         return;
       }
-      if (bestDelta > window.good) {
+      if (bestDelta > PIXEL_WINDOW.good) {
         return;
       }
 
-      const signedDelta = now - bestNote.timeMs;
+      const signedDelta = computeYRatio(bestNote, now) - 1;
       let judgment: Judgment;
-      if (bestDelta <= window.perfect) {
+      if (bestDelta <= PIXEL_WINDOW.perfect) {
         judgment = 'perfect';
-      } else if (bestDelta <= window.great) {
+      } else if (bestDelta <= PIXEL_WINDOW.great) {
         judgment = 'great';
       } else {
         judgment = 'good';
@@ -370,7 +392,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       judgedRef.current.add(bestNote.id);
       applyJudgment(judgment, bestNote, signedDelta);
     },
-    [applyJudgment, inputOffsetMs],
+    [applyJudgment, computeYRatio, inputOffsetMs],
   );
 
   const releaseInput = useCallback((_direction: Direction): void => {
@@ -406,6 +428,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     elapsedMs,
     durationMs,
     progress,
+    fallDurationMs,
     start,
     pause,
     resume,
