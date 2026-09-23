@@ -7,7 +7,7 @@ export type JudgmentEvent = {
   noteId: string;
   direction: Direction;
   judgment: Judgment;
-  deltaMs: number;
+  deltaPx: number;
   timeMs: number;
   comboAfter: number;
   scoreAwarded: number;
@@ -41,17 +41,16 @@ export type GameRunSummary = {
   isHighScore: boolean;
 };
 
-export type JudgmentWindow = {
-  perfect: number;
-  great: number;
-  good: number;
-};
-
-export const DEFAULT_JUDGMENT_WINDOW: JudgmentWindow = {
-  perfect: 45,
-  great: 90,
-  good: 140,
-};
+/**
+ * Judgment windows as fractions of the lane area height.
+ * The lane area is the full vertical space notes fall through,
+ * from just below the HUD to just above the button row.
+ */
+export const PIXEL_WINDOW = {
+  perfect: 0.035,
+  great: 0.07,
+  good: 0.12,
+} as const;
 
 export const JUDGMENT_SCORE: Record<Judgment, number> = {
   perfect: 300,
@@ -69,3 +68,20 @@ export const JUDGMENT_ACCURACY_WEIGHT: Record<Judgment, number> = {
 
 export const COMBO_BONUS_STEP = 10;
 export const COMBO_BONUS_CAP = 100;
+
+/**
+ * How long (in ms) a falling note takes to travel the entire lane.
+ * Lower = faster. This controls note speed independent of BPM.
+ */
+export const FALL_DURATION_MS = 1400;
+
+/**
+ * Multiplier applied to FALL_DURATION_MS by difficulty.
+ * Higher difficulty = smaller multiplier = faster fall.
+ */
+export const DIFFICULTY_FALL_MULTIPLIER: Record<Song['difficulty'], number> = {
+  easy: 1.3,
+  normal: 1.0,
+  hard: 0.8,
+  expert: 0.65,
+};
