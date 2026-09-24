@@ -34,6 +34,7 @@ const LANE_AREA_PADDING = 12;
 const HUD_FALLBACK_RATIO = 0.10;
 const BUTTON_ROW_TOP_RATIO = 0.80;
 const BUTTON_GAP = 8;
+const BUTTON_BOTTOM_PADDING = 24;
 
 const LANE_COLORS: Record<Direction, string> = {
   left: '#FF3366',
@@ -333,9 +334,11 @@ export default function GameScreen(): React.ReactElement {
     );
   }
 
+  // Lane area layout: inside the flex container that starts right below the HUD
   const laneAreaTop = hudHeight > 0 ? hudHeight : SCREEN_H * HUD_FALLBACK_RATIO;
-  const buttonRowTop = SCREEN_H * BUTTON_ROW_TOP_RATIO;
-  const laneAreaHeight = buttonRowTop - laneAreaTop;
+  const buttonRowTopScreen = SCREEN_H * BUTTON_ROW_TOP_RATIO;
+  const laneAreaHeight = buttonRowTopScreen - laneAreaTop;
+  const buttonRowTopInContainer = buttonRowTopScreen - laneAreaTop;
   const laneAreaWidth = SCREEN_W - LANE_AREA_PADDING * 2;
   const laneWidth = laneAreaWidth / LANE_COUNT;
   const noteSize = Math.min(laneWidth * 0.75, buttonSize * 0.9);
@@ -363,12 +366,13 @@ export default function GameScreen(): React.ReactElement {
       </View>
 
       <View style={{ flex: 1 }}>
+        {/* Lane container — starts right at the top of the flex area (which is right below the HUD) */}
         <View
           pointerEvents="none"
           style={{
             position: 'absolute',
             left: LANE_AREA_PADDING,
-            top: laneAreaTop,
+            top: 0,
             width: laneAreaWidth,
             height: laneAreaHeight,
             borderRadius: 16,
@@ -398,11 +402,12 @@ export default function GameScreen(): React.ReactElement {
           })}
         </View>
 
+        {/* Combo overlay — top center of the lane, just below the top edge */}
         <View
           pointerEvents="none"
           style={{
             position: 'absolute',
-            top: laneAreaTop + 12,
+            top: 12,
             left: 0,
             right: 0,
           }}
@@ -416,12 +421,13 @@ export default function GameScreen(): React.ReactElement {
           />
         </View>
 
+        {/* Judgment feedback — appears just above the button row */}
         {feedback ? (
           <View
             pointerEvents="none"
             style={{
               position: 'absolute',
-              top: buttonRowTop - 60,
+              top: buttonRowTopInContainer - 60,
               left: 0,
               right: 0,
               alignItems: 'center',
@@ -442,14 +448,16 @@ export default function GameScreen(): React.ReactElement {
           </View>
         ) : null}
 
+        {/* Button row — positioned inside the flex container */}
         <View
           style={{
             position: 'absolute',
-            top: buttonRowTop,
+            top: buttonRowTopInContainer,
             left: 0,
             right: 0,
             paddingHorizontal: LANE_AREA_PADDING,
             paddingTop: 8,
+            paddingBottom: BUTTON_BOTTOM_PADDING,
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -485,7 +493,7 @@ export default function GameScreen(): React.ReactElement {
       <CountdownOverlay
         count={countdown.count}
         visible={countdownActive}
-        laneTop={laneAreaTop}
+        laneTop={0}
         laneHeight={laneAreaHeight}
       />
 
