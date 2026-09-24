@@ -292,4 +292,66 @@ export default function HowToPlayScreen(): React.ReactElement {
               >
                 Combo & Score
               </Text>
-              <
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: NEON_PALETTE.text,
+                  marginTop: 12,
+                  lineHeight: 20,
+                }}
+              >
+                Every consecutive hit increases your combo and multiplies your
+                score. At combo 10, you earn 1.1× per note. At combo 100, you
+                earn the maximum 2.0× per note.
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: NEON_PALETTE.text,
+                  marginTop: 12,
+                  lineHeight: 20,
+                }}
+              >
+                Missing a note resets your combo to zero.
+              </Text>
+            </Card>
+          </View>
+
+          <View style={{ marginTop: 16 }}>
+            <Card>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: '800',
+                  color: NEON_PALETTE.text,
+                }}
+              >
+                Tips
+              </Text>
+              <TipRow
+                icon="headset-outline"
+                text="Use headphones — audio cues make timing easier."
+              />
+              <TipRow
+                icon="speedometer-outline"
+                text="Adjust note speed in Settings to match your reading pace."
+              />
+              <TipRow
+                icon="timer-outline"
+                text="If hits feel late or early, tune the input offset."
+              />
+              <TipRow
+                icon="musical-notes-outline"
+                text="Start on Easy, then work up to Normal, Hard, and Expert."
+              />
+              <TipRow
+                icon="construct-outline"
+                text="Use the Chart Builder to make your own songs."
+              />
+            </Card>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </NeonBackground>
+  );
+}
