@@ -7,7 +7,8 @@ import ScreenHeader from '@/components/ScreenHeader';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import SettingRow from '@/components/SettingRow';
-import { useTheme } from '@/hooks/useTheme';
+import NeonBackground from '@/components/NeonBackground';
+import { NEON_PALETTE } from '@/theme/colors';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useScoresStore } from '@/store/useScoresStore';
 import { usePacksStore } from '@/store/usePacksStore';
@@ -25,8 +26,25 @@ import { formatSignedMs } from '@/utils/formatting';
 
 const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark'];
 
+function SectionLabel({ children }: { children: string }): React.ReactElement {
+  return (
+    <Text
+      style={{
+        fontSize: 11,
+        fontWeight: '700',
+        letterSpacing: 2,
+        color: NEON_PALETTE.textDim,
+        marginTop: 24,
+        marginBottom: 8,
+        marginLeft: 4,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
+
 export default function SettingsScreen(): React.ReactElement {
-  const { colors } = useTheme();
   const settings = useSettingsStore((s) => s.settings);
   const setThemeMode = useSettingsStore((s) => s.setThemeMode);
   const setNoteSpeed = useSettingsStore((s) => s.setNoteSpeed);
@@ -79,204 +97,303 @@ export default function SettingsScreen(): React.ReactElement {
   const installedCount = Object.keys(installed).length;
 
   return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
-      <ScreenHeader title="Settings" />
+    <NeonBackground showGrid>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScreenHeader title="Settings" />
 
-      <ScrollView contentContainerClassName="px-4 pb-10" showsVerticalScrollIndicator={false}>
-        <Text className="text-xs font-semibold uppercase text-muted dark:text-dark-muted mb-2 ml-1">
-          Appearance
-        </Text>
-        <Card padded={false}>
-          <View className="px-4">
-            <SettingRow
-              label="Theme"
-              description="Light, dark, or match system"
-              icon="color-palette-outline"
-              valueText={settings.themeMode}
-              onPress={cycleTheme}
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <SectionLabel>APPEARANCE</SectionLabel>
+          <Card padded={false}>
+            <View style={{ paddingHorizontal: 16 }}>
+              <SettingRow
+                label="Theme"
+                description="Light, dark, or match system"
+                icon="color-palette-outline"
+                valueText={settings.themeMode}
+                onPress={cycleTheme}
+              />
+              <View style={{ height: 1, backgroundColor: 'rgba(0, 229, 255, 0.1)' }} />
+              <SettingRow
+                label="Show FPS counter"
+                description="Display during gameplay"
+                icon="speedometer-outline"
+                right={
+                  <Switch
+                    value={settings.showFpsCounter}
+                    onValueChange={setShowFpsCounter}
+                    trackColor={{
+                      false: 'rgba(0, 229, 255, 0.2)',
+                      true: NEON_PALETTE.primary,
+                    }}
+                    thumbColor={NEON_PALETTE.text}
+                  />
+                }
+              />
+            </View>
+          </Card>
+
+          <SectionLabel>GAMEPLAY</SectionLabel>
+          <Card>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '600',
+                    color: NEON_PALETTE.text,
+                  }}
+                >
+                  Note speed
+                </Text>
+                <Text
+                  style={{ fontSize: 12, color: NEON_PALETTE.textDim, marginTop: 2 }}
+                >
+                  How fast arrows fall. Higher is harder.
+                </Text>
+              </View>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '800',
+                  color: NEON_PALETTE.primary,
+                  marginLeft: 12,
+                }}
+              >
+                {settings.noteSpeed.toFixed(2)}×
+              </Text>
+            </View>
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={NOTE_SPEED_MIN}
+              maximumValue={NOTE_SPEED_MAX}
+              step={NOTE_SPEED_STEP}
+              value={settings.noteSpeed}
+              onValueChange={setNoteSpeed}
+              minimumTrackTintColor={NEON_PALETTE.primary}
+              maximumTrackTintColor="rgba(0, 229, 255, 0.2)"
+              thumbTintColor={NEON_PALETTE.primary}
             />
-            <View className="h-px bg-border dark:bg-dark-border" />
+
+            <View
+              style={{
+                height: 1,
+                backgroundColor: 'rgba(0, 229, 255, 0.1)',
+                marginTop: 6,
+                marginBottom: 12,
+              }}
+            />
+
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '600',
+                    color: NEON_PALETTE.text,
+                  }}
+                >
+                  Input offset
+                </Text>
+                <Text
+                  style={{ fontSize: 12, color: NEON_PALETTE.textDim, marginTop: 2 }}
+                >
+                  Shift hit timing. Positive = later.
+                </Text>
+              </View>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: '800',
+                  color: NEON_PALETTE.primary,
+                  marginLeft: 12,
+                }}
+              >
+                {formatSignedMs(settings.inputOffsetMs)}
+              </Text>
+            </View>
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={INPUT_OFFSET_MIN}
+              maximumValue={INPUT_OFFSET_MAX}
+              step={INPUT_OFFSET_STEP}
+              value={settings.inputOffsetMs}
+              onValueChange={setInputOffsetMs}
+              minimumTrackTintColor={NEON_PALETTE.primary}
+              maximumTrackTintColor="rgba(0, 229, 255, 0.2)"
+              thumbTintColor={NEON_PALETTE.primary}
+            />
+
+            <View
+              style={{
+                height: 1,
+                backgroundColor: 'rgba(0, 229, 255, 0.1)',
+                marginTop: 6,
+              }}
+            />
+
             <SettingRow
-              label="Show FPS counter"
-              description="Display during gameplay"
-              icon="speedometer-outline"
+              label="Sound"
+              description="Play audio during songs"
+              icon="volume-high-outline"
               right={
                 <Switch
-                  value={settings.showFpsCounter}
-                  onValueChange={setShowFpsCounter}
-                  trackColor={{ false: colors.border, true: colors.primary }}
+                  value={settings.soundEnabled}
+                  onValueChange={setSoundEnabled}
+                  trackColor={{
+                    false: 'rgba(0, 229, 255, 0.2)',
+                    true: NEON_PALETTE.primary,
+                  }}
+                  thumbColor={NEON_PALETTE.text}
                 />
               }
             />
-          </View>
-        </Card>
-
-        <Text className="text-xs font-semibold uppercase text-muted dark:text-dark-muted mt-6 mb-2 ml-1">
-          Gameplay
-        </Text>
-        <Card>
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="text-base font-medium text-text dark:text-dark-text">
-                Note speed
-              </Text>
-              <Text className="text-xs text-muted dark:text-dark-muted">
-                How fast arrows fall. Higher is harder.
-              </Text>
-            </View>
-            <Text className="text-sm font-bold text-primary ml-3">
-              {settings.noteSpeed.toFixed(2)}×
-            </Text>
-          </View>
-          <Slider
-            style={{ width: '100%', height: 40 }}
-            minimumValue={NOTE_SPEED_MIN}
-            maximumValue={NOTE_SPEED_MAX}
-            step={NOTE_SPEED_STEP}
-            value={settings.noteSpeed}
-            onValueChange={setNoteSpeed}
-            minimumTrackTintColor={colors.primary}
-            maximumTrackTintColor={colors.border}
-            thumbTintColor={colors.primary}
-          />
-
-          <View className="h-px bg-border dark:bg-dark-border mt-2" />
-
-          <View className="flex-row items-center justify-between mt-3">
-            <View className="flex-1">
-              <Text className="text-base font-medium text-text dark:text-dark-text">
-                Input offset
-              </Text>
-              <Text className="text-xs text-muted dark:text-dark-muted">
-                Shift hit timing. Positive = later.
-              </Text>
-            </View>
-            <Text className="text-sm font-bold text-primary ml-3">
-              {formatSignedMs(settings.inputOffsetMs)}
-            </Text>
-          </View>
-          <Slider
-            style={{ width: '100%', height: 40 }}
-            minimumValue={INPUT_OFFSET_MIN}
-            maximumValue={INPUT_OFFSET_MAX}
-            step={INPUT_OFFSET_STEP}
-            value={settings.inputOffsetMs}
-            onValueChange={setInputOffsetMs}
-            minimumTrackTintColor={colors.primary}
-            maximumTrackTintColor={colors.border}
-            thumbTintColor={colors.primary}
-          />
-
-          <View className="h-px bg-border dark:bg-dark-border mt-2" />
-
-          <SettingRow
-            label="Sound"
-            description="Play audio during songs"
-            icon="volume-high-outline"
-            right={
-              <Switch
-                value={settings.soundEnabled}
-                onValueChange={setSoundEnabled}
-                trackColor={{ false: colors.border, true: colors.primary }}
-              />
-            }
-          />
-          <View className="h-px bg-border dark:bg-dark-border" />
-          <SettingRow
-            label="Haptics"
-            description="Vibrate on perfect hits"
-            icon="pulse-outline"
-            right={
-              <Switch
-                value={settings.hapticsEnabled}
-                onValueChange={setHapticsEnabled}
-                trackColor={{ false: colors.border, true: colors.primary }}
-              />
-            }
-          />
-        </Card>
-
-        <Text className="text-xs font-semibold uppercase text-muted dark:text-dark-muted mt-6 mb-2 ml-1">
-          Song Packs
-        </Text>
-        <Card>
-          <Text className="text-sm text-text dark:text-dark-text">
-            Pack index URL
-          </Text>
-          <Text className="text-xs text-muted dark:text-dark-muted mt-1">
-            The remote JSON listing available song packs. Must be HTTPS.
-          </Text>
-          <TextInput
-            value={indexUrlDraft}
-            onChangeText={setIndexUrlDraft}
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder={DEFAULT_PACK_INDEX_URL}
-            placeholderTextColor={colors.muted}
-            className="mt-3 border border-border dark:border-dark-border rounded-lg px-3 py-2 text-xs text-text dark:text-dark-text"
-          />
-          <View className="flex-row mt-3 space-x-3">
-            <View className="flex-1">
-              <Button
-                label="Save"
-                icon="checkmark"
-                size="sm"
-                fullWidth
-                onPress={handleSaveIndexUrl}
-              />
-            </View>
-            <View className="flex-1">
-              <Button
-                label="Reset"
-                icon="refresh"
-                variant="secondary"
-                size="sm"
-                fullWidth
-                onPress={handleResetIndexUrl}
-              />
-            </View>
-          </View>
-          <Text className="text-[11px] text-muted dark:text-dark-muted mt-3">
-            {installedCount} pack{installedCount === 1 ? '' : 's'} currently installed.
-          </Text>
-        </Card>
-
-        <Text className="text-xs font-semibold uppercase text-muted dark:text-dark-muted mt-6 mb-2 ml-1">
-          Data
-        </Text>
-        <Card padded={false}>
-          <View className="px-4">
+            <View style={{ height: 1, backgroundColor: 'rgba(0, 229, 255, 0.1)' }} />
             <SettingRow
-              label="Clear all high scores"
-              description="Erase every saved score and combo"
-              icon="trophy-outline"
-              destructive
-              onPress={handleClearScores}
+              label="Haptics"
+              description="Vibrate on tap"
+              icon="pulse-outline"
+              right={
+                <Switch
+                  value={settings.hapticsEnabled}
+                  onValueChange={setHapticsEnabled}
+                  trackColor={{
+                    false: 'rgba(0, 229, 255, 0.2)',
+                    true: NEON_PALETTE.primary,
+                  }}
+                  thumbColor={NEON_PALETTE.text}
+                />
+              }
             />
-          </View>
-        </Card>
+          </Card>
 
-        <Text className="text-xs font-semibold uppercase text-muted dark:text-dark-muted mt-6 mb-2 ml-1">
-          About
-        </Text>
-        <Card>
-          <View className="flex-row items-center">
-            <Ionicons name="information-circle-outline" size={22} color={colors.primary} />
-            <View className="flex-1 ml-3">
-              <Text className="text-base font-semibold text-text dark:text-dark-text">
-                StepByStep
-              </Text>
-              <Text className="text-xs text-muted dark:text-dark-muted mt-0.5">
-                Rhythm game · v1.0.0
-              </Text>
+          <SectionLabel>SONG PACKS</SectionLabel>
+          <Card>
+            <Text style={{ fontSize: 14, color: NEON_PALETTE.text }}>
+              Pack index URL
+            </Text>
+            <Text
+              style={{ fontSize: 12, color: NEON_PALETTE.textDim, marginTop: 4 }}
+            >
+              The remote JSON listing available song packs. Must be HTTPS.
+            </Text>
+            <TextInput
+              value={indexUrlDraft}
+              onChangeText={setIndexUrlDraft}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder={DEFAULT_PACK_INDEX_URL}
+              placeholderTextColor={NEON_PALETTE.muted}
+              style={{
+                marginTop: 12,
+                borderWidth: 1,
+                borderColor: 'rgba(0, 229, 255, 0.25)',
+                borderRadius: 10,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                fontSize: 12,
+                color: NEON_PALETTE.text,
+                backgroundColor: 'rgba(0, 229, 255, 0.05)',
+              }}
+            />
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  label="Save"
+                  icon="checkmark"
+                  size="sm"
+                  fullWidth
+                  onPress={handleSaveIndexUrl}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button
+                  label="Reset"
+                  icon="refresh"
+                  variant="secondary"
+                  size="sm"
+                  fullWidth
+                  onPress={handleResetIndexUrl}
+                />
+              </View>
             </View>
-          </View>
-          <Text className="text-xs text-muted dark:text-dark-muted mt-3">
-            Tap the arrows in time with the beat. Hit Perfect, Great, and Good judgments
-            to build combos. Higher combos mean higher scores.
-          </Text>
-        </Card>
-      </ScrollView>
-    </SafeAreaView>
+            <Text
+              style={{
+                fontSize: 11,
+                color: NEON_PALETTE.textDim,
+                marginTop: 12,
+              }}
+            >
+              {installedCount} pack{installedCount === 1 ? '' : 's'} currently installed.
+            </Text>
+          </Card>
+
+          <SectionLabel>DATA</SectionLabel>
+          <Card padded={false}>
+            <View style={{ paddingHorizontal: 16 }}>
+              <SettingRow
+                label="Clear all high scores"
+                description="Erase every saved score and combo"
+                icon="trophy-outline"
+                destructive
+                onPress={handleClearScores}
+              />
+            </View>
+          </Card>
+
+          <SectionLabel>ABOUT</SectionLabel>
+          <Card>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons
+                name="information-circle-outline"
+                size={22}
+                color={NEON_PALETTE.primary}
+              />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '800',
+                    color: NEON_PALETTE.text,
+                  }}
+                >
+                  StepByStep
+                </Text>
+                <Text
+                  style={{ fontSize: 12, color: NEON_PALETTE.textDim, marginTop: 2 }}
+                >
+                  Rhythm game · v1.0.0
+                </Text>
+              </View>
+            </View>
+            <Text
+              style={{
+                fontSize: 12,
+                color: NEON_PALETTE.textDim,
+                marginTop: 12,
+                lineHeight: 18,
+              }}
+            >
+              Tap the arrows in time with the beat. Hit Perfect, Great, and Good
+              judgments to build combos. Higher combos mean higher scores.
+            </Text>
+          </Card>
+        </ScrollView>
+      </SafeAreaView>
+    </NeonBackground>
   );
 }
