@@ -1,11 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import {
-  Modal,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, ScrollView, Text, TextInput, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import Button from '@/components/Button';
 import { NEON_PALETTE } from '@/theme/colors';
@@ -19,8 +13,17 @@ export type PublishToGitHubSheetProps = {
   manifest: SongPackManifest | null;
   audioBase64: string | null;
   audioExt: string;
+  audioSizeBytes: number;
   coverBase64: string | null;
   coverExt: string;
+};
+
+type FieldProps = {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  secure?: boolean;
 };
 
 function Field({
@@ -29,13 +32,7 @@ function Field({
   onChange,
   placeholder,
   secure,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  secure?: boolean;
-}): React.ReactElement {
+}: FieldProps): React.ReactElement {
   return (
     <View style={{ marginTop: 12 }}>
       <Text
@@ -78,6 +75,7 @@ export default function PublishToGitHubSheet({
   manifest,
   audioBase64,
   audioExt,
+  audioSizeBytes,
   coverBase64,
   coverExt,
 }: PublishToGitHubSheetProps): React.ReactElement {
@@ -113,22 +111,30 @@ export default function PublishToGitHubSheet({
     setBusy(true);
     setLog([]);
 
+    const owner = ownerDraft.trim();
+    const repo = repoDraft.trim();
+    const branch = branchDraft.trim() || 'main';
+    const packsPath = pathDraft.trim().replace(/^\/+|\/+$/g, '') || 'packs';
+    const indexPath = `${packsPath}/index.json`;
+
     const config = {
       token: tokenDraft.trim(),
-      owner: ownerDraft.trim(),
-      repo: repoDraft.trim(),
-      branch: branchDraft.trim() || 'main',
-      packsPath: pathDraft.trim().replace(/^\/+|\/+$/g, '') || 'packs',
+      owner,
+      repo,
+      branch,
+      packsPath,
+      indexPath,
     };
 
-    // Persist settings so next time we don't need to re-enter
     setGithubToken(config.token);
-    setGithubOwner(config.owner);
-    setGithubRepo(config.repo);
-    setGithubBranch(config.branch);
-    setGithubPacksPath(config.packsPath);
+    setGithubOwner(owner);
+    setGithubRepo(repo);
+    setGithubBranch(branch);
+    setGithubPacksPath(packsPath);
 
-    appendLog(`Publishing to ${config.owner}/${config.repo}@${config.branch}...`);
+    appendLog(`Publishing to ${owner}/${repo}@${branch}...`);
+    appendLog(`Folder: ${packsPath}/`);
+    appendLog(`Index: ${indexPath}`);
 
     const payload: PublishPackInput = {
       config,
@@ -137,6 +143,7 @@ export default function PublishToGitHubSheet({
       audioExt,
       coverBase64,
       coverExt,
+      audioSizeBytes,
     };
 
     const result = await publishPack(payload);
@@ -147,7 +154,7 @@ export default function PublishToGitHubSheet({
       Toast.show({
         type: 'success',
         text1: 'Published to GitHub',
-        text2: result.message,
+        text2: 'Index updated — players can now download.',
         position: 'bottom',
         visibilityTime: 4000,
       });
@@ -165,6 +172,7 @@ export default function PublishToGitHubSheet({
     appendLog,
     audioBase64,
     audioExt,
+    audioSizeBytes,
     branchDraft,
     coverBase64,
     coverExt,
@@ -193,12 +201,7 @@ export default function PublishToGitHubSheet({
       onRequestClose={onClose}
       transparent={false}
     >
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: NEON_PALETTE.background,
-        }}
-      >
+      <View style={{ flex: 1, backgroundColor: NEON_PALETTE.background }}>
         <View
           style={{
             paddingHorizontal: 20,
@@ -221,12 +224,7 @@ export default function PublishToGitHubSheet({
           >
             PUBLISH
           </Text>
-          <Button
-            label="Close"
-            variant="ghost"
-            size="sm"
-            onPress={onClose}
-          />
+          <Button label="Close" variant="ghost" size="sm" onPress={onClose} />
         </View>
 
         <ScrollView
@@ -240,8 +238,8 @@ export default function PublishToGitHubSheet({
               lineHeight: 20,
             }}
           >
-            Uploads the pack to your GitHub repo using the Contents API. The
-            token is stored locally on your device.
+            Uploads the pack and updates the index JSON, so players see the new
+            song after tapping Refresh in Song Packs.
           </Text>
 
           {shortToken ? (
@@ -339,6 +337,15 @@ export default function PublishToGitHubSheet({
                 {audioBase64 ? `, audio.${audioExt}` : ''}
                 {coverBase64 ? `, cover.${coverExt}` : ''}
               </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: NEON_PALETTE.textDim,
+                  marginTop: 4,
+                }}
+              >
+                Then updates: index.json
+              </Text>
             </View>
           ) : null}
 
@@ -391,9 +398,8 @@ export default function PublishToGitHubSheet({
               lineHeight: 18,
             }}
           >
-            Note: The token is stored unencrypted on this device. Do not share
-            your phone with anyone you don&apos;t trust. If the token is ever
-            compromised, revoke it at github.com/settings/tokens.
+            Note: The token is stored unencrypted on this device. If the token
+            is ever compromised, revoke it at github.com/settings/tokens.
           </Text>
         </ScrollView>
       </View>
