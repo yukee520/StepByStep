@@ -407,7 +407,7 @@ export default function GameScreen(): React.ReactElement {
               pointerEvents="none"
               style={{
                 position: 'absolute',
-                top: buttonRowTopInContainer - 60,
+                top: 90,
                 left: 0,
                 right: 0,
               }}
