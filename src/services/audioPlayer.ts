@@ -67,27 +67,19 @@ class AudioPlayerService {
    * interpolation if the native read is unsupported.
    */
   getPositionMs(): number {
-    if (this.status === 'playing' && this.sound) {
-      try {
-        const native = this.sound.getCurrentTime();
-        if (Number.isFinite(native) && native >= 0) {
-          return Math.round(native * 1000);
-        }
-      } catch {
-        // fall through to wall-clock estimate
-      }
-      // Interpolate using wall clock
-      const elapsed = Date.now() - this.playStartedAt;
-      return Math.round(this.startPositionMs + elapsed);
-    }
-    if (this.status === 'paused') {
-      return Math.round(this.pausedPositionMs);
-    }
-    if (this.status === 'ready' || this.status === 'idle') {
-      return Math.round(this.startPositionMs);
-    }
-    return 0;
+  if (this.status === 'playing') {
+    const elapsed = Date.now() - this.playStartedAt;
+    const pos = this.startPositionMs + elapsed;
+    return Math.round(Math.max(0, Math.min(pos, this.durationMs)));
   }
+  if (this.status === 'paused') {
+    return Math.round(this.pausedPositionMs);
+  }
+  if (this.status === 'ready' || this.status === 'idle') {
+    return Math.round(this.startPositionMs);
+  }
+  return 0;
+}
 
   async load(path: string): Promise<AudioLoadResult> {
     if (this.loadedPath === path && this.status !== 'error') {
