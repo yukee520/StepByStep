@@ -66,9 +66,13 @@ export type UseGameEngineResult = {
 export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResult {
   const { song, inputOffsetMs, useAudioClock, onFinish, onNoteHit } = options;
 
-  const sortedNotes = useRef<Note[]>(
-    [...song.chart.notes].sort((a, b) => a.timeMs - b.timeMs),
-  );
+  const leadInMs = fallDurationMs + 100;
+
+const sortedNotes = useRef<Note[]>(
+  [...song.chart.notes]
+    .filter((n) => n.timeMs >= leadInMs)
+    .sort((a, b) => a.timeMs - b.timeMs),
+);
   const durationMs = song.durationMs;
 
   const fallDurationMs =
