@@ -111,7 +111,7 @@ export default function HomeScreen(): React.ReactElement {
             </Text>
           </View>
 
-          {/* Play / Library card */}
+          {/* Play card with stacked full-width buttons */}
           <View style={{ marginTop: 26 }}>
             <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -153,38 +153,30 @@ export default function HomeScreen(): React.ReactElement {
                 </View>
               </View>
 
-              <View style={{ flexDirection: 'row', marginTop: 16, gap: 12 }}>
-                <View style={{ flex: 1 }}>
-                  <Button
-                    label="Play"
-                    icon="musical-notes"
-                    size="lg"
-                    fullWidth
-                    onPress={goPlay}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Button
-                    label="Library"
-                    icon="albums-outline"
-                    variant="secondary"
-                    size="lg"
-                    fullWidth
-                    onPress={goLibrary}
-                  />
-                </View>
+              <View style={{ marginTop: 16 }}>
+                <Button
+                  label="Play"
+                  icon="musical-notes"
+                  size="lg"
+                  fullWidth
+                  onPress={goPlay}
+                />
+              </View>
+              <View style={{ marginTop: 12 }}>
+                <Button
+                  label="Library"
+                  icon="albums-outline"
+                  variant="secondary"
+                  size="lg"
+                  fullWidth
+                  onPress={goLibrary}
+                />
               </View>
             </Card>
           </View>
 
-          {/* Stats */}
-          <View
-            style={{
-              flexDirection: 'row',
-              marginTop: 16,
-              gap: 12,
-            }}
-          >
+          {/* Stats row */}
+          <View style={{ flexDirection: 'row', marginTop: 16, gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Card style={{ padding: 12 }}>
                 <Text
