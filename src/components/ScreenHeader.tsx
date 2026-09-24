@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme } from '@/hooks/useTheme';
+import { NEON_PALETTE } from '@/theme/colors';
 
 export type ScreenHeaderProps = {
   title: string;
@@ -24,7 +24,6 @@ export default function ScreenHeader({
   rightAccessibilityLabel,
 }: ScreenHeaderProps): React.ReactElement {
   const navigation = useNavigation();
-  const { colors } = useTheme();
 
   const handleBack = (): void => {
     if (onBack) {
@@ -37,31 +36,57 @@ export default function ScreenHeader({
   };
 
   return (
-    <View className="flex-row items-center px-4 py-3 bg-background dark:bg-dark-background">
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: 'rgba(10, 1, 24, 0.85)',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0, 229, 255, 0.12)',
+      }}
+    >
       {showBack ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Go back"
           hitSlop={12}
           onPress={handleBack}
-          className="w-10 h-10 items-center justify-center rounded-full active:opacity-70"
+          style={{
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 20,
+          }}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name="chevron-back" size={24} color={NEON_PALETTE.text} />
         </Pressable>
       ) : (
-        <View className="w-10 h-10" />
+        <View style={{ width: 40, height: 40 }} />
       )}
 
-      <View className="flex-1 ml-2">
+      <View style={{ flex: 1, marginLeft: 8 }}>
         <Text
-          className="text-lg font-semibold text-text dark:text-dark-text"
+          style={{
+            fontSize: 18,
+            fontWeight: '800',
+            color: NEON_PALETTE.text,
+            letterSpacing: 0.3,
+          }}
           numberOfLines={1}
         >
           {title}
         </Text>
         {subtitle ? (
           <Text
-            className="text-xs text-muted dark:text-dark-muted mt-0.5"
+            style={{
+              fontSize: 12,
+              color: NEON_PALETTE.textDim,
+              marginTop: 2,
+              letterSpacing: 0.5,
+            }}
             numberOfLines={1}
           >
             {subtitle}
@@ -75,12 +100,18 @@ export default function ScreenHeader({
           accessibilityLabel={rightAccessibilityLabel ?? 'Action'}
           hitSlop={12}
           onPress={onRightPress}
-          className="w-10 h-10 items-center justify-center rounded-full active:opacity-70"
+          style={{
+            width: 40,
+            height: 40,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 20,
+          }}
         >
-          <Ionicons name={rightIcon} size={22} color={colors.text} />
+          <Ionicons name={rightIcon} size={22} color={NEON_PALETTE.primary} />
         </Pressable>
       ) : (
-        <View className="w-10 h-10" />
+        <View style={{ width: 40, height: 40 }} />
       )}
     </View>
   );
