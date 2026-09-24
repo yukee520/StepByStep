@@ -5,15 +5,19 @@ import { useTheme } from '@/hooks/useTheme';
 export type CountdownOverlayProps = {
   count: number;
   visible: boolean;
+  laneTop?: number;
+  laneHeight?: number;
 };
 
-const HUD_RATIO = 0.10;
-const BUTTON_ROW_RATIO = 0.74;
+const FALLBACK_HUD_RATIO = 0.10;
+const FALLBACK_BUTTON_RATIO = 0.80;
 const CIRCLE_SIZE = 140;
 
 export default function CountdownOverlay({
   count,
   visible,
+  laneTop,
+  laneHeight,
 }: CountdownOverlayProps): React.ReactElement | null {
   const { colors } = useTheme();
   const { height: SCREEN_H } = useWindowDimensions();
@@ -25,9 +29,14 @@ export default function CountdownOverlay({
   const label = count > 0 ? String(count) : 'GO!';
   const accent = count > 0 ? colors.primary : colors.success;
 
-  const laneTop = SCREEN_H * HUD_RATIO;
-  const laneHeight = SCREEN_H * (BUTTON_ROW_RATIO - HUD_RATIO);
-  const circleTop = laneTop + (laneHeight - CIRCLE_SIZE) / 2;
+  const resolvedTop =
+    laneTop !== undefined ? laneTop : SCREEN_H * FALLBACK_HUD_RATIO;
+  const resolvedHeight =
+    laneHeight !== undefined
+      ? laneHeight
+      : SCREEN_H * (FALLBACK_BUTTON_RATIO - FALLBACK_HUD_RATIO);
+
+  const circleTop = resolvedTop + (resolvedHeight - CIRCLE_SIZE) / 2;
 
   return (
     <View
