@@ -356,19 +356,19 @@ export default function SettingsScreen(): React.ReactElement {
           </Card>
 
           <SectionLabel>ABOUT</SectionLabel>
-<Card>
-  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <Ionicons
-      name="information-circle-outline"
-      size={22}
-      color={NEON_PALETTE.primary}
-    />
-    <View style={{ flex: 1, marginLeft: 12 }}>
-      <DeveloperUnlockTap
-        label="StepByStep"
-        subtitle="Rhythm game · v1.0.0 · tap to unlock dev mode"
-      />
-    </View>
+          <Card>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons
+                name="information-circle-outline"
+                size={22}
+                color={NEON_PALETTE.primary}
+              />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <DeveloperUnlockTap
+                label="StepByStep"
+                subtitle="Rhythm game · v1.0.0 · tap to unlock dev mode"
+              />
+           </View>
     {devModeEnabled ? (
       <View
         style={{
