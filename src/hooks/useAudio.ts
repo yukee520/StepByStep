@@ -15,6 +15,7 @@ export type UseAudioResult = {
   stop: () => void;
   release: () => Promise<void>;
   getPositionMs: () => number;
+  isPlaying: () => boolean;
 };
 
 export function useAudio(): UseAudioResult {
@@ -103,11 +104,21 @@ export function useAudio(): UseAudioResult {
     return audioPlayer.getPositionMs();
   }, [soundEnabled]);
 
+  const isPlaying = useCallback((): boolean => {
+    if (!soundEnabled) {
+      return false;
+    }
+    return audioPlayer.isPlaying();
+  }, [soundEnabled]);
+
   return {
     status,
     durationMs,
     error,
-    isReady: status === 'ready' || status === 'playing' || status === 'paused',
+    isReady:
+      status === 'ready' ||
+      status === 'playing' ||
+      status === 'paused',
     load,
     play,
     pause,
@@ -115,5 +126,6 @@ export function useAudio(): UseAudioResult {
     stop,
     release,
     getPositionMs,
+    isPlaying,
   };
 }
