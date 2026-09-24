@@ -70,24 +70,6 @@ export default function GameScreen(): React.ReactElement {
 
   const audio = useAudio();
 
-  // Log song details
-  useEffect(() => {
-    if (!song) {
-      devLog('error', 'song', `song not found: ${route.params.songId}`);
-      return;
-    }
-    devLog(
-      'info',
-      'song',
-      `${song.title} · ${song.durationMs}ms · audioPath=${
-        song.audioPath ? 'yes' : 'NONE'
-      }`,
-    );
-    if (song.audioPath) {
-      devLog('info', 'song', `path=${song.audioPath}`);
-    }
-  }, [route.params.songId, song]);
-
   const onFinish = useCallback(
     (summary: GameRunSummary): void => {
       if (!song) {
@@ -103,7 +85,6 @@ export default function GameScreen(): React.ReactElement {
       });
       const enriched: GameRunSummary = { ...summary, isHighScore: isHigh };
       setLastSummary(enriched);
-      devLog('info', 'finish', `score=${summary.score}`);
       audio.stop();
       navigation.replace('Results', { summary: enriched });
     },
@@ -143,7 +124,6 @@ export default function GameScreen(): React.ReactElement {
   });
 
   const beginPlay = useCallback((): void => {
-    devLog('info', 'engine', 'countdown done → start');
     engine.start();
     if (hasAudio) {
       audio.play(0);
@@ -160,7 +140,6 @@ export default function GameScreen(): React.ReactElement {
     let cancelled = false;
     const init = async (): Promise<void> => {
       if (!song.audioPath) {
-        devLog('warn', 'audio', 'no audioPath — playing silent');
         setAudioReady(true);
         return;
       }
@@ -195,7 +174,6 @@ export default function GameScreen(): React.ReactElement {
       return;
     }
     if (!countdown.isRunning && engine.status === 'idle') {
-      devLog('info', 'countdown', '3-2-1-GO');
       setCountdownActive(true);
       countdown.start(3);
     }
@@ -219,15 +197,13 @@ export default function GameScreen(): React.ReactElement {
     };
   }, []);
 
-  // Pause when app goes to background, resume when it comes back
+  // Pause when app goes to background
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
       const prev = appStateRef.current;
       appStateRef.current = nextState;
 
       if (prev === 'active' && nextState !== 'active') {
-        devLog('warn', 'app', `background (${nextState}) — auto-pausing`);
-        // Only auto-pause if we're actually playing
         if (engine.status === 'playing') {
           pausedByBackgroundRef.current = true;
           engine.pause();
@@ -245,7 +221,6 @@ export default function GameScreen(): React.ReactElement {
     engine.pause();
     audio.pause();
     setShowPause(true);
-    devLog('info', 'pause', 'paused');
   }, [audio, engine]);
 
   const handleResume = useCallback((): void => {
@@ -253,27 +228,30 @@ export default function GameScreen(): React.ReactElement {
     pausedByBackgroundRef.current = false;
     engine.resume();
     audio.resume();
-    devLog('info', 'pause', 'resumed');
   }, [audio, engine]);
 
   const handleRestart = useCallback((): void => {
     setShowPause(false);
     pausedByBackgroundRef.current = false;
+
+    // 1. Freeze the engine first so it stops reading the audio position.
+    engine.pause();
+
+    // 2. Stop the audio player (native reset).
     audio.stop();
-    engine.restart();
-    if (hasAudio) {
-      // Small delay to let the audio engine reset
-      setTimeout(() => {
+
+    // 3. Give the native player a beat to settle, then restart engine + audio together.
+    setTimeout(() => {
+      engine.restart();
+      if (hasAudio) {
         audio.play(0);
-      }, 50);
-    }
-    devLog('info', 'restart', 'restarted');
+      }
+    }, 150);
   }, [audio, engine, hasAudio]);
 
   const handleQuit = useCallback((): void => {
     setShowPause(false);
     audio.stop();
-    devLog('info', 'quit', 'quitting');
     engine.quit();
   }, [audio, engine]);
 
@@ -534,7 +512,6 @@ export default function GameScreen(): React.ReactElement {
           onRestart={handleRestart}
           onQuit={handleQuit}
         />
-
       </SafeAreaView>
     </NeonBackground>
   );
