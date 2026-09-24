@@ -4,131 +4,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ScreenHeader from '@/components/ScreenHeader';
 import Card from '@/components/Card';
-import { useTheme } from '@/hooks/useTheme';
+import NeonBackground from '@/components/NeonBackground';
+import { NEON_PALETTE } from '@/theme/colors';
+import type { Direction } from '@/types/song';
 
 type DirectionExample = {
-  direction: 'left' | 'right' | 'up' | 'down';
+  direction: Direction;
   icon: string;
   color: string;
   label: string;
 };
 
 const DIRECTION_EXAMPLES: DirectionExample[] = [
-  { direction: 'left', icon: 'chevron-back', color: '#EF4444', label: 'Left' },
-  { direction: 'down', icon: 'chevron-down', color: '#F59E0B', label: 'Down' },
-  { direction: 'up', icon: 'chevron-up', color: '#10B981', label: 'Up' },
-  { direction: 'right', icon: 'chevron-forward', color: '#3B82F6', label: 'Right' },
+  { direction: 'left', icon: 'chevron-back', color: NEON_PALETTE.lane.left, label: 'Left' },
+  { direction: 'down', icon: 'chevron-down', color: NEON_PALETTE.lane.down, label: 'Down' },
+  { direction: 'up', icon: 'chevron-up', color: NEON_PALETTE.lane.up, label: 'Up' },
+  { direction: 'right', icon: 'chevron-forward', color: NEON_PALETTE.lane.right, label: 'Right' },
 ];
-
-export default function HowToPlayScreen(): React.ReactElement {
-  const { colors } = useTheme();
-
-  return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
-      <ScreenHeader title="How to Play" />
-
-      <ScrollView contentContainerClassName="px-4 pb-10" showsVerticalScrollIndicator={false}>
-        <Card>
-          <View className="flex-row items-center">
-            <Ionicons name="game-controller-outline" size={24} color={colors.primary} />
-            <Text className="text-lg font-bold text-text dark:text-dark-text ml-3">
-              The Basics
-            </Text>
-          </View>
-          <Text className="text-sm text-text dark:text-dark-text mt-3 leading-5">
-            Arrows fall from the top of the screen down four lanes. When an arrow reaches the
-            glowing line near the bottom, tap the matching direction button — Left, Down, Up,
-            or Right.
-          </Text>
-          <Text className="text-sm text-text dark:text-dark-text mt-3 leading-5">
-            The closer your tap is to the exact moment the arrow crosses the line, the better
-            your judgment. Chain hits without missing to build a combo and multiply your score.
-          </Text>
-        </Card>
-
-        <View className="h-4" />
-
-        <Card>
-          <Text className="text-base font-bold text-text dark:text-dark-text">
-            The Four Directions
-          </Text>
-          <Text className="text-xs text-muted dark:text-dark-muted mt-1">
-            Each lane has its own color so you can read the chart at a glance.
-          </Text>
-
-          <View className="flex-row flex-wrap mt-4 -mx-2">
-            {DIRECTION_EXAMPLES.map((example) => (
-              <View key={example.direction} className="w-1/2 px-2 mb-3">
-                <View
-                  className="rounded-2xl p-4 items-center"
-                  style={{
-                    backgroundColor: `${example.color}22`,
-                    borderWidth: 1,
-                    borderColor: example.color,
-                  }}
-                >
-                  <Ionicons name={example.icon} size={36} color={example.color} />
-                  <Text
-                    className="text-base font-bold mt-2"
-                    style={{ color: example.color }}
-                  >
-                    {example.label}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </Card>
-
-        <View className="h-4" />
-
-        <Card>
-          <Text className="text-base font-bold text-text dark:text-dark-text">
-            Judgments
-          </Text>
-          <Text className="text-xs text-muted dark:text-dark-muted mt-1">
-            Timing windows in milliseconds.
-          </Text>
-
-          <View className="mt-3">
-            <JudgmentRow color={colors.perfect} label="Perfect" windowLabel="±45 ms" points="300" />
-            <JudgmentRow color={colors.great} label="Great" windowLabel="±90 ms" points="200" />
-            <JudgmentRow color={colors.good} label="Good" windowLabel="±140 ms" points="100" />
-            <JudgmentRow color={colors.miss} label="Miss" windowLabel="Beyond ±140 ms" points="0" />
-          </View>
-        </Card>
-
-        <View className="h-4" />
-
-        <Card>
-          <Text className="text-base font-bold text-text dark:text-dark-text">
-            Combo & Score
-          </Text>
-          <Text className="text-sm text-text dark:text-dark-text mt-3 leading-5">
-            Every consecutive hit increases your combo. At 10, 20, 30 combo and beyond you earn
-            bonus points per hit, capped at +100 bonus per note.
-          </Text>
-          <Text className="text-sm text-text dark:text-dark-text mt-3 leading-5">
-            Missing a note resets your combo to zero, but your score is unaffected until then.
-          </Text>
-        </Card>
-
-        <View className="h-4" />
-
-        <Card>
-          <Text className="text-base font-bold text-text dark:text-dark-text">
-            Tips
-          </Text>
-          <TipRow icon="headset-outline" text="Use headphones — audio cues make timing easier." />
-          <TipRow icon="speedometer-outline" text="Adjust note speed in Settings to match your reading pace." />
-          <TipRow icon="timer-outline" text="If hits feel late or early, tune the input offset in Settings." />
-          <TipRow icon="musical-notes-outline" text="Start on Easy, then work up to Normal, Hard, and Expert." />
-          <TipRow icon="construct-outline" text="Use the Chart Builder to make your own songs from any audio." />
-        </Card>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
 
 type JudgmentRowProps = {
   color: string;
@@ -144,18 +36,49 @@ function JudgmentRow({
   points,
 }: JudgmentRowProps): React.ReactElement {
   return (
-    <View className="flex-row items-center py-2">
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+      }}
+    >
       <View
-        className="w-3 h-3 rounded-full mr-3"
-        style={{ backgroundColor: color }}
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: color,
+          marginRight: 12,
+        }}
       />
-      <Text className="text-sm font-semibold flex-1" style={{ color }}>
+      <Text
+        style={{
+          fontSize: 14,
+          fontWeight: '700',
+          flex: 1,
+          color,
+          letterSpacing: 0.5,
+        }}
+      >
         {label}
       </Text>
-      <Text className="text-xs text-muted dark:text-dark-muted mr-4">
+      <Text
+        style={{
+          fontSize: 12,
+          color: NEON_PALETTE.textDim,
+          marginRight: 16,
+        }}
+      >
         {windowLabel}
       </Text>
-      <Text className="text-xs font-bold text-text dark:text-dark-text">
+      <Text
+        style={{
+          fontSize: 12,
+          fontWeight: '800',
+          color: NEON_PALETTE.text,
+        }}
+      >
         {points} pts
       </Text>
     </View>
@@ -168,13 +91,205 @@ type TipRowProps = {
 };
 
 function TipRow({ icon, text }: TipRowProps): React.ReactElement {
-  const { colors } = useTheme();
   return (
-    <View className="flex-row items-start mt-3">
-      <Ionicons name={icon} size={18} color={colors.primary} style={{ marginTop: 1 }} />
-      <Text className="text-sm text-text dark:text-dark-text ml-3 flex-1 leading-5">
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: 12 }}>
+      <Ionicons
+        name={icon}
+        size={18}
+        color={NEON_PALETTE.primary}
+        style={{ marginTop: 2 }}
+      />
+      <Text
+        style={{
+          fontSize: 13,
+          color: NEON_PALETTE.text,
+          marginLeft: 12,
+          flex: 1,
+          lineHeight: 20,
+        }}
+      >
         {text}
       </Text>
     </View>
   );
 }
+
+export default function HowToPlayScreen(): React.ReactElement {
+  return (
+    <NeonBackground showGrid>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScreenHeader title="How to Play" />
+
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Card>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons
+                name="game-controller-outline"
+                size={24}
+                color={NEON_PALETTE.primary}
+              />
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: '800',
+                  color: NEON_PALETTE.text,
+                  marginLeft: 12,
+                }}
+              >
+                The Basics
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: 13,
+                color: NEON_PALETTE.text,
+                marginTop: 12,
+                lineHeight: 20,
+              }}
+            >
+              Arrows fall from the top of the screen down four lanes. When an
+              arrow reaches the row of direction buttons at the bottom, tap the
+              matching arrow.
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: NEON_PALETTE.text,
+                marginTop: 12,
+                lineHeight: 20,
+              }}
+            >
+              The closer your tap is to the exact moment the arrow crosses the
+              buttons, the better your judgment. Chain hits without missing to
+              build a combo and multiply your score.
+            </Text>
+          </Card>
+
+          <View style={{ marginTop: 16 }}>
+            <Card>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: '800',
+                  color: NEON_PALETTE.text,
+                }}
+              >
+                The Four Directions
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: NEON_PALETTE.textDim,
+                  marginTop: 4,
+                }}
+              >
+                Each lane has its own neon color.
+              </Text>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  marginTop: 16,
+                  gap: 12,
+                }}
+              >
+                {DIRECTION_EXAMPLES.map((example) => (
+                  <View
+                    key={example.direction}
+                    style={{
+                      width: '47%',
+                      borderRadius: 16,
+                      padding: 16,
+                      alignItems: 'center',
+                      borderWidth: 2,
+                      borderColor: example.color,
+                    }}
+                  >
+                    <Ionicons
+                      name={example.icon}
+                      size={36}
+                      color={example.color}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '800',
+                        color: example.color,
+                        marginTop: 8,
+                        letterSpacing: 1,
+                      }}
+                    >
+                      {example.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </Card>
+          </View>
+
+          <View style={{ marginTop: 16 }}>
+            <Card>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: '800',
+                  color: NEON_PALETTE.text,
+                }}
+              >
+                Judgments
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: NEON_PALETTE.textDim,
+                  marginTop: 4,
+                }}
+              >
+                Timing windows in lane distance.
+              </Text>
+
+              <View style={{ marginTop: 8 }}>
+                <JudgmentRow
+                  color={NEON_PALETTE.perfect}
+                  label="Perfect"
+                  windowLabel="±3.5%"
+                  points="300"
+                />
+                <JudgmentRow
+                  color={NEON_PALETTE.great}
+                  label="Great"
+                  windowLabel="±7%"
+                  points="200"
+                />
+                <JudgmentRow
+                  color={NEON_PALETTE.good}
+                  label="Good"
+                  windowLabel="±12%"
+                  points="100"
+                />
+                <JudgmentRow
+                  color={NEON_PALETTE.miss}
+                  label="Miss"
+                  windowLabel="Beyond ±12%"
+                  points="0"
+                />
+              </View>
+            </Card>
+          </View>
+
+          <View style={{ marginTop: 16 }}>
+            <Card>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: '800',
+                  color: NEON_PALETTE.text,
+                }}
+              >
+                Combo & Score
+              </Text>
+              <
