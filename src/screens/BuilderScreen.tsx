@@ -3,6 +3,7 @@ import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { pick, types } from 'react-native-document-picker';
+import RNFS from 'react-native-fs';
 import Toast from 'react-native-toast-message';
 import ScreenHeader from '@/components/ScreenHeader';
 import Card from '@/components/Card';
@@ -10,6 +11,7 @@ import Button from '@/components/Button';
 import BeatTapPad from '@/components/BeatTapPad';
 import TimelineStrip from '@/components/TimelineStrip';
 import DifficultyBadge from '@/components/DifficultyBadge';
+import PublishToGitHubSheet from '@/components/PublishToGitHubSheet';
 import { useTheme } from '@/hooks/useTheme';
 import { generateChart } from '@/services/chartGenerator';
 import {
@@ -25,9 +27,9 @@ import { BUILDER_ROOT, EXPORTS_ROOT, ensureLibraryDirs } from '@/services/songLi
 import { DIFFICULTIES, DIFFICULTY_LABELS, type Difficulty, type Note } from '@/types/song';
 import type { BeatMarker, BuilderMetadata } from '@/types/builder';
 import { DEFAULT_BUILDER_METADATA } from '@/types/builder';
+import type { SongPackManifest } from '@/types/songPack';
 import { formatSignedMs } from '@/utils/formatting';
 import { genId, slugify } from '@/utils/id';
-import RNFS from 'react-native-fs';
 
 export default function BuilderScreen(): React.ReactElement {
   const { colors } = useTheme();
@@ -39,6 +41,12 @@ export default function BuilderScreen(): React.ReactElement {
   const [beats, setBeats] = useState<BeatMarker[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [busy, setBusy] = useState<boolean>(false);
+
+  // Publishing state
+  const [manifestForPublish, setManifestForPublish] = useState<SongPackManifest | null>(null);
+  const [audioBase64ForPublish, setAudioBase64ForPublish] = useState<string | null>(null);
+  const [audioExtForPublish, setAudioExtForPublish] = useState<string>('mp3');
+  const [publishVisible, setPublishVisible] = useState<boolean>(false);
 
   const tapDetector = useMemo(() => createTapDetector(), []);
   const detectedBpm = useMemo(() => estimateBpmFromTaps(taps), [taps]);
@@ -56,7 +64,8 @@ export default function BuilderScreen(): React.ReactElement {
       await ensureLibraryDirs();
       const ext = result.name?.split('.').pop() ?? 'mp3';
       const target = `${BUILDER_ROOT}/source-${Date.now()}.${ext}`;
-      const srcPath = result.fileCopyUri?.replace('file://', '') ?? result.uri.replace('file://', '');
+      const srcPath =
+        result.fileCopyUri?.replace('file://', '') ?? result.uri.replace('file://', '');
       await RNFS.copyFile(srcPath, target);
       setAudioPath(target);
       setAudioFileName(result.name ?? 'audio');
@@ -96,11 +105,7 @@ export default function BuilderScreen(): React.ReactElement {
 
   const handleBeatsFromTaps = useCallback((): void => {
     if (taps.length < 2) {
-      Toast.show({
-        type: 'info',
-        text1: 'Tap at least twice',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'info', text1: 'Tap at least twice', position: 'bottom' });
       return;
     }
     const markers = tapTimesToMarkers(taps);
@@ -130,11 +135,7 @@ export default function BuilderScreen(): React.ReactElement {
 
   const handleGenerateChart = useCallback((): void => {
     if (beats.length === 0) {
-      Toast.show({
-        type: 'info',
-        text1: 'Generate beats first',
-        position: 'bottom',
-      });
+      Toast.show({ type: 'info', text1: 'Generate beats first', position: 'bottom' });
       return;
     }
     const dur = durationMs > 0 ? durationMs : 60000;
@@ -155,8 +156,32 @@ export default function BuilderScreen(): React.ReactElement {
     });
   }, [beats, durationMs, metadata]);
 
-  const handleExport = useCallback(async (): Promise<void> => {
+  const buildManifest = useCallback((): SongPackManifest | null => {
     if (notes.length === 0) {
+      return null;
+    }
+    const title = metadata.title.trim() || 'Untitled Song';
+    const id = metadata.id.trim() || slugify(title) || `pack-${genId('p')}`;
+    const dur = durationMs > 0 ? durationMs : 60000;
+    return {
+      formatVersion: 1,
+      id,
+      title,
+      artist: metadata.artist.trim() || 'Unknown Artist',
+      bpm: metadata.bpm,
+      durationMs: dur,
+      difficulty: metadata.difficulty,
+      offsetMs: metadata.offsetMs,
+      chart: notes,
+      version: 1,
+      license: metadata.license || 'CC0',
+      generatedBy: 'StepByStep Builder 1.0',
+    };
+  }, [durationMs, metadata, notes]);
+
+  const handleExport = useCallback(async (): Promise<void> => {
+    const manifest = buildManifest();
+    if (!manifest) {
       Toast.show({
         type: 'info',
         text1: 'Generate a chart first',
@@ -164,48 +189,29 @@ export default function BuilderScreen(): React.ReactElement {
       });
       return;
     }
-    const title = metadata.title.trim() || 'Untitled Song';
-    const id = metadata.id.trim() || slugify(title) || `pack-${genId('p')}`;
     setBusy(true);
     try {
       await ensureLibraryDirs();
-      const outDir = `${EXPORTS_ROOT}/${id}`;
+      const outDir = `${EXPORTS_ROOT}/${manifest.id}`;
       const exists = await RNFS.exists(outDir);
       if (exists) {
         await RNFS.unlink(outDir);
       }
       await RNFS.mkdir(outDir);
 
-      const dur = durationMs > 0 ? durationMs : 60000;
-      const manifest = {
-        formatVersion: 1,
-        id,
-        title,
-        artist: metadata.artist.trim() || 'Unknown Artist',
-        bpm: metadata.bpm,
-        durationMs: dur,
-        difficulty: metadata.difficulty,
-        offsetMs: metadata.offsetMs,
-        chart: notes,
-        version: 1,
-        license: metadata.license || 'CC0',
-        generatedBy: 'StepByStep Builder 1.0',
-      };
-
       const manifestPath = `${outDir}/manifest.json`;
       await RNFS.writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
 
-      let copiedAudio: string | undefined;
       if (audioPath) {
         const ext = audioPath.split('.').pop() ?? 'mp3';
-        copiedAudio = `${outDir}/audio.${ext}`;
-        await RNFS.copyFile(audioPath, copiedAudio);
+        const audioOut = `${outDir}/audio.${ext}`;
+        await RNFS.copyFile(audioPath, audioOut);
       }
 
       Toast.show({
         type: 'success',
         text1: 'Export complete',
-        text2: `Saved to ${id}/`,
+        text2: `Saved to ${manifest.id}/`,
         position: 'bottom',
       });
     } catch (error) {
@@ -219,7 +225,39 @@ export default function BuilderScreen(): React.ReactElement {
     } finally {
       setBusy(false);
     }
-  }, [audioPath, durationMs, metadata, notes]);
+  }, [audioPath, buildManifest]);
+
+  const handleOpenPublish = useCallback(async (): Promise<void> => {
+    const manifest = buildManifest();
+    if (!manifest) {
+      Toast.show({
+        type: 'info',
+        text1: 'Generate a chart first',
+        position: 'bottom',
+      });
+      return;
+    }
+
+    let audioBase64: string | null = null;
+    let ext = 'mp3';
+    if (audioPath) {
+      try {
+        audioBase64 = await RNFS.readFile(audioPath, 'base64');
+        ext = audioPath.split('.').pop() ?? 'mp3';
+      } catch {
+        audioBase64 = null;
+      }
+    }
+
+    setManifestForPublish(manifest);
+    setAudioBase64ForPublish(audioBase64);
+    setAudioExtForPublish(ext);
+    setPublishVisible(true);
+  }, [audioPath, buildManifest]);
+
+  const handleClosePublish = useCallback((): void => {
+    setPublishVisible(false);
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
@@ -401,14 +439,14 @@ export default function BuilderScreen(): React.ReactElement {
 
         <Card>
           <Text className="text-base font-semibold text-text dark:text-dark-text">
-            5. Export
+            5. Export & Publish
           </Text>
           <Text className="text-xs text-muted dark:text-dark-muted mt-1">
-            Saves a manifest.json and audio file you can upload to GitHub.
+            Save to device, or upload directly to GitHub.
           </Text>
           <View className="mt-3">
             <Button
-              label="Export Pack"
+              label="Export to Device"
               icon="download-outline"
               fullWidth
               loading={busy}
@@ -416,12 +454,32 @@ export default function BuilderScreen(): React.ReactElement {
               onPress={handleExport}
             />
           </View>
+          <View className="mt-3">
+            <Button
+              label="Publish to GitHub"
+              icon="cloud-upload-outline"
+              variant="secondary"
+              fullWidth
+              disabled={busy || notes.length === 0}
+              onPress={handleOpenPublish}
+            />
+          </View>
           <Text className="text-[11px] text-muted dark:text-dark-muted mt-3">
-            Files are written to app storage under StepByStep/exports/. Copy them into your
-            GitHub repo's packs/ folder to publish.
+            Files are written to app storage under StepByStep/exports/. Publishing
+            uploads directly to the GitHub repo configured in the publish sheet.
           </Text>
         </Card>
       </ScrollView>
+
+      <PublishToGitHubSheet
+        visible={publishVisible}
+        onClose={handleClosePublish}
+        manifest={manifestForPublish}
+        audioBase64={audioBase64ForPublish}
+        audioExt={audioExtForPublish}
+        coverBase64={null}
+        coverExt="png"
+      />
     </SafeAreaView>
   );
 }
