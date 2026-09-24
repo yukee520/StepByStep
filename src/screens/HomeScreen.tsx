@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -52,53 +52,66 @@ export default function HomeScreen(): React.ReactElement {
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
+          {/* Top bar: settings icon right-aligned */}
           <View
             style={{
-              marginTop: 20,
               flexDirection: 'row',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
+              marginTop: 12,
             }}
           >
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: 42,
-                  fontWeight: '900',
-                  color: NEON_PALETTE.text,
-                  letterSpacing: 1,
-                  textShadowColor: NEON_PALETTE.primary,
-                  textShadowRadius: 20,
-                  textShadowOffset: { width: 0, height: 0 },
-                }}
-              >
-                Step
-                <Text style={{ color: NEON_PALETTE.primary }}>By</Text>
-                Step
-              </Text>
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: NEON_PALETTE.textDim,
-                  marginTop: 4,
-                  letterSpacing: 2,
-                }}
-              >
-                HIT THE ARROWS · FEEL THE BEAT
-              </Text>
-            </View>
-
-            <View style={{ marginTop: 6 }}>
-              <Button
-                label="Settings"
-                variant="ghost"
-                icon="settings-outline"
-                size="sm"
-                onPress={goSettings}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              hitSlop={12}
+              onPress={goSettings}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: 'rgba(0, 229, 255, 0.12)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons
+                name="settings-outline"
+                size={20}
+                color={NEON_PALETTE.primary}
               />
-            </View>
+            </Pressable>
           </View>
 
+          {/* Hero title, full width */}
+          <View style={{ marginTop: 8 }}>
+            <Text
+              style={{
+                fontSize: 42,
+                fontWeight: '900',
+                color: NEON_PALETTE.text,
+                letterSpacing: 1,
+                textShadowColor: NEON_PALETTE.primary,
+                textShadowRadius: 20,
+                textShadowOffset: { width: 0, height: 0 },
+              }}
+            >
+              Step
+              <Text style={{ color: NEON_PALETTE.primary }}>By</Text>
+              Step
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: NEON_PALETTE.textDim,
+                marginTop: 4,
+                letterSpacing: 2,
+              }}
+            >
+              HIT THE ARROWS · FEEL THE BEAT
+            </Text>
+          </View>
+
+          {/* Play / Library card */}
           <View style={{ marginTop: 26 }}>
             <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -164,6 +177,7 @@ export default function HomeScreen(): React.ReactElement {
             </Card>
           </View>
 
+          {/* Stats */}
           <View
             style={{
               flexDirection: 'row',
