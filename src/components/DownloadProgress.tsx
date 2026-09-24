@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import type { PackDownloadState } from '@/types/songPack';
 import { formatBytes } from '@/utils/formatting';
+import { NEON_PALETTE } from '@/theme/colors';
 
 export type DownloadProgressProps = {
   state: PackDownloadState;
@@ -42,32 +43,55 @@ export default function DownloadProgress({
 
   return (
     <View>
-      <View className="flex-row items-center justify-between mb-1">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 6,
+        }}
+      >
         <Text
-          className={[
-            'text-xs font-medium',
-            isError
-              ? 'text-danger dark:text-danger'
-              : 'text-text dark:text-dark-text',
-          ].join(' ')}
+          style={{
+            fontSize: 12,
+            fontWeight: '700',
+            color: isError ? NEON_PALETTE.danger : NEON_PALETTE.text,
+            flexShrink: 1,
+          }}
           numberOfLines={1}
         >
           {label}
         </Text>
-        <Text className="text-xs text-muted dark:text-dark-muted">
+        <Text style={{ fontSize: 12, color: NEON_PALETTE.textDim }}>
           {Math.round(pct * 100)}%
         </Text>
       </View>
 
-      <View className="h-2 rounded-full bg-border dark:bg-dark-border overflow-hidden">
+      <View
+        style={{
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: 'rgba(0, 229, 255, 0.15)',
+          overflow: 'hidden',
+        }}
+      >
         <View
-          className={isError ? 'bg-danger h-full' : 'bg-primary h-full'}
-          style={{ width: `${pct * 100}%` }}
+          style={{
+            width: `${pct * 100}%`,
+            height: '100%',
+            backgroundColor: isError ? NEON_PALETTE.danger : NEON_PALETTE.primary,
+          }}
         />
       </View>
 
       {showBytes && state.totalBytes > 0 && !isError ? (
-        <Text className="text-[11px] text-muted dark:text-dark-muted mt-1">
+        <Text
+          style={{
+            fontSize: 11,
+            color: NEON_PALETTE.textDim,
+            marginTop: 6,
+          }}
+        >
           {formatBytes(state.bytesWritten)} / {formatBytes(state.totalBytes)}
         </Text>
       ) : null}
