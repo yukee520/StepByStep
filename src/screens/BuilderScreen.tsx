@@ -669,4 +669,137 @@ export default function BuilderScreen(): React.ReactElement {
                   } else if (text === '') {
                     setMetadata((m) => ({ ...m, bpm: 0 }));
                   }
-       
+                }}
+                placeholder="120"
+                keyboardType="numeric"
+              />
+
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '700',
+                  color: NEON_PALETTE.textDim,
+                  letterSpacing: 1,
+                  marginTop: 16,
+                  marginBottom: 8,
+                }}
+              >
+                DIFFICULTY
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {DIFFICULTIES.map((d) => {
+                  const active = d === metadata.difficulty;
+                  return (
+                    <Button
+                      key={d}
+                      label={DIFFICULTY_LABELS[d]}
+                      variant={active ? 'primary' : 'secondary'}
+                      size="sm"
+                      onPress={() =>
+                        setMetadata((m) => ({ ...m, difficulty: d }))
+                      }
+                    />
+                  );
+                })}
+              </View>
+            </Card>
+          </View>
+
+          <View style={{ marginTop: 16 }}>
+            <Card>
+              <SectionLabel
+                step="4"
+                title="Generate Chart"
+                subtitle="Convert your beats into arrows based on difficulty."
+              />
+              <Button
+                label="Generate Notes"
+                icon="sparkles-outline"
+                fullWidth
+                onPress={handleGenerateChart}
+              />
+              {chartReady ? (
+                <View style={{ marginTop: 16 }}>
+                  <TimelineStrip
+                    notes={notes}
+                    durationMs={durationMs > 0 ? durationMs : 60000}
+                    cursorMs={0}
+                  />
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: 10,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: NEON_PALETTE.textDim,
+                      }}
+                    >
+                      {notes.length} notes · {formatDuration(durationMs)}
+                    </Text>
+                    <DifficultyBadge difficulty={metadata.difficulty} />
+                  </View>
+                </View>
+              ) : null}
+            </Card>
+          </View>
+
+          <View style={{ marginTop: 16 }}>
+            <Card>
+              <SectionLabel
+                step="5"
+                title="Export & Publish"
+                subtitle="Save to device, or upload to GitHub."
+              />
+              <Button
+                label="Export to Device"
+                icon="download-outline"
+                fullWidth
+                loading={busy}
+                disabled={busy || !chartReady}
+                onPress={handleExport}
+              />
+              <View style={{ marginTop: 12 }}>
+                <Button
+                  label="Publish to GitHub"
+                  icon="cloud-upload-outline"
+                  variant="secondary"
+                  fullWidth
+                  disabled={busy || !chartReady}
+                  onPress={handleOpenPublish}
+                />
+              </View>
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: NEON_PALETTE.textDim,
+                  marginTop: 12,
+                  lineHeight: 16,
+                }}
+              >
+                Publishing uploads the manifest, audio, and updates the pack
+                index so any player can download the song without reinstalling
+                the app.
+              </Text>
+            </Card>
+          </View>
+        </ScrollView>
+
+        <PublishToGitHubSheet
+          visible={publishVisible}
+          onClose={handleClosePublish}
+          manifest={manifestForPublish}
+          audioBase64={audioBase64ForPublish}
+          audioExt={audioExtForPublish}
+          audioSizeBytes={audioSizeForPublish}
+          coverBase64={null}
+          coverExt="png"
+        />
+      </SafeAreaView>
+    </NeonBackground>
+  );
+}
