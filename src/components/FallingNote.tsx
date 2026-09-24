@@ -44,11 +44,6 @@ export default function FallingNote({
         alignItems: 'center',
         justifyContent: 'center',
         opacity,
-        shadowColor: color,
-        shadowOpacity: 0.85,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 0 },
-        elevation: 4,
       }}
     >
       <Ionicons name={ICON_NAMES[direction]} size={size * 0.6} color={color} />
