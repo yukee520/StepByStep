@@ -15,6 +15,8 @@ import type {
 import type { Direction, Note, Song } from '@/types/song';
 import { accuracyToGrade } from '@/utils/grading';
 import { genId } from '@/utils/id';
+import { audioPlayer } from '@/services/audioPlayer';
+import { devLog } from '@/store/useDevLogStore';
 
 export type HitFeedback = {
   direction: Direction;
@@ -31,6 +33,8 @@ export type VisibleNote = {
 export type UseGameEngineOptions = {
   song: Song;
   inputOffsetMs: number;
+  /** Use the audio player as the master clock (recommended when audio present). */
+  useAudioClock: boolean;
   onFinish: (summary: GameRunSummary) => void;
   onNoteHit?: (feedback: HitFeedback) => void;
 };
@@ -60,7 +64,7 @@ export type UseGameEngineResult = {
 };
 
 export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResult {
-  const { song, inputOffsetMs, onFinish, onNoteHit } = options;
+  const { song, inputOffsetMs, useAudioClock, onFinish, onNoteHit } = options;
 
   const sortedNotes = useRef<Note[]>(
     [...song.chart.notes].sort((a, b) => a.timeMs - b.timeMs),
@@ -81,8 +85,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [visibleNotes, setVisibleNotes] = useState<VisibleNote[]>([]);
 
-  const startTimeRef = useRef<number>(0);
-  const pausedElapsedRef = useRef<number>(0);
+  const wallClockStartRef = useRef<number>(0);
+  const wallClockPausedRef = useRef<number>(0);
   const judgedRef = useRef<Set<string>>(new Set());
   const rafRef = useRef<number | null>(null);
   const statusRef = useRef<GameStatus>('idle');
@@ -161,8 +165,21 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     stopLoop();
     setStatus('finished');
     const summary = buildSummary();
+    devLog('info', 'engine', `finish score=${summary.score}`);
     onFinish(summary);
   }, [buildSummary, onFinish, stopLoop]);
+
+  /**
+   * Returns the current "song time" in milliseconds.
+   * If useAudioClock is enabled and audio is loaded, this is read from the
+   * audio player. Otherwise it's derived from wall clock.
+   */
+  const getNow = useCallback((): number => {
+    if (useAudioClock && audioPlayer.getDurationMs() > 0) {
+      return audioPlayer.getPositionMs() - inputOffsetMs;
+    }
+    return Date.now() - wallClockStartRef.current - inputOffsetMs;
+  }, [inputOffsetMs, useAudioClock]);
 
   const computeYRatio = useCallback(
     (note: Note, now: number): number => {
@@ -205,7 +222,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     if (statusRef.current !== 'playing') {
       return;
     }
-    const now = Date.now() - startTimeRef.current - inputOffsetMs;
+    const now = getNow();
     setElapsedMs(now);
 
     const upcoming: VisibleNote[] = [];
@@ -228,23 +245,24 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     }
 
     rafRef.current = requestAnimationFrame(loop);
-  }, [computeYRatio, durationMs, finish, inputOffsetMs, processMisses]);
+  }, [computeYRatio, durationMs, finish, getNow, processMisses]);
 
   const start = useCallback((): void => {
     resetStats();
-    startTimeRef.current = Date.now();
-    pausedElapsedRef.current = 0;
+    wallClockStartRef.current = Date.now();
+    wallClockPausedRef.current = 0;
     setStatus('playing');
     statusRef.current = 'playing';
     stopLoop();
     rafRef.current = requestAnimationFrame(loop);
-  }, [loop, resetStats, stopLoop]);
+    devLog('info', 'engine', `start useAudioClock=${useAudioClock}`);
+  }, [loop, resetStats, stopLoop, useAudioClock]);
 
   const pause = useCallback((): void => {
     if (statusRef.current !== 'playing') {
       return;
     }
-    pausedElapsedRef.current = Date.now() - startTimeRef.current;
+    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
     setStatus('paused');
     statusRef.current = 'paused';
     stopLoop();
@@ -254,7 +272,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     if (statusRef.current !== 'paused') {
       return;
     }
-    startTimeRef.current = Date.now() - pausedElapsedRef.current;
+    wallClockStartRef.current = Date.now() - wallClockPausedRef.current;
     setStatus('playing');
     statusRef.current = 'playing';
     stopLoop();
@@ -264,8 +282,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const restart = useCallback((): void => {
     stopLoop();
     resetStats();
-    startTimeRef.current = Date.now();
-    pausedElapsedRef.current = 0;
+    wallClockStartRef.current = Date.now();
+    wallClockPausedRef.current = 0;
     setStatus('playing');
     statusRef.current = 'playing';
     rafRef.current = requestAnimationFrame(loop);
@@ -342,7 +360,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (statusRef.current !== 'playing') {
         return;
       }
-      const now = Date.now() - startTimeRef.current - inputOffsetMs;
+      const now = getNow();
 
       let bestNote: Note | null = null;
       let bestDelta = Number.POSITIVE_INFINITY;
@@ -382,7 +400,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       judgedRef.current.add(bestNote.id);
       applyJudgment(judgment, bestNote, signedDelta);
     },
-    [applyJudgment, computeYRatio, inputOffsetMs],
+    [applyJudgment, computeYRatio, getNow],
   );
 
   const releaseInput = useCallback((_direction: Direction): void => {
