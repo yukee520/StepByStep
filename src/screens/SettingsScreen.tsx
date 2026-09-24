@@ -369,7 +369,7 @@ export default function SettingsScreen(): React.ReactElement {
             <View style={{ flex: 1, marginLeft: 12 }}>
               <DeveloperUnlockTap
                 label="StepByStep"
-                subtitle="Rhythm game · v1.0.0 · tap to unlock dev mode"
+                subtitle="Rhythm game · v1.0.0 ·"
               />
            </View>
     {devModeEnabled ? (
@@ -396,17 +396,6 @@ export default function SettingsScreen(): React.ReactElement {
       </View>
     ) : null}
   </View>
-  <Text
-    style={{
-      fontSize: 12,
-      color: NEON_PALETTE.textDim,
-      marginTop: 12,
-      lineHeight: 18,
-    }}
-  >
-    Tap the version 7 times quickly to unlock Developer Mode. In
-    Developer Mode, the Chart Builder appears in the Library.
-  </Text>
 </Card>
 
         </ScrollView>
