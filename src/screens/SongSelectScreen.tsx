@@ -9,12 +9,17 @@ import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import EmptyState from '@/components/EmptyState';
 import Button from '@/components/Button';
+import NeonBackground from '@/components/NeonBackground';
+import { NEON_PALETTE } from '@/theme/colors';
 import { useSongs } from '@/hooks/useSongs';
 import { useScoresStore } from '@/store/useScoresStore';
 import type { Song } from '@/types/song';
 import type { RootStackParamList } from '@/types/navigation';
 
-type SongSelectNavigation = NativeStackNavigationProp<RootStackParamList, 'SongSelect'>;
+type SongSelectNavigation = NativeStackNavigationProp<
+  RootStackParamList,
+  'SongSelect'
+>;
 
 export default function SongSelectScreen(): React.ReactElement {
   const navigation = useNavigation<SongSelectNavigation>();
@@ -38,7 +43,11 @@ export default function SongSelectScreen(): React.ReactElement {
 
   const renderItem = useCallback(
     ({ item }: { item: Song }) => (
-      <SongListItem song={item} highScore={scores[item.id]} onPress={handlePress} />
+      <SongListItem
+        song={item}
+        highScore={scores[item.id]}
+        onPress={handlePress}
+      />
     ),
     [handlePress, scores],
   );
@@ -46,61 +55,62 @@ export default function SongSelectScreen(): React.ReactElement {
   const keyExtractor = useCallback((item: Song): string => item.id, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
-      <ScreenHeader
-        title="Song List"
-        subtitle={`${songs.length} song${songs.length === 1 ? '' : 's'}`}
-        rightIcon="cloud-download-outline"
-        rightAccessibilityLabel="Open song packs"
-        onRightPress={goPacks}
-      />
+    <NeonBackground showGrid>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScreenHeader
+          title="Song List"
+          subtitle={`${songs.length} song${songs.length === 1 ? '' : 's'}`}
+          rightIcon="cloud-download-outline"
+          rightAccessibilityLabel="Open song packs"
+          onRightPress={goPacks}
+        />
 
-      {isLoading ? (
-        <LoadingState fullscreen label="Loading songs…" />
-      ) : isError ? (
-        <ErrorState
-          fullscreen
-          title="Could not load songs"
-          message={error?.message ?? 'Please try again.'}
-          onRetry={handleRefresh}
-        />
-      ) : songs.length === 0 ? (
-        <EmptyState
-          fullscreen
-          icon="musical-notes-outline"
-          title="No songs yet"
-          message="Download a song pack to get started."
-          actionLabel="Open Song Packs"
-          onAction={goPacks}
-        />
-      ) : (
-        <FlatList
-          data={songs}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          contentContainerClassName="px-4 pb-8 pt-2"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} />
-          }
-          ListFooterComponent={
-            <View className="mt-4">
-              <Button
-                label="Get more songs"
-                icon="cloud-download-outline"
-                variant="secondary"
-                fullWidth
-                onPress={goPacks}
+        {isLoading ? (
+          <LoadingState fullscreen label="Loading songs…" />
+        ) : isError ? (
+          <ErrorState
+            fullscreen
+            title="Could not load songs"
+            message={error?.message ?? 'Please try again.'}
+            onRetry={handleRefresh}
+          />
+        ) : songs.length === 0 ? (
+          <EmptyState
+            fullscreen
+            icon="musical-notes-outline"
+            title="No songs yet"
+            message="Download a song pack to get started."
+            actionLabel="Open Song Packs"
+            onAction={goPacks}
+          />
+        ) : (
+          <FlatList
+            data={songs}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={handleRefresh}
+                tintColor={NEON_PALETTE.primary}
               />
-            </View>
-          }
-          ListEmptyComponent={
-            <Text className="text-sm text-muted dark:text-dark-muted text-center mt-6">
-              No songs match.
-            </Text>
-          }
-        />
-      )}
-    </SafeAreaView>
+            }
+            ListFooterComponent={
+              <View style={{ marginTop: 16 }}>
+                <Button
+                  label="Get more songs"
+                  icon="cloud-download-outline"
+                  variant="secondary"
+                  fullWidth
+                  onPress={goPacks}
+                />
+              </View>
+            }
+          />
+        )}
+      </SafeAreaView>
+    </NeonBackground>
   );
 }
