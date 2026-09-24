@@ -31,8 +31,8 @@ type GameNav = NativeStackNavigationProp<RootStackParamList, 'Game'>;
 
 const LANE_COUNT = 4;
 const LANE_AREA_PADDING = 12;
-const HUD_HEIGHT_RATIO = 0.10;
-const BUTTON_ROW_TOP_RATIO = 0.74;
+const HUD_FALLBACK_RATIO = 0.10;
+const BUTTON_ROW_TOP_RATIO = 0.80;
 const BUTTON_GAP = 8;
 
 const LANE_COLORS: Record<Direction, string> = {
@@ -64,6 +64,8 @@ export default function GameScreen(): React.ReactElement {
   const [countdownActive, setCountdownActive] = useState<boolean>(false);
   const [audioReady, setAudioReady] = useState<boolean>(false);
   const [pressedLane, setPressedLane] = useState<Direction | null>(null);
+  const [hudHeight, setHudHeight] = useState<number>(0);
+
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressedLaneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -90,18 +92,15 @@ export default function GameScreen(): React.ReactElement {
     [audio, navigation, setLastSummary, song, submitScore],
   );
 
-  const onNoteHit = useCallback(
-    (fb: HitFeedback): void => {
-      setFeedback(fb);
-      if (feedbackTimeoutRef.current !== null) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-      feedbackTimeoutRef.current = setTimeout(() => {
-        setFeedback(null);
-      }, 260);
-    },
-    [],
-  );
+  const onNoteHit = useCallback((fb: HitFeedback): void => {
+    setFeedback(fb);
+    if (feedbackTimeoutRef.current !== null) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+    feedbackTimeoutRef.current = setTimeout(() => {
+      setFeedback(null);
+    }, 260);
+  }, []);
 
   const engine = useGameEngine({
     song:
@@ -247,6 +246,15 @@ export default function GameScreen(): React.ReactElement {
     [engine],
   );
 
+  const handleHudLayout = useCallback(
+    (height: number): void => {
+      if (height > 0 && Math.abs(height - hudHeight) > 1) {
+        setHudHeight(height);
+      }
+    },
+    [hudHeight],
+  );
+
   const feedbackColor = useMemo((): string => {
     if (!feedback) {
       return 'transparent';
@@ -325,20 +333,23 @@ export default function GameScreen(): React.ReactElement {
     );
   }
 
-  const laneAreaTop = SCREEN_H * HUD_HEIGHT_RATIO;
+  const laneAreaTop = hudHeight > 0 ? hudHeight : SCREEN_H * HUD_FALLBACK_RATIO;
   const buttonRowTop = SCREEN_H * BUTTON_ROW_TOP_RATIO;
   const laneAreaHeight = buttonRowTop - laneAreaTop;
   const laneAreaWidth = SCREEN_W - LANE_AREA_PADDING * 2;
   const laneWidth = laneAreaWidth / LANE_COUNT;
   const noteSize = Math.min(laneWidth * 0.75, buttonSize * 0.9);
-  const buttonAreaHeight = SCREEN_H - buttonRowTop;
 
   return (
     <SafeAreaView
       className="flex-1 bg-background dark:bg-dark-background"
       edges={['top']}
     >
-      <View style={{ height: laneAreaTop }}>
+      <View
+        onLayout={(e) => {
+          handleHudLayout(e.nativeEvent.layout.height);
+        }}
+      >
         <GameHUD
           title={song.title}
           score={engine.score}
@@ -387,7 +398,6 @@ export default function GameScreen(): React.ReactElement {
           })}
         </View>
 
-        {/* Combo overlay — top-center of the lane area */}
         <View
           pointerEvents="none"
           style={{
@@ -438,12 +448,11 @@ export default function GameScreen(): React.ReactElement {
             top: buttonRowTop,
             left: 0,
             right: 0,
-            height: buttonAreaHeight,
             paddingHorizontal: LANE_AREA_PADDING,
             paddingTop: 8,
             flexDirection: 'row',
             justifyContent: 'space-between',
-            alignItems: 'flex-start',
+            alignItems: 'center',
           }}
         >
           <ArrowButton
@@ -473,7 +482,12 @@ export default function GameScreen(): React.ReactElement {
         </View>
       </View>
 
-      <CountdownOverlay count={countdown.count} visible={countdownActive} />
+      <CountdownOverlay
+        count={countdown.count}
+        visible={countdownActive}
+        laneTop={laneAreaTop}
+        laneHeight={laneAreaHeight}
+      />
 
       <PauseModal
         visible={showPause}
