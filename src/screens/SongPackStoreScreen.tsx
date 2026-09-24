@@ -8,6 +8,8 @@ import SongPackCard from '@/components/SongPackCard';
 import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import EmptyState from '@/components/EmptyState';
+import NeonBackground from '@/components/NeonBackground';
+import { NEON_PALETTE } from '@/theme/colors';
 import { fetchRemoteIndex } from '@/api/songPacks';
 import { usePacksStore } from '@/store/usePacksStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -85,50 +87,68 @@ export default function SongPackStoreScreen(): React.ReactElement {
   const keyExtractor = useCallback((item: RemotePackEntry): string => item.id, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={['top']}>
-      <ScreenHeader
-        title="Song Packs"
-        subtitle={indexUrl.replace(/^https?:\/\//, '').slice(0, 36)}
-        rightIcon="refresh"
-        rightAccessibilityLabel="Refresh packs"
-        onRightPress={handleRefresh}
-      />
+    <NeonBackground showGrid>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <ScreenHeader
+          title="Song Packs"
+          subtitle={indexUrl.replace(/^https?:\/\//, '').slice(0, 36)}
+          rightIcon="refresh"
+          rightAccessibilityLabel="Refresh packs"
+          onRightPress={handleRefresh}
+        />
 
-      {loading && !hasLoaded ? (
-        <LoadingState fullscreen label="Fetching pack index…" />
-      ) : error && remoteIndex.length === 0 ? (
-        <ErrorState
-          fullscreen
-          title="Could not load song packs"
-          message={error}
-          onRetry={handleRefresh}
-        />
-      ) : remoteIndex.length === 0 ? (
-        <EmptyState
-          fullscreen
-          icon="cloud-offline-outline"
-          title="No song packs available"
-          message="Check back later, or change the index URL in Settings."
-        />
-      ) : (
-        <FlatList
-          data={remoteIndex}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          contentContainerClassName="px-4 pb-8 pt-2"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-          ListHeaderComponent={
-            error ? (
-              <View className="mb-3 rounded-xl bg-danger/10 px-3 py-2">
-                <Text className="text-xs text-danger dark:text-danger">{error}</Text>
-              </View>
-            ) : null
-          }
-        />
-      )}
-    </SafeAreaView>
+        {loading && !hasLoaded ? (
+          <LoadingState fullscreen label="Fetching pack index…" />
+        ) : error && remoteIndex.length === 0 ? (
+          <ErrorState
+            fullscreen
+            title="Could not load song packs"
+            message={error}
+            onRetry={handleRefresh}
+          />
+        ) : remoteIndex.length === 0 ? (
+          <EmptyState
+            fullscreen
+            icon="cloud-offline-outline"
+            title="No song packs available"
+            message="Check back later, or change the index URL in Settings."
+          />
+        ) : (
+          <FlatList
+            data={remoteIndex}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={NEON_PALETTE.primary}
+              />
+            }
+            ListHeaderComponent={
+              error ? (
+                <View
+                  style={{
+                    marginBottom: 12,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    backgroundColor: 'rgba(255, 59, 92, 0.12)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255, 59, 92, 0.4)',
+                  }}
+                >
+                  <Text style={{ fontSize: 12, color: NEON_PALETTE.danger }}>
+                    {error}
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        )}
+      </SafeAreaView>
+    </NeonBackground>
   );
 }
