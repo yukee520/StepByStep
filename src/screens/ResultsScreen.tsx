@@ -231,7 +231,7 @@ export default function ResultsScreen(): React.ReactElement {
             </Card>
           </View>
 
-          <View style={{ marginTop: 24, gap: 12 }}>
+          <View style={{ marginTop: 24 }}>
             <Button
               label="Retry"
               icon="refresh"
@@ -239,6 +239,8 @@ export default function ResultsScreen(): React.ReactElement {
               fullWidth
               onPress={handleRetry}
             />
+          </View>
+          <View style={{ marginTop: 12 }}>
             <Button
               label="Song List"
               icon="list"
@@ -247,6 +249,8 @@ export default function ResultsScreen(): React.ReactElement {
               fullWidth
               onPress={handleSongList}
             />
+          </View>
+          <View style={{ marginTop: 12 }}>
             <Button
               label="Home"
               icon="home-outline"
