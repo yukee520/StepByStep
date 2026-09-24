@@ -73,7 +73,7 @@ export default function PauseModal({
           PAUSED
         </Text>
 
-        <View style={{ width: '100%', gap: 12 }}>
+        <View style={{ width: '100%' }}>
           <Button
             label="Resume"
             icon="play"
@@ -81,6 +81,8 @@ export default function PauseModal({
             fullWidth
             onPress={onResume}
           />
+        </View>
+        <View style={{ width: '100%', marginTop: 12 }}>
           <Button
             label="Restart"
             icon="refresh"
@@ -89,6 +91,8 @@ export default function PauseModal({
             fullWidth
             onPress={onRestart}
           />
+        </View>
+        <View style={{ width: '100%', marginTop: 12 }}>
           <Button
             label="Quit to Song List"
             icon="exit-outline"
