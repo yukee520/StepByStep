@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -88,7 +88,11 @@ export default function SongSelectScreen(): React.ReactElement {
             data={songs}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 12,
+              paddingBottom: 24,
+            }}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -98,11 +102,12 @@ export default function SongSelectScreen(): React.ReactElement {
               />
             }
             ListFooterComponent={
-              <View style={{ marginTop: 16 }}>
+              <View style={{ marginTop: 20 }}>
                 <Button
                   label="Get more songs"
                   icon="cloud-download-outline"
                   variant="secondary"
+                  size="lg"
                   fullWidth
                   onPress={goPacks}
                 />
