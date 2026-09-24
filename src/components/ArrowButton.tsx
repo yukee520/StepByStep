@@ -70,15 +70,10 @@ export default function ArrowButton({
           borderRadius: size / 4,
           borderWidth: pressed ? 4 : 3,
           borderColor: color,
-          backgroundColor: 'transparent',
+          backgroundColor: pressed ? `${color}33` : 'transparent',
           alignItems: 'center',
           justifyContent: 'center',
           opacity: disabled ? 0.35 : 1,
-          shadowColor: color,
-          shadowOpacity: pressed ? 1 : 0.55,
-          shadowRadius: pressed ? 22 : 10,
-          shadowOffset: { width: 0, height: 0 },
-          elevation: pressed ? 12 : 4,
           transform: [{ scale: pressed ? 0.94 : 1 }],
         }}
       >
