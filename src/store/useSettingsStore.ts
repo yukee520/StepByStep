@@ -20,6 +20,11 @@ type SettingsState = {
   setHapticsEnabled: (value: boolean) => void;
   setPackIndexUrl: (value: string) => void;
   setShowFpsCounter: (value: boolean) => void;
+  setGithubToken: (value: string) => void;
+  setGithubOwner: (value: string) => void;
+  setGithubRepo: (value: string) => void;
+  setGithubBranch: (value: string) => void;
+  setGithubPacksPath: (value: string) => void;
   resetToDefaults: () => void;
   markHydrated: () => void;
 };
@@ -52,7 +57,11 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           settings: {
             ...state.settings,
-            inputOffsetMs: clamp(Math.round(value), INPUT_OFFSET_MIN, INPUT_OFFSET_MAX),
+            inputOffsetMs: clamp(
+              Math.round(value),
+              INPUT_OFFSET_MIN,
+              INPUT_OFFSET_MAX,
+            ),
           },
         })),
       setSoundEnabled: (value) =>
@@ -63,6 +72,29 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({ settings: { ...state.settings, packIndexUrl: value.trim() } })),
       setShowFpsCounter: (value) =>
         set((state) => ({ settings: { ...state.settings, showFpsCounter: value } })),
+      setGithubToken: (value) =>
+        set((state) => ({
+          settings: { ...state.settings, githubToken: value.trim() },
+        })),
+      setGithubOwner: (value) =>
+        set((state) => ({
+          settings: { ...state.settings, githubOwner: value.trim() },
+        })),
+      setGithubRepo: (value) =>
+        set((state) => ({
+          settings: { ...state.settings, githubRepo: value.trim() },
+        })),
+      setGithubBranch: (value) =>
+        set((state) => ({
+          settings: { ...state.settings, githubBranch: value.trim() },
+        })),
+      setGithubPacksPath: (value) =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            githubPacksPath: value.trim().replace(/^\/+|\/+$/g, ''),
+          },
+        })),
       resetToDefaults: () => set({ settings: DEFAULT_SETTINGS }),
       markHydrated: () => set({ hydrated: true }),
     }),
