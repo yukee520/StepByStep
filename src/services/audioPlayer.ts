@@ -119,12 +119,14 @@ class AudioPlayerService {
       devLog('warn', 'audio', 'play() but no sound loaded');
       return;
     }
-    const seconds = Math.max(0, startAtMs / 1000);
-    try {
-      this.sound.setCurrentTime(seconds);
-    } catch {
-      // ignore
-    }
+    if (startAtMs > 0) {
+  const seconds = startAtMs / 1000;
+  try {
+    this.sound.setCurrentTime(seconds);
+  } catch {
+    // ignore
+  }
+}
     this.startPositionMs = Math.max(0, startAtMs);
     this.playStartedAt = Date.now();
     this.pausedPositionMs = this.startPositionMs;
