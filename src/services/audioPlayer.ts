@@ -70,7 +70,7 @@ class AudioPlayerService {
   if (this.status === 'playing') {
     const elapsed = Date.now() - this.playStartedAt;
     const pos = this.startPositionMs + elapsed;
-    return Math.round(Math.max(0, Math.min(pos, this.durationMs)));
+    return Math.round(Math.max(0, pos));
   }
   if (this.status === 'paused') {
     return Math.round(this.pausedPositionMs);
