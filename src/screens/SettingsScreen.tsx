@@ -356,42 +356,56 @@ export default function SettingsScreen(): React.ReactElement {
           </Card>
 
           <SectionLabel>ABOUT</SectionLabel>
-          <Card>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons
-                name="information-circle-outline"
-                size={22}
-                color={NEON_PALETTE.primary}
-              />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '800',
-                    color: NEON_PALETTE.text,
-                  }}
-                >
-                  StepByStep
-                </Text>
-                <Text
-                  style={{ fontSize: 12, color: NEON_PALETTE.textDim, marginTop: 2 }}
-                >
-                  Rhythm game · v1.0.0
-                </Text>
-              </View>
-            </View>
-            <Text
-              style={{
-                fontSize: 12,
-                color: NEON_PALETTE.textDim,
-                marginTop: 12,
-                lineHeight: 18,
-              }}
-            >
-              Tap the arrows in time with the beat. Hit Perfect, Great, and Good
-              judgments to build combos. Higher combos mean higher scores.
-            </Text>
-          </Card>
+<Card>
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Ionicons
+      name="information-circle-outline"
+      size={22}
+      color={NEON_PALETTE.primary}
+    />
+    <View style={{ flex: 1, marginLeft: 12 }}>
+      <DeveloperUnlockTap
+        label="StepByStep"
+        subtitle="Rhythm game · v1.0.0 · tap to unlock dev mode"
+      />
+    </View>
+    {devModeEnabled ? (
+      <View
+        style={{
+          paddingHorizontal: 8,
+          paddingVertical: 4,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: NEON_PALETTE.primary,
+          backgroundColor: 'rgba(0, 229, 255, 0.12)',
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '800',
+            color: NEON_PALETTE.primary,
+            letterSpacing: 1,
+          }}
+        >
+          DEV
+        </Text>
+      </View>
+    ) : null}
+  </View>
+  <Text
+    style={{
+      fontSize: 12,
+      color: NEON_PALETTE.textDim,
+      marginTop: 12,
+      lineHeight: 18,
+    }}
+  >
+    Tap the version 7 times quickly to unlock Developer Mode. In
+    Developer Mode, the Chart Builder appears in the Library.
+  </Text>
+</Card>
+
         </ScrollView>
       </SafeAreaView>
     </NeonBackground>
