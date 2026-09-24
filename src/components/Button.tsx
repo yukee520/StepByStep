@@ -63,6 +63,7 @@ function getVariantStyle(
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: py * 2 + FONT_SIZE[size] + 4,
   };
 
   switch (variant) {
@@ -156,7 +157,7 @@ export default function Button({
       style={({ pressed }) => [
         v.base,
         pressed && !isDisabled ? v.pressed : null,
-        fullWidth ? { width: '100%' } : { alignSelf: 'flex-start' },
+        fullWidth ? { width: '100%' } : null,
         isDisabled ? { opacity: 0.5 } : null,
         style,
       ]}
