@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import type { Direction } from '@/types/song';
+import { NEON_PALETTE } from '@/theme/colors';
 
 export type ArrowButtonProps = {
   direction: Direction;
@@ -22,13 +23,6 @@ const ICON_NAMES: Record<Direction, string> = {
   down: 'chevron-down',
 };
 
-const COLORS: Record<Direction, string> = {
-  left: '#FF3366',
-  right: '#00E5FF',
-  up: '#00FF88',
-  down: '#FFD500',
-};
-
 export default function ArrowButton({
   direction,
   onPress,
@@ -37,7 +31,7 @@ export default function ArrowButton({
   disabled = false,
 }: ArrowButtonProps): React.ReactElement {
   const [pressed, setPressed] = useState<boolean>(false);
-  const color = COLORS[direction];
+  const color = NEON_PALETTE.lane[direction];
 
   const handlePressIn = useCallback(
     (_event: GestureResponderEvent): void => {
@@ -76,15 +70,15 @@ export default function ArrowButton({
           borderRadius: size / 4,
           borderWidth: pressed ? 4 : 3,
           borderColor: color,
-          backgroundColor: pressed ? `${color}55` : `${color}18`,
+          backgroundColor: 'transparent',
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: disabled ? 0.4 : 1,
+          opacity: disabled ? 0.35 : 1,
           shadowColor: color,
-          shadowOpacity: pressed ? 1 : 0.5,
-          shadowRadius: pressed ? 20 : 8,
+          shadowOpacity: pressed ? 1 : 0.55,
+          shadowRadius: pressed ? 22 : 10,
           shadowOffset: { width: 0, height: 0 },
-          elevation: pressed ? 10 : 4,
+          elevation: pressed ? 12 : 4,
           transform: [{ scale: pressed ? 0.94 : 1 }],
         }}
       >
