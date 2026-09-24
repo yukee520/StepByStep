@@ -488,14 +488,15 @@ export default function GameScreen(): React.ReactElement {
             size={buttonSize}
           />
         </View>
+
+        <CountdownOverlay
+          count={countdown.count}
+          visible={countdownActive}
+          laneTop={0}
+          laneHeight={laneAreaHeight}
+        />
       </View>
 
-      <CountdownOverlay
-        count={countdown.count}
-        visible={countdownActive}
-        laneTop={0}
-        laneHeight={laneAreaHeight}
-      />
 
       <PauseModal
         visible={showPause}
