@@ -8,10 +8,21 @@ export type Settings = {
   hapticsEnabled: boolean;
   packIndexUrl: string;
   showFpsCounter: boolean;
+
+  /** GitHub Personal Access Token for publishing packs. */
+  githubToken: string;
+  /** GitHub repo owner (username or org). */
+  githubOwner: string;
+  /** GitHub repo name. */
+  githubRepo: string;
+  /** Branch to commit to. Defaults to main. */
+  githubBranch: string;
+  /** Path prefix inside the repo where packs are stored. */
+  githubPacksPath: string;
 };
 
 export const DEFAULT_PACK_INDEX_URL =
-  'https://raw.githubusercontent.com/yukee520/stepbystep-packs/main/index.json';
+  'https://raw.githubusercontent.com/yukee520/StepByStep/main/packs/index.json';
 
 export const DEFAULT_SETTINGS: Settings = {
   themeMode: 'system',
@@ -21,6 +32,11 @@ export const DEFAULT_SETTINGS: Settings = {
   hapticsEnabled: true,
   packIndexUrl: DEFAULT_PACK_INDEX_URL,
   showFpsCounter: false,
+  githubToken: '',
+  githubOwner: 'yukee520',
+  githubRepo: 'StepByStep',
+  githubBranch: 'main',
+  githubPacksPath: 'packs',
 };
 
 export const NOTE_SPEED_MIN = 0.5;
