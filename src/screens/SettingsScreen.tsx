@@ -8,10 +8,12 @@ import Card from '@/components/Card';
 import Button from '@/components/Button';
 import SettingRow from '@/components/SettingRow';
 import NeonBackground from '@/components/NeonBackground';
+import DeveloperUnlockTap from '@/components/DeveloperUnlockTap';
 import { NEON_PALETTE } from '@/theme/colors';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useScoresStore } from '@/store/useScoresStore';
 import { usePacksStore } from '@/store/usePacksStore';
+import { useDevModeStore } from '@/store/useDevModeStore';
 import {
   DEFAULT_PACK_INDEX_URL,
   INPUT_OFFSET_MAX,
@@ -55,6 +57,7 @@ export default function SettingsScreen(): React.ReactElement {
   const setShowFpsCounter = useSettingsStore((s) => s.setShowFpsCounter);
   const clearScores = useScoresStore((s) => s.clearAll);
   const installed = usePacksStore((s) => s.installed);
+  const devModeEnabled = useDevModeStore((s) => s.enabled);
 
   const [indexUrlDraft, setIndexUrlDraft] = useState<string>(settings.packIndexUrl);
 
