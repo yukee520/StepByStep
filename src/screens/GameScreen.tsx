@@ -31,8 +31,8 @@ type GameNav = NativeStackNavigationProp<RootStackParamList, 'Game'>;
 
 const LANE_COUNT = 4;
 const LANE_AREA_PADDING = 12;
-const HUD_HEIGHT_RATIO = 0.12;
-const BUTTON_ROW_TOP_RATIO = 0.85;
+const HUD_HEIGHT_RATIO = 0.10;
+const BUTTON_ROW_TOP_RATIO = 0.74;
 const BUTTON_GAP = 8;
 
 const LANE_COLORS: Record<Direction, string> = {
@@ -284,7 +284,7 @@ export default function GameScreen(): React.ReactElement {
   const buttonSize = useMemo(() => {
     const available =
       SCREEN_W - LANE_AREA_PADDING * 2 - BUTTON_GAP * (LANE_COUNT - 1);
-    return Math.min(90, available / LANE_COUNT);
+    return Math.min(84, available / LANE_COUNT);
   }, [SCREEN_W]);
 
   if (isLoading) {
@@ -336,7 +336,7 @@ export default function GameScreen(): React.ReactElement {
   return (
     <SafeAreaView
       className="flex-1 bg-background dark:bg-dark-background"
-      edges={['top', 'bottom']}
+      edges={['top']}
     >
       <View style={{ height: laneAreaTop }}>
         <GameHUD
