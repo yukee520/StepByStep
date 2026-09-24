@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Button from '@/components/Button';
-import { useTheme } from '@/hooks/useTheme';
+import { NEON_PALETTE } from '@/theme/colors';
 
 export type ErrorStateProps = {
   title?: string;
@@ -17,26 +17,58 @@ export default function ErrorState({
   onRetry,
   fullscreen = false,
 }: ErrorStateProps): React.ReactElement {
-  const { colors } = useTheme();
-
   return (
     <View
-      className={[
-        'items-center justify-center px-8',
-        fullscreen ? 'flex-1 bg-background dark:bg-dark-background' : 'py-10',
-      ].join(' ')}
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 32,
+        flex: fullscreen ? 1 : undefined,
+        paddingVertical: fullscreen ? 0 : 40,
+      }}
     >
-      <View className="w-16 h-16 rounded-full bg-danger/10 items-center justify-center mb-4">
-        <Ionicons name="alert-circle" size={32} color={colors.danger} />
+      <View
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: 'rgba(255, 59, 92, 0.12)',
+          borderWidth: 2,
+          borderColor: NEON_PALETTE.danger,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <Ionicons
+          name="alert-circle"
+          size={32}
+          color={NEON_PALETTE.danger}
+        />
       </View>
-      <Text className="text-lg font-semibold text-text dark:text-dark-text text-center">
+      <Text
+        style={{
+          fontSize: 17,
+          fontWeight: '800',
+          color: NEON_PALETTE.text,
+          textAlign: 'center',
+        }}
+      >
         {title}
       </Text>
-      <Text className="text-sm text-muted dark:text-dark-muted text-center mt-2">
+      <Text
+        style={{
+          fontSize: 13,
+          color: NEON_PALETTE.textDim,
+          textAlign: 'center',
+          marginTop: 8,
+          lineHeight: 20,
+        }}
+      >
         {message}
       </Text>
       {onRetry ? (
-        <View className="mt-6">
+        <View style={{ marginTop: 20 }}>
           <Button label="Retry" icon="refresh" onPress={onRetry} />
         </View>
       ) : null}
