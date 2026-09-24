@@ -9,6 +9,7 @@ import Card from '@/components/Card';
 import NeonBackground from '@/components/NeonBackground';
 import { NEON_PALETTE } from '@/theme/colors';
 import { useScoresStore } from '@/store/useScoresStore';
+import { useDevModeStore } from '@/store/useDevModeStore';
 import { formatScore } from '@/utils/formatting';
 import type { RootStackParamList } from '@/types/navigation';
 
@@ -17,6 +18,7 @@ type HomeNavigation = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 export default function HomeScreen(): React.ReactElement {
   const navigation = useNavigation<HomeNavigation>();
   const scores = useScoresStore((s) => s.scores);
+  const devModeEnabled = useDevModeStore((s) => s.enabled);
 
   const stats = useMemo(() => {
     const values = Object.values(scores);
@@ -52,7 +54,6 @@ export default function HomeScreen(): React.ReactElement {
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Top bar: settings icon right-aligned */}
           <View
             style={{
               flexDirection: 'row',
@@ -82,7 +83,6 @@ export default function HomeScreen(): React.ReactElement {
             </Pressable>
           </View>
 
-          {/* Hero title, full width */}
           <View style={{ marginTop: 8 }}>
             <Text
               style={{
@@ -111,7 +111,6 @@ export default function HomeScreen(): React.ReactElement {
             </Text>
           </View>
 
-          {/* Play card with stacked full-width buttons */}
           <View style={{ marginTop: 26 }}>
             <Card>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -162,20 +161,22 @@ export default function HomeScreen(): React.ReactElement {
                   onPress={goPlay}
                 />
               </View>
-              <View style={{ marginTop: 12 }}>
-                <Button
-                  label="Library"
-                  icon="albums-outline"
-                  variant="secondary"
-                  size="lg"
-                  fullWidth
-                  onPress={goLibrary}
-                />
-              </View>
+
+              {devModeEnabled ? (
+                <View style={{ marginTop: 12 }}>
+                  <Button
+                    label="Library"
+                    icon="albums-outline"
+                    variant="secondary"
+                    size="lg"
+                    fullWidth
+                    onPress={goLibrary}
+                  />
+                </View>
+              ) : null}
             </Card>
           </View>
 
-          {/* Stats row */}
           <View style={{ flexDirection: 'row', marginTop: 16, gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Card style={{ padding: 12 }}>
