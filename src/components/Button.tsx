@@ -42,15 +42,18 @@ const ICON_SIZE: Record<ButtonSize, number> = {
   lg: 22,
 };
 
-function getStyles(
-  variant: ButtonVariant,
-  size: ButtonSize,
-): {
-  container: ViewStyle;
+type VariantStyle = {
+  base: ViewStyle;
+  pressed: ViewStyle;
   textColor: string;
   iconColor: string;
   spinnerColor: string;
-} {
+};
+
+function getVariantStyle(
+  variant: ButtonVariant,
+  size: ButtonSize,
+): VariantStyle {
   const { px, py } = PADDING[size];
 
   const base: ViewStyle = {
@@ -65,14 +68,15 @@ function getStyles(
   switch (variant) {
     case 'primary':
       return {
-        container: {
+        base: {
           ...base,
           backgroundColor: NEON_PALETTE.primary,
-          shadowColor: NEON_PALETTE.primary,
-          shadowOpacity: 0.55,
-          shadowRadius: 14,
-          shadowOffset: { width: 0, height: 0 },
-          elevation: 6,
+          borderWidth: 2,
+          borderColor: NEON_PALETTE.primary,
+        },
+        pressed: {
+          backgroundColor: NEON_PALETTE.primaryGlow,
+          borderColor: NEON_PALETTE.primaryGlow,
         },
         textColor: '#0A0118',
         iconColor: '#0A0118',
@@ -80,11 +84,15 @@ function getStyles(
       };
     case 'secondary':
       return {
-        container: {
+        base: {
           ...base,
           backgroundColor: 'rgba(26, 11, 46, 0.6)',
-          borderWidth: 1,
-          borderColor: NEON_PALETTE.borderBright,
+          borderWidth: 2,
+          borderColor: 'rgba(0, 229, 255, 0.5)',
+        },
+        pressed: {
+          backgroundColor: 'rgba(0, 229, 255, 0.15)',
+          borderColor: NEON_PALETTE.primary,
         },
         textColor: NEON_PALETTE.text,
         iconColor: NEON_PALETTE.primary,
@@ -92,14 +100,15 @@ function getStyles(
       };
     case 'danger':
       return {
-        container: {
+        base: {
           ...base,
           backgroundColor: NEON_PALETTE.danger,
-          shadowColor: NEON_PALETTE.danger,
-          shadowOpacity: 0.5,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 0 },
-          elevation: 5,
+          borderWidth: 2,
+          borderColor: NEON_PALETTE.danger,
+        },
+        pressed: {
+          backgroundColor: '#FF5777',
+          borderColor: '#FF5777',
         },
         textColor: '#FFFFFF',
         iconColor: '#FFFFFF',
@@ -108,9 +117,14 @@ function getStyles(
     case 'ghost':
     default:
       return {
-        container: {
+        base: {
           ...base,
           backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderColor: 'transparent',
+        },
+        pressed: {
+          backgroundColor: 'rgba(0, 229, 255, 0.12)',
         },
         textColor: NEON_PALETTE.primary,
         iconColor: NEON_PALETTE.primary,
@@ -132,15 +146,16 @@ export default function Button({
   ...rest
 }: ButtonProps): React.ReactElement {
   const isDisabled = disabled === true || loading;
-  const s = getStyles(variant, size);
+  const v = getVariantStyle(variant, size);
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      style={[
-        s.container,
+      style={({ pressed }) => [
+        v.base,
+        pressed && !isDisabled ? v.pressed : null,
         fullWidth ? { width: '100%' } : { alignSelf: 'flex-start' },
         isDisabled ? { opacity: 0.5 } : null,
         style,
@@ -148,17 +163,17 @@ export default function Button({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={s.spinnerColor} />
+        <ActivityIndicator size="small" color={v.spinnerColor} />
       ) : (
         <>
           {icon && iconPosition === 'left' ? (
             <View style={{ marginRight: 8 }}>
-              <Ionicons name={icon} size={ICON_SIZE[size]} color={s.iconColor} />
+              <Ionicons name={icon} size={ICON_SIZE[size]} color={v.iconColor} />
             </View>
           ) : null}
           <Text
             style={{
-              color: s.textColor,
+              color: v.textColor,
               fontSize: FONT_SIZE[size],
               fontWeight: '700',
               letterSpacing: 0.3,
@@ -169,7 +184,7 @@ export default function Button({
           </Text>
           {icon && iconPosition === 'right' ? (
             <View style={{ marginLeft: 8 }}>
-              <Ionicons name={icon} size={ICON_SIZE[size]} color={s.iconColor} />
+              <Ionicons name={icon} size={ICON_SIZE[size]} color={v.iconColor} />
             </View>
           ) : null}
         </>
