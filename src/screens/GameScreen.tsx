@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useWindowDimensions, View } from 'react-native';
+import { AppState, AppStateStatus, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -69,10 +69,12 @@ export default function GameScreen(): React.ReactElement {
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressedLaneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const pausedByBackgroundRef = useRef<boolean>(false);
 
   const audio = useAudio();
 
-  // Log song details once we have them
+  // Log song details
   useEffect(() => {
     if (!song) {
       devLog('error', 'song', `song not found: ${route.params.songId}`);
@@ -105,7 +107,7 @@ export default function GameScreen(): React.ReactElement {
       });
       const enriched: GameRunSummary = { ...summary, isHighScore: isHigh };
       setLastSummary(enriched);
-      devLog('info', 'finish', `score=${summary.score} acc=${summary.accuracy.toFixed(3)}`);
+      devLog('info', 'finish', `score=${summary.score}`);
       audio.stop();
       navigation.replace('Results', { summary: enriched });
     },
@@ -122,6 +124,8 @@ export default function GameScreen(): React.ReactElement {
     }, 260);
   }, []);
 
+  const hasAudio = Boolean(song?.audioPath);
+
   const engine = useGameEngine({
     song:
       song ?? {
@@ -137,18 +141,22 @@ export default function GameScreen(): React.ReactElement {
         chart: { difficulty: 'normal', laneCount: 4, notes: [] },
       },
     inputOffsetMs,
+    useAudioClock: hasAudio,
     onFinish,
     onNoteHit,
   });
 
   const beginPlay = useCallback((): void => {
-    devLog('info', 'engine', 'start');
+    devLog('info', 'engine', 'countdown done → start');
     engine.start();
-  }, [engine]);
+    if (hasAudio) {
+      audio.play(0);
+    }
+  }, [audio, engine, hasAudio]);
 
   const countdown = useCountdown(3, beginPlay, 700);
 
-  // Load audio
+  // Load audio on mount
   useEffect(() => {
     if (!song) {
       return;
@@ -160,9 +168,7 @@ export default function GameScreen(): React.ReactElement {
         setAudioReady(true);
         return;
       }
-      devLog('info', 'audio', `loading ${song.audioPath}`);
       const ok = await audio.load(song.audioPath);
-      devLog(ok ? 'success' : 'error', 'audio', ok ? 'loaded' : 'load failed');
       if (!cancelled) {
         setAudioReady(ok);
         if (!ok) {
@@ -178,6 +184,7 @@ export default function GameScreen(): React.ReactElement {
     void init();
     return () => {
       cancelled = true;
+      audio.stop();
       void audio.release();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -192,7 +199,7 @@ export default function GameScreen(): React.ReactElement {
       return;
     }
     if (!countdown.isRunning && engine.status === 'idle') {
-      devLog('info', 'countdown', '3-2-1-Go');
+      devLog('info', 'countdown', '3-2-1-GO');
       setCountdownActive(true);
       countdown.start(3);
     }
@@ -205,14 +212,6 @@ export default function GameScreen(): React.ReactElement {
     }
   }, [countdown.isRunning]);
 
-  // Start audio when the engine begins playing
-  useEffect(() => {
-    if (engine.status === 'playing' && song?.audioPath) {
-      devLog('info', 'audio', 'play(0)');
-      audio.play(0);
-    }
-  }, [audio, engine.status, song?.audioPath]);
-
   useEffect(() => {
     return () => {
       if (feedbackTimeoutRef.current !== null) {
@@ -224,6 +223,28 @@ export default function GameScreen(): React.ReactElement {
     };
   }, []);
 
+  // Pause when app goes to background, resume when it comes back
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      const prev = appStateRef.current;
+      appStateRef.current = nextState;
+
+      if (prev === 'active' && nextState !== 'active') {
+        devLog('warn', 'app', `background (${nextState}) — auto-pausing`);
+        // Only auto-pause if we're actually playing
+        if (engine.status === 'playing') {
+          pausedByBackgroundRef.current = true;
+          engine.pause();
+          audio.pause();
+          setShowPause(true);
+        }
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [audio, engine]);
+
   const handlePause = useCallback((): void => {
     engine.pause();
     audio.pause();
@@ -233,6 +254,7 @@ export default function GameScreen(): React.ReactElement {
 
   const handleResume = useCallback((): void => {
     setShowPause(false);
+    pausedByBackgroundRef.current = false;
     engine.resume();
     audio.resume();
     devLog('info', 'pause', 'resumed');
@@ -240,19 +262,24 @@ export default function GameScreen(): React.ReactElement {
 
   const handleRestart = useCallback((): void => {
     setShowPause(false);
+    pausedByBackgroundRef.current = false;
     audio.stop();
     engine.restart();
-    if (song?.audioPath) {
-      audio.play(0);
+    if (hasAudio) {
+      // Small delay to let the audio engine reset
+      setTimeout(() => {
+        audio.play(0);
+      }, 50);
     }
     devLog('info', 'restart', 'restarted');
-  }, [audio, engine, song?.audioPath]);
+  }, [audio, engine, hasAudio]);
 
   const handleQuit = useCallback((): void => {
     setShowPause(false);
+    audio.stop();
     devLog('info', 'quit', 'quitting');
     engine.quit();
-  }, [engine]);
+  }, [audio, engine]);
 
   const handleInput = useCallback(
     (direction: Direction): void => {
