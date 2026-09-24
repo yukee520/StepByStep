@@ -76,14 +76,6 @@ export default function GameHUD({
           />
         </View>
       </View>
-
-      <View className="items-center mt-2 h-6 justify-center">
-        {combo >= 2 ? (
-          <Text className="text-base font-bold text-primary dark:text-primary">
-            {combo} combo
-          </Text>
-        ) : null}
-      </View>
     </View>
   );
 }
