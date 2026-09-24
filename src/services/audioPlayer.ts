@@ -1,5 +1,4 @@
 import Sound from 'react-native-sound';
-import { devLog } from '@/store/useDevLogStore';
 
 Sound.setCategory('Playback', true);
 
@@ -15,6 +14,7 @@ export type AudioStatus =
   | 'ready'
   | 'playing'
   | 'paused'
+  | 'ended'
   | 'error';
 
 type Listener = (status: AudioStatus, positionMs: number) => void;
@@ -26,10 +26,10 @@ class AudioPlayerService {
   private durationMs = 0;
   private listeners = new Set<Listener>();
 
-  // Wall-clock tracking for smooth position reads between native polls
-  private playStartedAt = 0; // Date.now() when play() was called
-  private startPositionMs = 0; // position within the audio at play() start
-  private pausedPositionMs = 0; // position when paused
+  private playStartedAt = 0;
+  private startPositionMs = 0;
+  private pausedPositionMs = 0;
+  private ended = false;
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -57,29 +57,31 @@ class AudioPlayerService {
     return this.status === 'playing';
   }
 
+  hasEnded(): boolean {
+    return this.ended;
+  }
+
   getDurationMs(): number {
     return this.durationMs;
   }
 
-  /**
-   * Returns the current audio position in milliseconds.
-   * Prefers the native player's reported time but falls back to wall-clock
-   * interpolation if the native read is unsupported.
-   */
   getPositionMs(): number {
-  if (this.status === 'playing') {
-    const elapsed = Date.now() - this.playStartedAt;
-    const pos = this.startPositionMs + elapsed;
-    return Math.round(Math.max(0, pos));
+    if (this.status === 'playing') {
+      const elapsed = Date.now() - this.playStartedAt;
+      const pos = this.startPositionMs + elapsed;
+      return Math.round(Math.max(0, pos));
+    }
+    if (this.status === 'paused') {
+      return Math.round(this.pausedPositionMs);
+    }
+    if (this.status === 'ended') {
+      return Math.round(this.durationMs);
+    }
+    if (this.status === 'ready' || this.status === 'idle') {
+      return Math.round(this.startPositionMs);
+    }
+    return 0;
   }
-  if (this.status === 'paused') {
-    return Math.round(this.pausedPositionMs);
-  }
-  if (this.status === 'ready' || this.status === 'idle') {
-    return Math.round(this.startPositionMs);
-  }
-  return 0;
-}
 
   async load(path: string): Promise<AudioLoadResult> {
     if (this.loadedPath === path && this.status !== 'error') {
@@ -87,14 +89,12 @@ class AudioPlayerService {
     }
     await this.release();
     this.setStatus('loading');
-    devLog('info', 'audio', `loading ${path}`);
 
     return new Promise<AudioLoadResult>((resolve) => {
       const sound = new Sound(path, '', (error) => {
         if (error) {
           this.status = 'error';
           this.emit();
-          devLog('error', 'audio', `load failed: ${error.message}`);
           resolve({
             ok: false,
             durationMs: 0,
@@ -107,8 +107,8 @@ class AudioPlayerService {
         this.durationMs = Math.round(sound.getDuration() * 1000);
         this.startPositionMs = 0;
         this.pausedPositionMs = 0;
+        this.ended = false;
         this.setStatus('ready');
-        devLog('success', 'audio', `ready · ${this.durationMs}ms`);
         resolve({ ok: true, durationMs: this.durationMs });
       });
     });
@@ -116,35 +116,33 @@ class AudioPlayerService {
 
   play(startAtMs = 0): void {
     if (!this.sound) {
-      devLog('warn', 'audio', 'play() but no sound loaded');
       return;
     }
     if (startAtMs > 0) {
-  const seconds = startAtMs / 1000;
-  try {
-    this.sound.setCurrentTime(seconds);
-  } catch {
-    // ignore
-  }
-}
+      const seconds = startAtMs / 1000;
+      try {
+        this.sound.setCurrentTime(seconds);
+      } catch {
+        // ignore
+      }
+    }
     this.startPositionMs = Math.max(0, startAtMs);
     this.playStartedAt = Date.now();
     this.pausedPositionMs = this.startPositionMs;
+    this.ended = false;
 
     this.sound.play((success) => {
       if (!success) {
         this.setStatus('error');
-        devLog('error', 'audio', 'playback failed');
         return;
       }
+      this.ended = true;
       this.startPositionMs = this.durationMs;
       this.pausedPositionMs = this.durationMs;
-      this.setStatus('idle');
-      devLog('info', 'audio', 'playback ended');
+      this.setStatus('ended');
     });
 
     this.setStatus('playing');
-    devLog('info', 'audio', `play from ${startAtMs}ms`);
   }
 
   pause(): void {
@@ -160,7 +158,6 @@ class AudioPlayerService {
       // ignore
     }
     this.setStatus('paused');
-    devLog('info', 'audio', `paused at ${pos}ms`);
   }
 
   resume(): void {
@@ -177,9 +174,9 @@ class AudioPlayerService {
     this.sound.stop(() => {
       this.startPositionMs = 0;
       this.pausedPositionMs = 0;
+      this.ended = false;
       this.setStatus('ready');
     });
-    devLog('info', 'audio', 'stopped');
   }
 
   async release(): Promise<void> {
@@ -188,6 +185,7 @@ class AudioPlayerService {
       this.startPositionMs = 0;
       this.pausedPositionMs = 0;
       this.durationMs = 0;
+      this.ended = false;
       this.status = 'idle';
       return;
     }
@@ -198,6 +196,7 @@ class AudioPlayerService {
       this.startPositionMs = 0;
       this.pausedPositionMs = 0;
       this.durationMs = 0;
+      this.ended = false;
       this.status = 'idle';
       this.emit();
       if (s) {
