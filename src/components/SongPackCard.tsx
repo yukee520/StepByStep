@@ -3,9 +3,13 @@ import { Pressable, Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import DifficultyBadge from '@/components/DifficultyBadge';
 import DownloadProgress from '@/components/DownloadProgress';
-import { useTheme } from '@/hooks/useTheme';
 import { formatBytes } from '@/utils/formatting';
-import type { InstalledPack, PackDownloadState, RemotePackEntry } from '@/types/songPack';
+import { NEON_PALETTE } from '@/theme/colors';
+import type {
+  InstalledPack,
+  PackDownloadState,
+  RemotePackEntry,
+} from '@/types/songPack';
 
 export type SongPackCardProps = {
   entry: RemotePackEntry;
@@ -14,13 +18,15 @@ export type SongPackCardProps = {
   onPress: (entry: RemotePackEntry) => void;
 };
 
+const CARD_BG = '#1A0B2E';
+const CARD_BORDER = 'rgba(0, 229, 255, 0.22)';
+
 export default function SongPackCard({
   entry,
   installed,
   download,
   onPress,
 }: SongPackCardProps): React.ReactElement {
-  const { colors } = useTheme();
   const isInstalled = installed !== undefined;
   const needsUpdate = isInstalled && installed.version < entry.version;
   const isDownloading =
@@ -36,36 +42,95 @@ export default function SongPackCard({
       accessibilityRole="button"
       accessibilityLabel={`${entry.title} by ${entry.artist}`}
       onPress={() => onPress(entry)}
-      className="bg-card dark:bg-dark-card rounded-2xl border border-border dark:border-dark-border mb-3 p-4 active:opacity-90"
+      android_ripple={{ color: 'rgba(0, 229, 255, 0.12)' }}
+      style={({ pressed }) => ({
+        backgroundColor: pressed ? '#241243' : CARD_BG,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: pressed ? NEON_PALETTE.primary : CARD_BORDER,
+        marginBottom: 12,
+        padding: 14,
+      })}
     >
-      <View className="flex-row items-start">
-        <View className="w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20 items-center justify-center mr-3">
-          <Ionicons name="cloud-download-outline" size={22} color={colors.primary} />
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 14,
+            backgroundColor: 'rgba(0, 229, 255, 0.15)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 12,
+          }}
+        >
+          <Ionicons
+            name="cloud-download-outline"
+            size={22}
+            color={NEON_PALETTE.primary}
+          />
         </View>
 
-        <View className="flex-1">
+        <View style={{ flex: 1 }}>
           <Text
-            className="text-base font-semibold text-text dark:text-dark-text"
+            style={{
+              fontSize: 15,
+              fontWeight: '700',
+              color: NEON_PALETTE.text,
+            }}
             numberOfLines={1}
           >
             {entry.title}
           </Text>
           <Text
-            className="text-xs text-muted dark:text-dark-muted mt-0.5"
+            style={{
+              fontSize: 12,
+              color: NEON_PALETTE.textDim,
+              marginTop: 2,
+            }}
             numberOfLines={1}
           >
             {entry.artist} · {entry.bpm} BPM
           </Text>
 
-          <View className="flex-row items-center mt-2">
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: 8,
+              flexWrap: 'wrap',
+            }}
+          >
             <DifficultyBadge difficulty={entry.difficulty} />
-            <Text className="text-[11px] text-muted dark:text-dark-muted ml-2">
+            <Text
+              style={{
+                fontSize: 11,
+                color: NEON_PALETTE.textDim,
+                marginLeft: 8,
+              }}
+            >
               {formatBytes(entry.sizeBytes)}
             </Text>
             {isInstalled ? (
-              <View className="flex-row items-center ml-3">
-                <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                <Text className="text-[11px] text-success ml-1">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  marginLeft: 12,
+                }}
+              >
+                <Ionicons
+                  name="checkmark-circle"
+                  size={14}
+                  color={NEON_PALETTE.success}
+                />
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: NEON_PALETTE.success,
+                    marginLeft: 4,
+                  }}
+                >
                   {needsUpdate ? 'Update available' : 'Installed'}
                 </Text>
               </View>
@@ -73,11 +138,15 @@ export default function SongPackCard({
           </View>
         </View>
 
-        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+        <Ionicons
+          name="chevron-forward"
+          size={20}
+          color={NEON_PALETTE.textDim}
+        />
       </View>
 
       {isDownloading && download ? (
-        <View className="mt-3">
+        <View style={{ marginTop: 12 }}>
           <DownloadProgress state={download} />
         </View>
       ) : null}
