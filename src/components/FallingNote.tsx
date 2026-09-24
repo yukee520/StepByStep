@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import type { Direction } from '@/types/song';
+import { NEON_PALETTE } from '@/theme/colors';
 
 export type FallingNoteProps = {
   direction: Direction;
@@ -18,13 +19,6 @@ const ICON_NAMES: Record<Direction, string> = {
   down: 'chevron-down',
 };
 
-const COLORS: Record<Direction, string> = {
-  left: '#FF3366',
-  right: '#00E5FF',
-  up: '#00FF88',
-  down: '#FFD500',
-};
-
 export default function FallingNote({
   direction,
   x,
@@ -32,7 +26,7 @@ export default function FallingNote({
   size,
   opacity = 1,
 }: FallingNoteProps): React.ReactElement {
-  const color = COLORS[direction];
+  const color = NEON_PALETTE.lane[direction];
   const borderWidth = Math.max(2, size * 0.06);
 
   return (
@@ -46,15 +40,15 @@ export default function FallingNote({
         borderRadius: size / 5,
         borderWidth,
         borderColor: color,
-        backgroundColor: `${color}22`,
+        backgroundColor: 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
         opacity,
         shadowColor: color,
-        shadowOpacity: 0.9,
+        shadowOpacity: 0.85,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 0 },
-        elevation: 6,
+        elevation: 4,
       }}
     >
       <Ionicons name={ICON_NAMES[direction]} size={size * 0.6} color={color} />
