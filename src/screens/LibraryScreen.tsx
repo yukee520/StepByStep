@@ -5,7 +5,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import ScreenHeader from '@/components/ScreenHeader';
-import Card from '@/components/Card';
 import NeonBackground from '@/components/NeonBackground';
 import { NEON_PALETTE } from '@/theme/colors';
 import { usePacksStore } from '@/store/usePacksStore';
@@ -19,6 +18,9 @@ type MenuItemProps = {
   subtitle: string;
   onPress: () => void;
 };
+
+const CARD_BG = '#1A0B2E';
+const CARD_BORDER = 'rgba(0, 229, 255, 0.22)';
 
 function MenuItem({
   icon,
@@ -35,20 +37,22 @@ function MenuItem({
       style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 16,
+        paddingVertical: 18,
+        paddingHorizontal: 18,
         backgroundColor: pressed ? 'rgba(0, 229, 255, 0.08)' : 'transparent',
       })}
     >
       <View
         style={{
-          width: 44,
-          height: 44,
+          width: 46,
+          height: 46,
           borderRadius: 14,
           backgroundColor: 'rgba(0, 229, 255, 0.15)',
+          borderWidth: 1,
+          borderColor: 'rgba(0, 229, 255, 0.35)',
           alignItems: 'center',
           justifyContent: 'center',
-          marginRight: 14,
+          marginRight: 16,
         }}
       >
         <Ionicons name={icon} size={22} color={NEON_PALETTE.primary} />
@@ -78,7 +82,7 @@ function MenuItem({
       <Ionicons
         name="chevron-forward"
         size={20}
-        color={NEON_PALETTE.textDim}
+        color={NEON_PALETTE.primary}
       />
     </Pressable>
   );
@@ -89,8 +93,8 @@ function Divider(): React.ReactElement {
     <View
       style={{
         height: 1,
-        backgroundColor: 'rgba(0, 229, 255, 0.1)',
-        marginHorizontal: 16,
+        backgroundColor: 'rgba(0, 229, 255, 0.15)',
+        marginHorizontal: 18,
       }}
     />
   );
@@ -120,10 +124,22 @@ export default function LibraryScreen(): React.ReactElement {
         <ScreenHeader title="Library" subtitle="Everything else" />
 
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 }}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: 40,
+          }}
           showsVerticalScrollIndicator={false}
         >
-          <Card padded={false}>
+          <View
+            style={{
+              backgroundColor: CARD_BG,
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: CARD_BORDER,
+              overflow: 'hidden',
+            }}
+          >
             <MenuItem
               icon="cloud-download-outline"
               title="Song Packs"
@@ -155,7 +171,7 @@ export default function LibraryScreen(): React.ReactElement {
               subtitle="Note speed, offset, sound, theme"
               onPress={goSettings}
             />
-          </Card>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </NeonBackground>
