@@ -8,6 +8,7 @@ import ScreenHeader from '@/components/ScreenHeader';
 import NeonBackground from '@/components/NeonBackground';
 import { NEON_PALETTE } from '@/theme/colors';
 import { usePacksStore } from '@/store/usePacksStore';
+import { useDevModeStore } from '@/store/useDevModeStore';
 import type { RootStackParamList } from '@/types/navigation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Library'>;
@@ -103,6 +104,7 @@ function Divider(): React.ReactElement {
 export default function LibraryScreen(): React.ReactElement {
   const navigation = useNavigation<Nav>();
   const installed = usePacksStore((s) => s.installed);
+  const devModeEnabled = useDevModeStore((s) => s.enabled);
   const packCount = Object.keys(installed).length;
 
   const goPacks = useCallback((): void => {
@@ -150,13 +152,19 @@ export default function LibraryScreen(): React.ReactElement {
               }
               onPress={goPacks}
             />
-            <Divider />
-            <MenuItem
-              icon="construct-outline"
-              title="Chart Builder"
-              subtitle="Create a chart from your own music"
-              onPress={goBuilder}
-            />
+
+            {devModeEnabled ? (
+              <>
+                <Divider />
+                <MenuItem
+                  icon="construct-outline"
+                  title="Chart Builder"
+                  subtitle="Create a chart from your own music"
+                  onPress={goBuilder}
+                />
+              </>
+            ) : null}
+
             <Divider />
             <MenuItem
               icon="help-circle-outline"
