@@ -8,6 +8,7 @@ export type RootStackParamList = {
   SongPackDetail: { packId: string };
   Game: { songId: string };
   Results: { summary: GameRunSummary };
+  Library: undefined;
   Builder: undefined;
   Settings: undefined;
   HowToPlay: undefined;
