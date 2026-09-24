@@ -3,6 +3,7 @@ import { NavigationContainer, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '@/hooks/useTheme';
 import HomeScreen from '@/screens/HomeScreen';
+import LibraryScreen from '@/screens/LibraryScreen';
 import SongSelectScreen from '@/screens/SongSelectScreen';
 import SongPackStoreScreen from '@/screens/SongPackStoreScreen';
 import SongPackDetailScreen from '@/screens/SongPackDetailScreen';
@@ -47,6 +48,7 @@ export default function RootNavigator(): React.ReactElement {
         }}
       >
         <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Library" component={LibraryScreen} />
         <Stack.Screen name="SongSelect" component={SongSelectScreen} />
         <Stack.Screen name="SongPackStore" component={SongPackStoreScreen} />
         <Stack.Screen name="SongPackDetail" component={SongPackDetailScreen} />
