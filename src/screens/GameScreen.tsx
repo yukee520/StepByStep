@@ -14,8 +14,6 @@ import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import NeonBackground from '@/components/NeonBackground';
 import PerfectPop from '@/components/PerfectPop';
-import DevLogOverlay from '@/components/DevLogOverlay';
-import DevLogToggle from '@/components/DevLogToggle';
 import { useSongs } from '@/hooks/useSongs';
 import { useGameEngine, type HitFeedback } from '@/hooks/useGameEngine';
 import { useAudio } from '@/hooks/useAudio';
@@ -25,7 +23,6 @@ import { useTheme } from '@/hooks/useTheme';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useScoresStore } from '@/store/useScoresStore';
 import { useGameStore } from '@/store/useGameStore';
-import { useDevLogStore, devLog } from '@/store/useDevLogStore';
 import { DIRECTIONS, type Direction, type Song } from '@/types/song';
 import type { GameRunSummary } from '@/types/game';
 import type { RootStackParamList } from '@/types/navigation';
@@ -52,7 +49,6 @@ export default function GameScreen(): React.ReactElement {
   const inputOffsetMs = useSettingsStore((s) => s.settings.inputOffsetMs);
   const submitScore = useScoresStore((s) => s.submitScore);
   const setLastSummary = useGameStore((s) => s.setLastSummary);
-  const logVisible = useDevLogStore((s) => s.visible);
   const { vibrate } = useHaptics();
 
   const song = useMemo<Song | undefined>(
