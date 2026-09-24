@@ -38,17 +38,12 @@ export default function PauseModal({
             width: 96,
             height: 96,
             borderRadius: 48,
-            borderWidth: 3,
+            borderWidth: 4,
             borderColor: NEON_PALETTE.primary,
-            backgroundColor: 'rgba(0, 229, 255, 0.12)',
+            backgroundColor: 'transparent',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: 24,
-            shadowColor: NEON_PALETTE.primary,
-            shadowOpacity: 0.6,
-            shadowRadius: 20,
-            shadowOffset: { width: 0, height: 0 },
-            elevation: 8,
           }}
         >
           <Text
@@ -57,6 +52,9 @@ export default function PauseModal({
               fontWeight: '900',
               color: NEON_PALETTE.primary,
               letterSpacing: 4,
+              textShadowColor: NEON_PALETTE.primary,
+              textShadowRadius: 12,
+              textShadowOffset: { width: 0, height: 0 },
             }}
           >
             II
@@ -75,36 +73,30 @@ export default function PauseModal({
           PAUSED
         </Text>
 
-        <View style={{ width: '100%' }}>
-          <View style={{ marginBottom: 12 }}>
-            <Button
-              label="Resume"
-              icon="play"
-              size="lg"
-              fullWidth
-              onPress={onResume}
-            />
-          </View>
-          <View style={{ marginBottom: 12 }}>
-            <Button
-              label="Restart"
-              icon="refresh"
-              variant="secondary"
-              size="lg"
-              fullWidth
-              onPress={onRestart}
-            />
-          </View>
-          <View>
-            <Button
-              label="Quit to Song List"
-              icon="exit-outline"
-              variant="danger"
-              size="lg"
-              fullWidth
-              onPress={onQuit}
-            />
-          </View>
+        <View style={{ width: '100%', gap: 12 }}>
+          <Button
+            label="Resume"
+            icon="play"
+            size="lg"
+            fullWidth
+            onPress={onResume}
+          />
+          <Button
+            label="Restart"
+            icon="refresh"
+            variant="secondary"
+            size="lg"
+            fullWidth
+            onPress={onRestart}
+          />
+          <Button
+            label="Quit to Song List"
+            icon="exit-outline"
+            variant="danger"
+            size="lg"
+            fullWidth
+            onPress={onQuit}
+          />
         </View>
       </View>
     </Modal>
