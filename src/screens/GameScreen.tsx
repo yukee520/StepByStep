@@ -14,6 +14,8 @@ import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import NeonBackground from '@/components/NeonBackground';
 import PerfectPop from '@/components/PerfectPop';
+import DevLogOverlay from '@/components/DevLogOverlay';
+import DevLogToggle from '@/components/DevLogToggle';
 import { useSongs } from '@/hooks/useSongs';
 import { useGameEngine, type HitFeedback } from '@/hooks/useGameEngine';
 import { useAudio } from '@/hooks/useAudio';
@@ -23,6 +25,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useScoresStore } from '@/store/useScoresStore';
 import { useGameStore } from '@/store/useGameStore';
+import { useDevLogStore, devLog } from '@/store/useDevLogStore';
 import { DIRECTIONS, type Direction, type Song } from '@/types/song';
 import type { GameRunSummary } from '@/types/game';
 import type { RootStackParamList } from '@/types/navigation';
@@ -49,6 +52,7 @@ export default function GameScreen(): React.ReactElement {
   const inputOffsetMs = useSettingsStore((s) => s.settings.inputOffsetMs);
   const submitScore = useScoresStore((s) => s.submitScore);
   const setLastSummary = useGameStore((s) => s.setLastSummary);
+  const logVisible = useDevLogStore((s) => s.visible);
   const { vibrate } = useHaptics();
 
   const song = useMemo<Song | undefined>(
@@ -68,6 +72,24 @@ export default function GameScreen(): React.ReactElement {
 
   const audio = useAudio();
 
+  // Log song details once we have them
+  useEffect(() => {
+    if (!song) {
+      devLog('error', 'song', `song not found: ${route.params.songId}`);
+      return;
+    }
+    devLog(
+      'info',
+      'song',
+      `${song.title} · ${song.durationMs}ms · audioPath=${
+        song.audioPath ? 'yes' : 'NONE'
+      }`,
+    );
+    if (song.audioPath) {
+      devLog('info', 'song', `path=${song.audioPath}`);
+    }
+  }, [route.params.songId, song]);
+
   const onFinish = useCallback(
     (summary: GameRunSummary): void => {
       if (!song) {
@@ -83,6 +105,7 @@ export default function GameScreen(): React.ReactElement {
       });
       const enriched: GameRunSummary = { ...summary, isHighScore: isHigh };
       setLastSummary(enriched);
+      devLog('info', 'finish', `score=${summary.score} acc=${summary.accuracy.toFixed(3)}`);
       audio.stop();
       navigation.replace('Results', { summary: enriched });
     },
@@ -119,32 +142,37 @@ export default function GameScreen(): React.ReactElement {
   });
 
   const beginPlay = useCallback((): void => {
+    devLog('info', 'engine', 'start');
     engine.start();
   }, [engine]);
 
   const countdown = useCountdown(3, beginPlay, 700);
 
+  // Load audio
   useEffect(() => {
     if (!song) {
       return;
     }
     let cancelled = false;
     const init = async (): Promise<void> => {
-      if (song.audioPath) {
-        const ok = await audio.load(song.audioPath);
-        if (!cancelled) {
-          setAudioReady(ok);
-          if (!ok) {
-            Toast.show({
-              type: 'info',
-              text1: 'Playing without audio',
-              text2: 'Audio could not be loaded.',
-              position: 'bottom',
-            });
-          }
-        }
-      } else {
+      if (!song.audioPath) {
+        devLog('warn', 'audio', 'no audioPath — playing silent');
         setAudioReady(true);
+        return;
+      }
+      devLog('info', 'audio', `loading ${song.audioPath}`);
+      const ok = await audio.load(song.audioPath);
+      devLog(ok ? 'success' : 'error', 'audio', ok ? 'loaded' : 'load failed');
+      if (!cancelled) {
+        setAudioReady(ok);
+        if (!ok) {
+          Toast.show({
+            type: 'info',
+            text1: 'Playing without audio',
+            text2: 'Audio could not be loaded.',
+            position: 'bottom',
+          });
+        }
       }
     };
     void init();
@@ -155,6 +183,7 @@ export default function GameScreen(): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [song?.id]);
 
+  // Kick off countdown after audio is ready
   useEffect(() => {
     if (!song) {
       return;
@@ -163,6 +192,7 @@ export default function GameScreen(): React.ReactElement {
       return;
     }
     if (!countdown.isRunning && engine.status === 'idle') {
+      devLog('info', 'countdown', '3-2-1-Go');
       setCountdownActive(true);
       countdown.start(3);
     }
@@ -175,8 +205,10 @@ export default function GameScreen(): React.ReactElement {
     }
   }, [countdown.isRunning]);
 
+  // Start audio when the engine begins playing
   useEffect(() => {
     if (engine.status === 'playing' && song?.audioPath) {
+      devLog('info', 'audio', 'play(0)');
       audio.play(0);
     }
   }, [audio, engine.status, song?.audioPath]);
@@ -196,12 +228,14 @@ export default function GameScreen(): React.ReactElement {
     engine.pause();
     audio.pause();
     setShowPause(true);
+    devLog('info', 'pause', 'paused');
   }, [audio, engine]);
 
   const handleResume = useCallback((): void => {
     setShowPause(false);
     engine.resume();
     audio.resume();
+    devLog('info', 'pause', 'resumed');
   }, [audio, engine]);
 
   const handleRestart = useCallback((): void => {
@@ -211,10 +245,12 @@ export default function GameScreen(): React.ReactElement {
     if (song?.audioPath) {
       audio.play(0);
     }
+    devLog('info', 'restart', 'restarted');
   }, [audio, engine, song?.audioPath]);
 
   const handleQuit = useCallback((): void => {
     setShowPause(false);
+    devLog('info', 'quit', 'quitting');
     engine.quit();
   }, [engine]);
 
@@ -278,7 +314,7 @@ export default function GameScreen(): React.ReactElement {
   if (isLoading) {
     return (
       <NeonBackground showGrid={false}>
-        <SafeAreaView className="flex-1" edges={['top']}>
+        <SafeAreaView style={{ flex: 1 }} edges={['top']}>
           <LoadingState fullscreen label="Loading song…" />
         </SafeAreaView>
       </NeonBackground>
@@ -288,7 +324,7 @@ export default function GameScreen(): React.ReactElement {
   if (isError) {
     return (
       <NeonBackground showGrid={false}>
-        <SafeAreaView className="flex-1" edges={['top']}>
+        <SafeAreaView style={{ flex: 1 }} edges={['top']}>
           <ErrorState
             fullscreen
             title="Could not load song"
@@ -305,7 +341,7 @@ export default function GameScreen(): React.ReactElement {
   if (!song) {
     return (
       <NeonBackground showGrid={false}>
-        <SafeAreaView className="flex-1" edges={['top']}>
+        <SafeAreaView style={{ flex: 1 }} edges={['top']}>
           <ErrorState
             fullscreen
             title="Song not found"
@@ -329,7 +365,7 @@ export default function GameScreen(): React.ReactElement {
 
   return (
     <NeonBackground showGrid={false}>
-      <SafeAreaView className="flex-1" edges={['top']}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <View
           onLayout={(e) => {
             handleHudLayout(e.nativeEvent.layout.height);
@@ -475,6 +511,10 @@ export default function GameScreen(): React.ReactElement {
           onRestart={handleRestart}
           onQuit={handleQuit}
         />
+
+        <DevLogOverlay />
+        <DevLogToggle />
+        {logVisible ? <View style={{ height: 0 }} /> : null}
       </SafeAreaView>
     </NeonBackground>
   );
