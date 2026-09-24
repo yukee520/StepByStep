@@ -19,10 +19,7 @@ import TimelineStrip from '@/components/TimelineStrip';
 import DifficultyBadge from '@/components/DifficultyBadge';
 import PublishToGitHubSheet from '@/components/PublishToGitHubSheet';
 import NeonBackground from '@/components/NeonBackground';
-import DevLogOverlay from '@/components/DevLogOverlay';
-import DevLogToggle from '@/components/DevLogToggle';
 import { NEON_PALETTE } from '@/theme/colors';
-import { useDevLogStore, devLog } from '@/store/useDevLogStore';
 import { generateChart } from '@/services/chartGenerator';
 import {
   addTap,
@@ -41,7 +38,6 @@ import {
 import {
   DIFFICULTIES,
   DIFFICULTY_LABELS,
-  type Difficulty,
   type Note,
 } from '@/types/song';
 import type { BeatMarker, BuilderMetadata } from '@/types/builder';
@@ -174,21 +170,20 @@ async function readAudioDurationMs(path: string): Promise<number> {
   return new Promise<number>((resolve) => {
     const sound = new Sound(path, '', (error) => {
       if (error) {
-        devLog('error', 'audio', `duration read failed: ${error.message}`);
         resolve(0);
         return;
       }
       const seconds = sound.getDuration();
       sound.release();
       const ms = Math.round(seconds * 1000);
-      devLog('success', 'audio', `duration = ${ms}ms (${(seconds / 60).toFixed(2)} min)`);
       resolve(ms);
     });
   });
 }
 
+const CHART_LEAD_IN_MS = 2000;
+
 export default function BuilderScreen(): React.ReactElement {
-  const logVisible = useDevLogStore((s) => s.visible);
   const [metadata, setMetadata] = useState<BuilderMetadata>(DEFAULT_BUILDER_METADATA);
   const [audioPath, setAudioPath] = useState<string | null>(null);
   const [audioFileName, setAudioFileName] = useState<string>('');
@@ -210,33 +205,24 @@ export default function BuilderScreen(): React.ReactElement {
 
   const handlePickAudio = useCallback(async (): Promise<void> => {
     try {
-      devLog('info', 'picker', 'opening audio picker...');
       const [result] = await pick({
         type: [types.audio],
         allowMultiSelection: false,
         copyTo: 'documentDirectory',
       });
       if (!result) {
-        devLog('warn', 'picker', 'cancelled');
         return;
       }
-      devLog('info', 'picker', `picked: ${result.name ?? 'audio'}`);
-
       await ensureLibraryDirs();
       const ext = result.name?.split('.').pop() ?? 'mp3';
       const target = `${BUILDER_ROOT}/source-${Date.now()}.${ext}`;
       const srcPath =
         result.fileCopyUri?.replace('file://', '') ??
         result.uri.replace('file://', '');
-      devLog('info', 'copy', `copy -> ${target}`);
       await RNFS.copyFile(srcPath, target);
 
       setAudioPath(target);
       setAudioFileName(result.name ?? 'audio');
-
-      const stat = await RNFS.stat(target);
-      const sizeBytes = Number(stat.size) || 0;
-      devLog('info', 'file', `size = ${sizeBytes} bytes`);
 
       const detected = await readAudioDurationMs(target);
       if (detected > 0) {
@@ -258,8 +244,7 @@ export default function BuilderScreen(): React.ReactElement {
           position: 'bottom',
         });
       }
-    } catch (error) {
-      devLog('error', 'picker', error instanceof Error ? error.message : 'unknown');
+    } catch {
       Toast.show({
         type: 'error',
         text1: 'Could not pick audio',
@@ -280,7 +265,6 @@ export default function BuilderScreen(): React.ReactElement {
     }
     const ms = Math.round(parsed * 1000);
     setDurationMs(ms);
-    devLog('info', 'duration', `manual = ${ms}ms`);
     Toast.show({
       type: 'success',
       text1: 'Duration set',
@@ -321,7 +305,6 @@ export default function BuilderScreen(): React.ReactElement {
     if (detectedBpm !== null) {
       setMetadata((m) => ({ ...m, bpm: detectedBpm }));
     }
-    devLog('success', 'beats', `${markers.length} from taps, bpm=${detectedBpm ?? '?'}`);
     Toast.show({
       type: 'success',
       text1: 'Beats captured',
@@ -334,7 +317,6 @@ export default function BuilderScreen(): React.ReactElement {
     const dur = durationMs > 0 ? durationMs : 60000;
     const markers = generateBeatMarkersFromBpm(metadata.bpm, dur, 0);
     setBeats(markers);
-    devLog('success', 'beats', `${markers.length} from bpm=${metadata.bpm} dur=${dur}ms`);
     Toast.show({
       type: 'success',
       text1: 'Beats generated',
@@ -358,18 +340,13 @@ export default function BuilderScreen(): React.ReactElement {
       difficulty: metadata.difficulty,
       bpm: metadata.bpm,
       offsetMs: metadata.offsetMs,
-      startAtMs: 0,
+      startAtMs: CHART_LEAD_IN_MS,
       endAtMs: dur,
       includeDoubles:
         metadata.difficulty === 'hard' || metadata.difficulty === 'expert',
       songId,
     });
     setNotes(chart);
-    devLog(
-      'success',
-      'chart',
-      `${chart.length} notes · ${metadata.difficulty} · bpm=${metadata.bpm}`,
-    );
     Toast.show({
       type: 'success',
       text1: 'Chart generated',
@@ -434,7 +411,6 @@ export default function BuilderScreen(): React.ReactElement {
         await RNFS.copyFile(audioPath, audioOut);
       }
 
-      devLog('success', 'export', `saved to ${manifest.id}/`);
       Toast.show({
         type: 'success',
         text1: 'Export complete',
@@ -443,7 +419,6 @@ export default function BuilderScreen(): React.ReactElement {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Export failed';
-      devLog('error', 'export', message);
       Toast.show({
         type: 'error',
         text1: 'Export failed',
@@ -475,7 +450,6 @@ export default function BuilderScreen(): React.ReactElement {
         size = Number(stat.size) || 0;
         audioBase64 = await RNFS.readFile(audioPath, 'base64');
         ext = audioPath.split('.').pop() ?? 'mp3';
-        devLog('info', 'publish', `audio ${ext} · ${size} bytes`);
       } catch {
         audioBase64 = null;
         size = 0;
@@ -506,7 +480,7 @@ export default function BuilderScreen(): React.ReactElement {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: logVisible ? 200 : 40,
+            paddingBottom: 40,
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -695,140 +669,4 @@ export default function BuilderScreen(): React.ReactElement {
                   } else if (text === '') {
                     setMetadata((m) => ({ ...m, bpm: 0 }));
                   }
-                }}
-                placeholder="120"
-                keyboardType="numeric"
-              />
-
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: '700',
-                  color: NEON_PALETTE.textDim,
-                  letterSpacing: 1,
-                  marginTop: 16,
-                  marginBottom: 8,
-                }}
-              >
-                DIFFICULTY
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {DIFFICULTIES.map((d) => {
-                  const active = d === metadata.difficulty;
-                  return (
-                    <Button
-                      key={d}
-                      label={DIFFICULTY_LABELS[d]}
-                      variant={active ? 'primary' : 'secondary'}
-                      size="sm"
-                      onPress={() =>
-                        setMetadata((m) => ({ ...m, difficulty: d }))
-                      }
-                    />
-                  );
-                })}
-              </View>
-            </Card>
-          </View>
-
-          <View style={{ marginTop: 16 }}>
-            <Card>
-              <SectionLabel
-                step="4"
-                title="Generate Chart"
-                subtitle="Convert your beats into arrows based on difficulty."
-              />
-              <Button
-                label="Generate Notes"
-                icon="sparkles-outline"
-                fullWidth
-                onPress={handleGenerateChart}
-              />
-              {chartReady ? (
-                <View style={{ marginTop: 16 }}>
-                  <TimelineStrip
-                    notes={notes}
-                    durationMs={durationMs > 0 ? durationMs : 60000}
-                    cursorMs={0}
-                  />
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginTop: 10,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: NEON_PALETTE.textDim,
-                      }}
-                    >
-                      {notes.length} notes · {formatDuration(durationMs)}
-                    </Text>
-                    <DifficultyBadge difficulty={metadata.difficulty} />
-                  </View>
-                </View>
-              ) : null}
-            </Card>
-          </View>
-
-          <View style={{ marginTop: 16 }}>
-            <Card>
-              <SectionLabel
-                step="5"
-                title="Export & Publish"
-                subtitle="Save to device, or upload to GitHub."
-              />
-              <Button
-                label="Export to Device"
-                icon="download-outline"
-                fullWidth
-                loading={busy}
-                disabled={busy || !chartReady}
-                onPress={handleExport}
-              />
-              <View style={{ marginTop: 12 }}>
-                <Button
-                  label="Publish to GitHub"
-                  icon="cloud-upload-outline"
-                  variant="secondary"
-                  fullWidth
-                  disabled={busy || !chartReady}
-                  onPress={handleOpenPublish}
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: 11,
-                  color: NEON_PALETTE.textDim,
-                  marginTop: 12,
-                  lineHeight: 16,
-                }}
-              >
-                Publishing uploads the manifest, audio, and updates the pack
-                index so any player can download the song without reinstalling
-                the app.
-              </Text>
-            </Card>
-          </View>
-        </ScrollView>
-
-        <PublishToGitHubSheet
-          visible={publishVisible}
-          onClose={handleClosePublish}
-          manifest={manifestForPublish}
-          audioBase64={audioBase64ForPublish}
-          audioExt={audioExtForPublish}
-          audioSizeBytes={audioSizeForPublish}
-          coverBase64={null}
-          coverExt="png"
-        />
-
-        <DevLogOverlay />
-        <DevLogToggle />
-      </SafeAreaView>
-    </NeonBackground>
-  );
-}
+       
