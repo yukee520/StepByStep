@@ -535,9 +535,6 @@ export default function GameScreen(): React.ReactElement {
           onQuit={handleQuit}
         />
 
-        <DevLogOverlay />
-        <DevLogToggle />
-        {logVisible ? <View style={{ height: 0 }} /> : null}
       </SafeAreaView>
     </NeonBackground>
   );
