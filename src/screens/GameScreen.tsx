@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,6 +12,8 @@ import CountdownOverlay from '@/components/CountdownOverlay';
 import PauseModal from '@/components/PauseModal';
 import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
+import NeonBackground from '@/components/NeonBackground';
+import PerfectPop from '@/components/PerfectPop';
 import { useSongs } from '@/hooks/useSongs';
 import { useGameEngine, type HitFeedback } from '@/hooks/useGameEngine';
 import { useAudio } from '@/hooks/useAudio';
@@ -25,6 +27,7 @@ import { DIRECTIONS, type Direction, type Song } from '@/types/song';
 import type { GameRunSummary } from '@/types/game';
 import type { RootStackParamList } from '@/types/navigation';
 import { accuracyToGrade } from '@/utils/grading';
+import { NEON_PALETTE } from '@/theme/colors';
 
 type GameRoute = RouteProp<RootStackParamList, 'Game'>;
 type GameNav = NativeStackNavigationProp<RootStackParamList, 'Game'>;
@@ -35,13 +38,6 @@ const HUD_FALLBACK_RATIO = 0.10;
 const BUTTON_ROW_TOP_RATIO = 0.80;
 const BUTTON_GAP = 8;
 const BUTTON_BOTTOM_PADDING = 24;
-
-const LANE_COLORS: Record<Direction, string> = {
-  left: '#FF3366',
-  right: '#00E5FF',
-  up: '#00FF88',
-  down: '#FFD500',
-};
 
 export default function GameScreen(): React.ReactElement {
   const route = useRoute<GameRoute>();
@@ -273,23 +269,6 @@ export default function GameScreen(): React.ReactElement {
     }
   }, [colors, feedback]);
 
-  const feedbackLabel = useMemo((): string => {
-    if (!feedback) {
-      return '';
-    }
-    switch (feedback.judgment) {
-      case 'perfect':
-        return 'PERFECT';
-      case 'great':
-        return 'GREAT';
-      case 'good':
-        return 'GOOD';
-      case 'miss':
-      default:
-        return 'MISS';
-    }
-  }, [feedback]);
-
   const buttonSize = useMemo(() => {
     const available =
       SCREEN_W - LANE_AREA_PADDING * 2 - BUTTON_GAP * (LANE_COUNT - 1);
@@ -298,43 +277,48 @@ export default function GameScreen(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-background dark:bg-dark-background">
-        <LoadingState fullscreen label="Loading song…" />
-      </SafeAreaView>
+      <NeonBackground showGrid={false}>
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <LoadingState fullscreen label="Loading song…" />
+        </SafeAreaView>
+      </NeonBackground>
     );
   }
 
   if (isError) {
     return (
-      <SafeAreaView className="flex-1 bg-background dark:bg-dark-background">
-        <ErrorState
-          fullscreen
-          title="Could not load song"
-          message={error?.message ?? 'Please try again.'}
-          onRetry={() => {
-            void refetch();
-          }}
-        />
-      </SafeAreaView>
+      <NeonBackground showGrid={false}>
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <ErrorState
+            fullscreen
+            title="Could not load song"
+            message={error?.message ?? 'Please try again.'}
+            onRetry={() => {
+              void refetch();
+            }}
+          />
+        </SafeAreaView>
+      </NeonBackground>
     );
   }
 
   if (!song) {
     return (
-      <SafeAreaView className="flex-1 bg-background dark:bg-dark-background">
-        <ErrorState
-          fullscreen
-          title="Song not found"
-          message="It may have been removed. Go back to the song list."
-          onRetry={() => {
-            navigation.goBack();
-          }}
-        />
-      </SafeAreaView>
+      <NeonBackground showGrid={false}>
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <ErrorState
+            fullscreen
+            title="Song not found"
+            message="It may have been removed. Go back to the song list."
+            onRetry={() => {
+              navigation.goBack();
+            }}
+          />
+        </SafeAreaView>
+      </NeonBackground>
     );
   }
 
-  // Lane area layout: inside the flex container that starts right below the HUD
   const laneAreaTop = hudHeight > 0 ? hudHeight : SCREEN_H * HUD_FALLBACK_RATIO;
   const buttonRowTopScreen = SCREEN_H * BUTTON_ROW_TOP_RATIO;
   const laneAreaHeight = buttonRowTopScreen - laneAreaTop;
@@ -344,166 +328,154 @@ export default function GameScreen(): React.ReactElement {
   const noteSize = Math.min(laneWidth * 0.75, buttonSize * 0.9);
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-background dark:bg-dark-background"
-      edges={['top']}
-    >
-      <View
-        onLayout={(e) => {
-          handleHudLayout(e.nativeEvent.layout.height);
-        }}
-      >
-        <GameHUD
-          title={song.title}
-          score={engine.score}
-          combo={engine.combo}
-          accuracy={engine.accuracy}
-          elapsedMs={engine.elapsedMs}
-          durationMs={engine.durationMs}
-          progress={engine.progress}
-          onPause={handlePause}
-        />
-      </View>
-
-      <View style={{ flex: 1 }}>
-        {/* Lane container — starts right at the top of the flex area (which is right below the HUD) */}
+    <NeonBackground showGrid={false}>
+      <SafeAreaView className="flex-1" edges={['top']}>
         <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: LANE_AREA_PADDING,
-            top: 0,
-            width: laneAreaWidth,
-            height: laneAreaHeight,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: colors.border,
-            overflow: 'hidden',
+          onLayout={(e) => {
+            handleHudLayout(e.nativeEvent.layout.height);
           }}
         >
-          {DIRECTIONS.map((dir, index) => {
-            const laneNotes = engine.visibleNotes.filter(
-              (n) => n.note.direction === dir,
-            );
-            return (
-              <Lane
-                key={dir}
-                width={laneWidth}
-                left={index * laneWidth}
-                top={0}
-                height={laneAreaHeight}
-                notes={laneNotes}
-                noteSize={noteSize}
-                isActive={laneNotes.length > 0}
-                isPressed={pressedLane === dir}
-                pressColor={LANE_COLORS[dir]}
-              />
-            );
-          })}
-        </View>
-
-        {/* Combo overlay — top center of the lane, just below the top edge */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: 0,
-            right: 0,
-          }}
-        >
-          <ComboOverlay
+          <GameHUD
+            title={song.title}
+            score={engine.score}
             combo={engine.combo}
-            accentColor={colors.primary}
-            mutedColor={colors.muted}
-            fontSize={SCREEN_H * 0.06}
-            labelSize={SCREEN_W * 0.032}
+            accuracy={engine.accuracy}
+            elapsedMs={engine.elapsedMs}
+            durationMs={engine.durationMs}
+            progress={engine.progress}
+            onPause={handlePause}
           />
         </View>
 
-        {/* Judgment feedback — appears just above the button row */}
-        {feedback ? (
+        <View style={{ flex: 1 }}>
           <View
             pointerEvents="none"
             style={{
               position: 'absolute',
-              top: buttonRowTopInContainer - 60,
+              left: LANE_AREA_PADDING,
+              top: 0,
+              width: laneAreaWidth,
+              height: laneAreaHeight,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: NEON_PALETTE.border,
+              backgroundColor: 'rgba(21, 8, 41, 0.55)',
+              overflow: 'hidden',
+            }}
+          >
+            {DIRECTIONS.map((dir, index) => {
+              const laneNotes = engine.visibleNotes.filter(
+                (n) => n.note.direction === dir,
+              );
+              return (
+                <Lane
+                  key={dir}
+                  width={laneWidth}
+                  left={index * laneWidth}
+                  top={0}
+                  height={laneAreaHeight}
+                  notes={laneNotes}
+                  noteSize={noteSize}
+                  isActive={laneNotes.length > 0}
+                  isPressed={pressedLane === dir}
+                  pressColor={NEON_PALETTE.lane[dir]}
+                />
+              );
+            })}
+          </View>
+
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 12,
               left: 0,
               right: 0,
+            }}
+          >
+            <ComboOverlay
+              combo={engine.combo}
+              accentColor={NEON_PALETTE.primary}
+              mutedColor={NEON_PALETTE.textDim}
+              fontSize={SCREEN_H * 0.06}
+              labelSize={SCREEN_W * 0.032}
+            />
+          </View>
+
+          {feedback ? (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: buttonRowTopInContainer - 60,
+                left: 0,
+                right: 0,
+              }}
+            >
+              <PerfectPop
+                judgment={feedback.judgment}
+                eventKey={feedback.key}
+                color={feedbackColor}
+                fontSize={SCREEN_W * 0.08}
+              />
+            </View>
+          ) : null}
+
+          <View
+            style={{
+              position: 'absolute',
+              top: buttonRowTopInContainer,
+              left: 0,
+              right: 0,
+              paddingHorizontal: LANE_AREA_PADDING,
+              paddingTop: 8,
+              paddingBottom: BUTTON_BOTTOM_PADDING,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
-            <Text
-              style={{
-                color: feedbackColor,
-                fontSize: SCREEN_W * 0.08,
-                fontWeight: '800',
-                letterSpacing: 3,
-                textShadowColor: feedbackColor,
-                textShadowRadius: 12,
-              }}
-            >
-              {feedbackLabel}
-            </Text>
+            <ArrowButton
+              direction="left"
+              onPress={handleInput}
+              onRelease={handleRelease}
+              size={buttonSize}
+            />
+            <ArrowButton
+              direction="down"
+              onPress={handleInput}
+              onRelease={handleRelease}
+              size={buttonSize}
+            />
+            <ArrowButton
+              direction="up"
+              onPress={handleInput}
+              onRelease={handleRelease}
+              size={buttonSize}
+            />
+            <ArrowButton
+              direction="right"
+              onPress={handleInput}
+              onRelease={handleRelease}
+              size={buttonSize}
+            />
           </View>
-        ) : null}
 
-        {/* Button row — positioned inside the flex container */}
-        <View
-          style={{
-            position: 'absolute',
-            top: buttonRowTopInContainer,
-            left: 0,
-            right: 0,
-            paddingHorizontal: LANE_AREA_PADDING,
-            paddingTop: 8,
-            paddingBottom: BUTTON_BOTTOM_PADDING,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <ArrowButton
-            direction="left"
-            onPress={handleInput}
-            onRelease={handleRelease}
-            size={buttonSize}
-          />
-          <ArrowButton
-            direction="down"
-            onPress={handleInput}
-            onRelease={handleRelease}
-            size={buttonSize}
-          />
-          <ArrowButton
-            direction="up"
-            onPress={handleInput}
-            onRelease={handleRelease}
-            size={buttonSize}
-          />
-          <ArrowButton
-            direction="right"
-            onPress={handleInput}
-            onRelease={handleRelease}
-            size={buttonSize}
+          <CountdownOverlay
+            count={countdown.count}
+            visible={countdownActive}
+            laneTop={0}
+            laneHeight={laneAreaHeight}
           />
         </View>
 
-        <CountdownOverlay
-          count={countdown.count}
-          visible={countdownActive}
-          laneTop={0}
-          laneHeight={laneAreaHeight}
+        <PauseModal
+          visible={showPause}
+          onResume={handleResume}
+          onRestart={handleRestart}
+          onQuit={handleQuit}
         />
-      </View>
-
-
-      <PauseModal
-        visible={showPause}
-        onResume={handleResume}
-        onRestart={handleRestart}
-        onQuit={handleQuit}
-      />
-    </SafeAreaView>
+      </SafeAreaView>
+    </NeonBackground>
   );
 }
