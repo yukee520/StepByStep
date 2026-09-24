@@ -16,7 +16,6 @@ import type { Direction, Note, Song } from '@/types/song';
 import { accuracyToGrade } from '@/utils/grading';
 import { genId } from '@/utils/id';
 import { audioPlayer } from '@/services/audioPlayer';
-import { devLog } from '@/store/useDevLogStore';
 
 export type HitFeedback = {
   direction: Direction;
@@ -66,17 +65,16 @@ export type UseGameEngineResult = {
 export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResult {
   const { song, inputOffsetMs, useAudioClock, onFinish, onNoteHit } = options;
 
-  const leadInMs = fallDurationMs + 100;
-
-const sortedNotes = useRef<Note[]>(
-  [...song.chart.notes]
-    .filter((n) => n.timeMs >= leadInMs)
-    .sort((a, b) => a.timeMs - b.timeMs),
-);
-  const durationMs = song.durationMs;
-
   const fallDurationMs =
     FALL_DURATION_MS * DIFFICULTY_FALL_MULTIPLIER[song.difficulty];
+  const leadInMs = fallDurationMs + 100;
+  const durationMs = song.durationMs;
+
+  const sortedNotes = useRef<Note[]>(
+    [...song.chart.notes]
+      .filter((n) => n.timeMs >= leadInMs)
+      .sort((a, b) => a.timeMs - b.timeMs),
+  );
 
   const [status, setStatus] = useState<GameStatus>('idle');
   const [score, setScore] = useState<number>(0);
@@ -168,16 +166,11 @@ const sortedNotes = useRef<Note[]>(
   const finish = useCallback((): void => {
     stopLoop();
     setStatus('finished');
+    statusRef.current = 'finished';
     const summary = buildSummary();
-    devLog('info', 'engine', `finish score=${summary.score}`);
     onFinish(summary);
   }, [buildSummary, onFinish, stopLoop]);
 
-  /**
-   * Returns the current "song time" in milliseconds.
-   * If useAudioClock is enabled and audio is loaded, this is read from the
-   * audio player. Otherwise it's derived from wall clock.
-   */
   const getNow = useCallback((): number => {
     if (useAudioClock && audioPlayer.getDurationMs() > 0) {
       return audioPlayer.getPositionMs() - inputOffsetMs;
@@ -235,7 +228,7 @@ const sortedNotes = useRef<Note[]>(
         continue;
       }
       const ratio = computeYRatio(note, now);
-      if (ratio > -0.1 && ratio < 1 + PIXEL_WINDOW.good + 0.05) {
+      if (ratio > -0.15 && ratio < 1 + PIXEL_WINDOW.good + 0.05) {
         upcoming.push({ note, yRatio: ratio });
       }
     }
@@ -259,8 +252,7 @@ const sortedNotes = useRef<Note[]>(
     statusRef.current = 'playing';
     stopLoop();
     rafRef.current = requestAnimationFrame(loop);
-    devLog('info', 'engine', `start useAudioClock=${useAudioClock}`);
-  }, [loop, resetStats, stopLoop, useAudioClock]);
+  }, [loop, resetStats, stopLoop]);
 
   const pause = useCallback((): void => {
     if (statusRef.current !== 'playing') {
