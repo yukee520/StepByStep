@@ -32,7 +32,6 @@ export type VisibleNote = {
 export type UseGameEngineOptions = {
   song: Song;
   inputOffsetMs: number;
-  /** Use the audio player as the master clock (recommended when audio present). */
   useAudioClock: boolean;
   onFinish: (summary: GameRunSummary) => void;
   onNoteHit?: (feedback: HitFeedback) => void;
@@ -61,6 +60,8 @@ export type UseGameEngineResult = {
   hit: (direction: Direction) => void;
   releaseInput: (direction: Direction) => void;
 };
+
+const FINISH_GRACE_MS = 1200;
 
 export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResult {
   const { song, inputOffsetMs, useAudioClock, onFinish, onNoteHit } = options;
@@ -92,6 +93,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const judgedRef = useRef<Set<string>>(new Set());
   const rafRef = useRef<number | null>(null);
   const statusRef = useRef<GameStatus>('idle');
+  const audioEndedAtRef = useRef<number>(0);
 
   const statsRef = useRef({
     score: 0,
@@ -236,18 +238,32 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
     processMisses(now, true);
 
-    if (now >= durationMs + 1200) {
+    // Finish when the audio has ended (after a short grace)
+    if (useAudioClock && audioPlayer.hasEnded()) {
+      if (audioEndedAtRef.current === 0) {
+        audioEndedAtRef.current = Date.now();
+      }
+      const grace = Date.now() - audioEndedAtRef.current;
+      if (grace >= FINISH_GRACE_MS) {
+        finish();
+        return;
+      }
+    }
+
+    // Fallback: finish when elapsed time exceeds the chart duration
+    if (now >= durationMs + FINISH_GRACE_MS) {
       finish();
       return;
     }
 
     rafRef.current = requestAnimationFrame(loop);
-  }, [computeYRatio, durationMs, finish, getNow, processMisses]);
+  }, [computeYRatio, durationMs, finish, getNow, processMisses, useAudioClock]);
 
   const start = useCallback((): void => {
     resetStats();
     wallClockStartRef.current = Date.now();
     wallClockPausedRef.current = 0;
+    audioEndedAtRef.current = 0;
     setStatus('playing');
     statusRef.current = 'playing';
     stopLoop();
@@ -280,6 +296,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     resetStats();
     wallClockStartRef.current = Date.now();
     wallClockPausedRef.current = 0;
+    audioEndedAtRef.current = 0;
     setStatus('playing');
     statusRef.current = 'playing';
     rafRef.current = requestAnimationFrame(loop);
