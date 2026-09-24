@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Button from '@/components/Button';
-import { useTheme } from '@/hooks/useTheme';
+import { NEON_PALETTE } from '@/theme/colors';
 
 export type EmptyStateProps = {
   icon?: string;
@@ -21,28 +21,56 @@ export default function EmptyState({
   onAction,
   fullscreen = false,
 }: EmptyStateProps): React.ReactElement {
-  const { colors } = useTheme();
-
   return (
     <View
-      className={[
-        'items-center justify-center px-8',
-        fullscreen ? 'flex-1 bg-background dark:bg-dark-background' : 'py-10',
-      ].join(' ')}
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 32,
+        flex: fullscreen ? 1 : undefined,
+        paddingVertical: fullscreen ? 0 : 40,
+      }}
     >
-      <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
-        <Ionicons name={icon} size={32} color={colors.primary} />
+      <View
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          backgroundColor: 'rgba(0, 229, 255, 0.12)',
+          borderWidth: 2,
+          borderColor: NEON_PALETTE.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 16,
+        }}
+      >
+        <Ionicons name={icon} size={32} color={NEON_PALETTE.primary} />
       </View>
-      <Text className="text-lg font-semibold text-text dark:text-dark-text text-center">
+      <Text
+        style={{
+          fontSize: 17,
+          fontWeight: '800',
+          color: NEON_PALETTE.text,
+          textAlign: 'center',
+        }}
+      >
         {title}
       </Text>
       {message ? (
-        <Text className="text-sm text-muted dark:text-dark-muted text-center mt-2">
+        <Text
+          style={{
+            fontSize: 13,
+            color: NEON_PALETTE.textDim,
+            textAlign: 'center',
+            marginTop: 8,
+            lineHeight: 20,
+          }}
+        >
           {message}
         </Text>
       ) : null}
       {actionLabel && onAction ? (
-        <View className="mt-6">
+        <View style={{ marginTop: 20 }}>
           <Button label={actionLabel} icon="add-circle-outline" onPress={onAction} />
         </View>
       ) : null}
