@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { perfMonitor } from '@/services/perfMonitor';
 import { NEON_PALETTE } from '@/theme/colors';
 
@@ -7,35 +7,59 @@ export type PerfOverlayProps = {
   visible: boolean;
 };
 
-export default function PerfOverlay({
+type Snapshot = {
+  fps: number;
+  frameAvg: number;
+  frameMax: number;
+  notes: number;
+  nowMs: number;
+  setVisibleMs: number;
+  hitMs: number;
+};
+
+const EMPTY: Snapshot = {
+  fps: 0,
+  frameAvg: 0,
+  frameMax: 0,
+  notes: 0,
+  nowMs: 0,
+  setVisibleMs: 0,
+  hitMs: 0,
+};
+
+function PerfOverlayBase({
   visible,
 }: PerfOverlayProps): React.ReactElement | null {
-  const [tick, setTick] = useState<number>(0);
+  const [snap, setSnap] = useState<Snapshot>(EMPTY);
 
   useEffect(() => {
-    perfMonitor.setOnUpdate(() => {
-      setTick((t) => t + 1);
-    });
+    if (!visible) {
+      return;
+    }
+    const id = setInterval(() => {
+      const avg = perfMonitor.averages();
+      const frameAvg = avg['frame_ms'] ?? 0;
+      const fps = frameAvg > 0 ? Math.round(1000 / frameAvg) : 0;
+      setSnap({
+        fps,
+        frameAvg,
+        frameMax: perfMonitor.max('frame_ms'),
+        notes: avg['visible_notes'] ?? 0,
+        nowMs: avg['get_now_ms'] ?? 0,
+        setVisibleMs: avg['set_visible_ms'] ?? 0,
+        hitMs: avg['hit_ms'] ?? 0,
+      });
+    }, 500);
     return () => {
-      perfMonitor.setOnUpdate(null);
+      clearInterval(id);
     };
-  }, []);
+  }, [visible]);
 
   if (!visible) {
     return null;
   }
 
-  void tick;
-  const avg = perfMonitor.averages();
-  const maxFrame = perfMonitor.max('frame_ms');
-  const avgFrame = avg['frame_ms'] ?? 0;
-  const fps = avgFrame > 0 ? Math.round(1000 / avgFrame) : 0;
-  const visibleCount = avg['visible_notes'] ?? 0;
-  const nowMs = avg['get_now_ms'] ?? 0;
-  const setVisibleMs = avg['set_visible_ms'] ?? 0;
-  const hitMs = avg['hit_ms'] ?? 0;
-
-  const warn = avgFrame > 24 ? NEON_PALETTE.danger : NEON_PALETTE.success;
+  const warn = snap.frameAvg > 24 ? NEON_PALETTE.danger : NEON_PALETTE.success;
 
   return (
     <View
@@ -53,17 +77,39 @@ export default function PerfOverlay({
       }}
     >
       <Text style={{ fontSize: 10, color: warn, fontFamily: 'monospace' }}>
-        FPS ~{fps}  frame avg {avgFrame.toFixed(1)}ms  max {maxFrame.toFixed(1)}ms
+        FPS ~{snap.fps}  frame avg {snap.frameAvg.toFixed(1)}ms  max{' '}
+        {snap.frameMax.toFixed(1)}ms
       </Text>
-      <Text style={{ fontSize: 10, color: NEON_PALETTE.text, fontFamily: 'monospace' }}>
-        notes {visibleCount.toFixed(0)}
+      <Text
+        style={{
+          fontSize: 10,
+          color: NEON_PALETTE.text,
+          fontFamily: 'monospace',
+        }}
+      >
+        notes {snap.notes.toFixed(0)}
       </Text>
-      <Text style={{ fontSize: 10, color: NEON_PALETTE.text, fontFamily: 'monospace' }}>
-        now {nowMs.toFixed(2)}ms  setVis {setVisibleMs.toFixed(2)}ms
+      <Text
+        style={{
+          fontSize: 10,
+          color: NEON_PALETTE.text,
+          fontFamily: 'monospace',
+        }}
+      >
+        now {snap.nowMs.toFixed(2)}ms  setVis {snap.setVisibleMs.toFixed(2)}ms
       </Text>
-      <Text style={{ fontSize: 10, color: NEON_PALETTE.text, fontFamily: 'monospace' }}>
-        hit {hitMs.toFixed(2)}ms
+      <Text
+        style={{
+          fontSize: 10,
+          color: NEON_PALETTE.text,
+          fontFamily: 'monospace',
+        }}
+      >
+        hit {snap.hitMs.toFixed(2)}ms
       </Text>
     </View>
   );
 }
+
+const PerfOverlay = React.memo(PerfOverlayBase);
+export default PerfOverlay;
