@@ -12,7 +12,6 @@ import CountdownOverlay from '@/components/CountdownOverlay';
 import PauseModal from '@/components/PauseModal';
 import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
-import NeonBackground from '@/components/NeonBackground';
 import PerfectPop from '@/components/PerfectPop';
 import PerfOverlay from '@/components/PerfOverlay';
 import { useSongs } from '@/hooks/useSongs';
@@ -71,8 +70,6 @@ export default function GameScreen(): React.ReactElement {
   const [hudHeight, setHudHeight] = useState<number>(0);
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const feedbackRafRef = useRef<number | null>(null);
-  const pendingFeedbackRef = useRef<HitFeedback | null>(null);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pausedByBackgroundRef = useRef<boolean>(false);
 
@@ -99,16 +96,15 @@ export default function GameScreen(): React.ReactElement {
     [audio, navigation, setLastSummary, song, submitScore],
   );
 
-  // Feedback is deferred to the next frame so `hit()` doesn't block input.
-const onNoteHit = useCallback((fb: HitFeedback): void => {
-  setFeedback(fb);
-  if (feedbackTimeoutRef.current !== null) {
-    clearTimeout(feedbackTimeoutRef.current);
-  }
-  feedbackTimeoutRef.current = setTimeout(() => {
-    setFeedback(null);
-  }, 260);
-}, []);
+  const onNoteHit = useCallback((fb: HitFeedback): void => {
+    setFeedback(fb);
+    if (feedbackTimeoutRef.current !== null) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+    feedbackTimeoutRef.current = setTimeout(() => {
+      setFeedback(null);
+    }, 260);
+  }, []);
 
   const hasAudio = Boolean(song?.audioPath);
 
@@ -197,9 +193,6 @@ const onNoteHit = useCallback((fb: HitFeedback): void => {
     return () => {
       if (feedbackTimeoutRef.current !== null) {
         clearTimeout(feedbackTimeoutRef.current);
-      }
-      if (feedbackRafRef.current !== null) {
-        cancelAnimationFrame(feedbackRafRef.current);
       }
     };
   }, []);
@@ -304,17 +297,17 @@ const onNoteHit = useCallback((fb: HitFeedback): void => {
 
   if (isLoading) {
     return (
-      <NeonBackground showGrid={false}>
+      <View style={{ flex: 1, backgroundColor: NEON_PALETTE.background }}>
         <SafeAreaView style={{ flex: 1 }} edges={['top']}>
           <LoadingState fullscreen label="Loading song…" />
         </SafeAreaView>
-      </NeonBackground>
+      </View>
     );
   }
 
   if (isError) {
     return (
-      <NeonBackground showGrid={false}>
+      <View style={{ flex: 1, backgroundColor: NEON_PALETTE.background }}>
         <SafeAreaView style={{ flex: 1 }} edges={['top']}>
           <ErrorState
             fullscreen
@@ -325,13 +318,13 @@ const onNoteHit = useCallback((fb: HitFeedback): void => {
             }}
           />
         </SafeAreaView>
-      </NeonBackground>
+      </View>
     );
   }
 
   if (!song) {
     return (
-      <NeonBackground showGrid={false}>
+      <View style={{ flex: 1, backgroundColor: NEON_PALETTE.background }}>
         <SafeAreaView style={{ flex: 1 }} edges={['top']}>
           <ErrorState
             fullscreen
@@ -342,7 +335,7 @@ const onNoteHit = useCallback((fb: HitFeedback): void => {
             }}
           />
         </SafeAreaView>
-      </NeonBackground>
+      </View>
     );
   }
 
@@ -357,7 +350,7 @@ const onNoteHit = useCallback((fb: HitFeedback): void => {
   const hotLevels = EMPTY_HOT_LEVELS;
 
   return (
-    <NeonBackground showGrid={false}>
+    <View style={{ flex: 1, backgroundColor: NEON_PALETTE.background }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <View
           onLayout={(e) => {
@@ -488,6 +481,6 @@ const onNoteHit = useCallback((fb: HitFeedback): void => {
 
         <PerfOverlay visible={true} />
       </SafeAreaView>
-    </NeonBackground>
+    </View>
   );
 }
