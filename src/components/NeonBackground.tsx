@@ -13,7 +13,7 @@ export type NeonBackgroundProps = {
 
 const GRID_SPACING = 40;
 
-export default function NeonBackground({
+function NeonBackgroundBase({
   children,
   showGrid = false,
   gridColor,
