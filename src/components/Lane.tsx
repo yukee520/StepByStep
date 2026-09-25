@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, View } from 'react-native';
+import React from 'react';
+import { View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import FallingNote from '@/components/FallingNote';
 import { useTheme } from '@/hooks/useTheme';
 import type { Note } from '@/types/song';
@@ -9,11 +10,11 @@ export type LaneProps = {
   left: number;
   top: number;
   height: number;
-  notes: Array<{ note: Note; yRatio: number }>;
+  notes: Note[];
   noteSize: number;
   isActive?: boolean;
-  isPressed?: boolean;
-  pressColor: string;
+  audioPosition: SharedValue<number>;
+  fallDurationMs: number;
 };
 
 export default function Lane({
@@ -24,23 +25,11 @@ export default function Lane({
   notes,
   noteSize,
   isActive = false,
-  isPressed = false,
-  pressColor,
+  audioPosition,
+  fallDurationMs,
 }: LaneProps): React.ReactElement {
   const { colors } = useTheme();
   const noteX = (width - noteSize) / 2;
-  const glowAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (isPressed) {
-      glowAnim.setValue(1);
-      Animated.timing(glowAnim, {
-        toValue: 0,
-        duration: 240,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [isPressed, glowAnim]);
 
   return (
     <View
@@ -54,28 +43,16 @@ export default function Lane({
         backgroundColor: isActive ? `${colors.primary}0A` : 'transparent',
       }}
     >
-      <Animated.View
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: pressColor,
-          opacity: glowAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 0.35],
-          }),
-        }}
-      />
-      {notes.map(({ note, yRatio }) => (
+      {notes.map((note) => (
         <FallingNote
           key={note.id}
           direction={note.direction}
           x={noteX}
-          y={yRatio * height - noteSize / 2}
-          size={noteSize}
-          opacity={yRatio < 0 ? 0.4 : yRatio > 1 ? 0.85 : 1}
+          audioPosition={audioPosition}
+          noteTimeMs={note.timeMs}
+          fallDurationMs={fallDurationMs}
+          laneHeight={height}
+          noteSize={noteSize}
         />
       ))}
     </View>
