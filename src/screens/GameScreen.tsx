@@ -388,7 +388,6 @@ export default function GameScreen(): React.ReactElement {
             }}
           >
             <ComboOverlay
-              combo={0}
               accentColor={NEON_PALETTE.primary}
               mutedColor={NEON_PALETTE.textDim}
               fontSize={SCREEN_H * 0.06}
