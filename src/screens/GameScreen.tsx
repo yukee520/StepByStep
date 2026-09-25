@@ -234,19 +234,17 @@ export default function GameScreen(): React.ReactElement {
     setShowPause(false);
     pausedByBackgroundRef.current = false;
 
-    // 1. Freeze the engine
+    // 1. Freeze the engine so it stops reading the audio position
     engine.pause();
 
-    // 2. Stop audio and WAIT for the native player to actually stop
-    await audio.stop();
-
-    // 3. Reset engine (stats + clock)
-    engine.restart();
-
-    // 4. Start audio from 0
+    // 2. Fully rebuild the audio player: stop → release → reload → play(0).
+    //    stop() + play() back-to-back silently fails on RN Sound 0.13.0.
     if (hasAudio) {
-      audio.play(0);
+      await audio.restart();
     }
+
+    // 3. Reset the engine (stats + clock)
+    engine.restart();
   }, [audio, engine, hasAudio]);
 
   const handleQuit = useCallback((): void => {
@@ -509,7 +507,9 @@ export default function GameScreen(): React.ReactElement {
         <PauseModal
           visible={showPause}
           onResume={handleResume}
-          onRestart={handleRestart}
+          onRestart={() => {
+            void handleRestart();
+          }}
           onQuit={handleQuit}
         />
       </SafeAreaView>
