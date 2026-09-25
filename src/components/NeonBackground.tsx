@@ -110,3 +110,6 @@ function NeonBackgroundBase({
     </View>
   );
 }
+
+const NeonBackground = React.memo(NeonBackgroundBase);
+export default NeonBackground;
