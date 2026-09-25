@@ -63,6 +63,16 @@ const FINISH_GRACE_MS = 1200;
 const VISIBLE_BEHIND = 0.2;
 const VISIBLE_AHEAD = 1.2;
 
+type Stats = {
+  score: number;
+  combo: number;
+  maxCombo: number;
+  perfect: number;
+  great: number;
+  good: number;
+  miss: number;
+};
+
 function findFirstNoteAtOrAfter(notes: Note[], target: number): number {
   let lo = 0;
   let hi = notes.length;
@@ -115,7 +125,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const visibleIdsRef = useRef<string>('');
   const lastFrameAtRef = useRef<number>(0);
 
-  const statsRef = useRef({
+  const statsRef = useRef<Stats>({
     score: 0,
     combo: 0,
     maxCombo: 0,
@@ -125,9 +135,47 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     miss: 0,
   });
 
+  // Pending state updates — batched into a single rAF
+  const pendingFeedbackRef = useRef<HitFeedback[]>([]);
+  const pendingStatsRef = useRef<boolean>(false);
+  const flushRafRef = useRef<number | null>(null);
+
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  /**
+   * Schedule a batch of state updates to run on the next animation frame.
+   * Called from event handlers (like gesture callbacks) that run outside
+   * React's batching scope, so all our setStates happen in one render pass.
+   */
+  const scheduleFlush = useCallback((): void => {
+    if (flushRafRef.current !== null) {
+      return;
+    }
+    flushRafRef.current = requestAnimationFrame(() => {
+      flushRafRef.current = null;
+      const stats = statsRef.current;
+
+      if (pendingStatsRef.current) {
+        pendingStatsRef.current = false;
+        setScore(stats.score);
+        setCombo(stats.combo);
+        setMaxCombo(stats.maxCombo);
+        setPerfectCount(stats.perfect);
+        setGreatCount(stats.great);
+        setGoodCount(stats.good);
+        setMissCount(stats.miss);
+      }
+
+      if (pendingFeedbackRef.current.length > 0 && onNoteHit) {
+        // Deliver only the latest feedback — the pop only shows one at a time
+        const last = pendingFeedbackRef.current[pendingFeedbackRef.current.length - 1];
+        pendingFeedbackRef.current.length = 0;
+        onNoteHit(last);
+      }
+    });
+  }, [onNoteHit]);
 
   const resetStats = useCallback((): void => {
     statsRef.current = {
@@ -144,6 +192,12 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     lastElapsedUpdateRef.current = 0;
     visibleIdsRef.current = '';
     lastFrameAtRef.current = 0;
+    pendingFeedbackRef.current = [];
+    pendingStatsRef.current = false;
+    if (flushRafRef.current !== null) {
+      cancelAnimationFrame(flushRafRef.current);
+      flushRafRef.current = null;
+    }
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
@@ -212,6 +266,44 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     [fallDurationMs],
   );
 
+  /**
+   * Apply a hit's judgment to the stats ref only. No setState here — the
+   * caller schedules a batched flush via `scheduleFlush`.
+   */
+  const applyJudgmentRef = useCallback(
+    (judgment: Judgment, note: Note, signedDelta: number): void => {
+      const stats = statsRef.current;
+      const base = JUDGMENT_SCORE[judgment];
+      const tier = Math.floor(stats.combo / 10);
+      const multiplier = Math.min(1.0 + tier * 0.1, 2.0);
+      const awarded = judgment === 'miss' ? 0 : Math.round(base * multiplier);
+
+      stats.score += awarded;
+
+      if (judgment === 'miss') {
+        stats.combo = 0;
+        stats.miss += 1;
+      } else {
+        stats.combo += 1;
+        if (stats.combo > stats.maxCombo) {
+          stats.maxCombo = stats.combo;
+        }
+        if (judgment === 'perfect') {
+          stats.perfect += 1;
+        } else if (judgment === 'great') {
+          stats.great += 1;
+        } else {
+          stats.good += 1;
+        }
+      }
+
+      void awarded;
+      void signedDelta;
+      void note;
+    },
+    [],
+  );
+
   const processMisses = useCallback(
     (now: number): void => {
       const notes = sortedNotes.current;
@@ -225,24 +317,32 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
           statsRef.current.combo = 0;
           statsRef.current.miss += 1;
           missedThisFrame += 1;
-          if (onNoteHit) {
-            onNoteHit({
-              direction: note.direction,
-              judgment: 'miss',
-              key: genId('fb'),
-              timeMs: Date.now(),
-            });
-          }
+          const event: JudgmentEvent = {
+            id: genId('evt'),
+            noteId: note.id,
+            direction: note.direction,
+            judgment: 'miss',
+            deltaPx: 0,
+            timeMs: Date.now(),
+            comboAfter: 0,
+            scoreAwarded: 0,
+          };
+          pendingFeedbackRef.current.push({
+            direction: event.direction,
+            judgment: event.judgment,
+            key: event.id,
+            timeMs: event.timeMs,
+          });
         }
         i += 1;
       }
       missPointerRef.current = i;
       if (missedThisFrame > 0) {
-        setCombo(0);
-        setMissCount(statsRef.current.miss);
+        pendingStatsRef.current = true;
+        scheduleFlush();
       }
     },
-    [fallDurationMs, onNoteHit],
+    [fallDurationMs, scheduleFlush],
   );
 
   const loop = useCallback((): void => {
@@ -376,64 +476,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     onFinish(summary);
   }, [buildSummary, onFinish, stopLoop]);
 
-  const applyJudgment = useCallback(
-    (judgment: Judgment, note: Note, deltaRatio: number): void => {
-      const stats = statsRef.current;
-      const base = JUDGMENT_SCORE[judgment];
-      const tier = Math.floor(stats.combo / 10);
-      const multiplier = Math.min(1.0 + tier * 0.1, 2.0);
-      const awarded =
-        judgment === 'miss' ? 0 : Math.round(base * multiplier);
-
-      stats.score += awarded;
-
-      if (judgment === 'miss') {
-        stats.combo = 0;
-        stats.miss += 1;
-        setMissCount(stats.miss);
-      } else {
-        stats.combo += 1;
-        if (stats.combo > stats.maxCombo) {
-          stats.maxCombo = stats.combo;
-        }
-        if (judgment === 'perfect') {
-          stats.perfect += 1;
-          setPerfectCount(stats.perfect);
-        } else if (judgment === 'great') {
-          stats.great += 1;
-          setGreatCount(stats.great);
-        } else {
-          stats.good += 1;
-          setGoodCount(stats.good);
-        }
-      }
-
-      setScore(stats.score);
-      setCombo(stats.combo);
-      setMaxCombo(stats.maxCombo);
-
-      if (onNoteHit) {
-        const event: JudgmentEvent = {
-          id: genId('evt'),
-          noteId: note.id,
-          direction: note.direction,
-          judgment,
-          deltaPx: deltaRatio,
-          timeMs: Date.now(),
-          comboAfter: stats.combo,
-          scoreAwarded: awarded,
-        };
-        onNoteHit({
-          direction: event.direction,
-          judgment: event.judgment,
-          key: event.id,
-          timeMs: event.timeMs,
-        });
-      }
-    },
-    [onNoteHit],
-  );
-
   const hit = useCallback(
     (direction: Direction): void => {
       if (statusRef.current !== 'playing') {
@@ -488,12 +530,37 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       }
 
       judgedRef.current.add(bestNote.id);
-      applyJudgment(judgment, bestNote, signedDelta);
+      applyJudgmentRef(judgment, bestNote, signedDelta);
+
+      const event: JudgmentEvent = {
+        id: genId('evt'),
+        noteId: bestNote.id,
+        direction: bestNote.direction,
+        judgment,
+        deltaPx: signedDelta,
+        timeMs: Date.now(),
+        comboAfter: statsRef.current.combo,
+        scoreAwarded: 0,
+      };
+      pendingFeedbackRef.current.push({
+        direction: event.direction,
+        judgment: event.judgment,
+        key: event.id,
+        timeMs: event.timeMs,
+      });
+      pendingStatsRef.current = true;
+      scheduleFlush();
 
       visibleIdsRef.current = '';
       perfMonitor.record('hit_ms', Date.now() - hitStart);
     },
-    [applyJudgment, computeYRatio, fallDurationMs, getNow],
+    [
+      applyJudgmentRef,
+      computeYRatio,
+      fallDurationMs,
+      getNow,
+      scheduleFlush,
+    ],
   );
 
   const releaseInput = useCallback((_direction: Direction): void => {
@@ -503,6 +570,10 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   useEffect(() => {
     return () => {
       stopLoop();
+      if (flushRafRef.current !== null) {
+        cancelAnimationFrame(flushRafRef.current);
+        flushRafRef.current = null;
+      }
     };
   }, [stopLoop]);
 
