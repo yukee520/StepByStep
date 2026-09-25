@@ -12,7 +12,7 @@ export type UseAudioResult = {
   play: (startAtMs?: number) => void;
   pause: () => void;
   resume: () => void;
-  stop: () => void;
+  stop: () => Promise<void>;
   release: () => Promise<void>;
   getPositionMs: () => number;
   isPlaying: () => boolean;
@@ -82,11 +82,11 @@ export function useAudio(): UseAudioResult {
     audioPlayer.resume();
   }, [soundEnabled]);
 
-  const stop = useCallback(() => {
+  const stop = useCallback(async (): Promise<void> => {
     if (!soundEnabled) {
       return;
     }
-    audioPlayer.stop();
+    await audioPlayer.stop();
   }, [soundEnabled]);
 
   const release = useCallback(async (): Promise<void> => {
@@ -118,7 +118,8 @@ export function useAudio(): UseAudioResult {
     isReady:
       status === 'ready' ||
       status === 'playing' ||
-      status === 'paused',
+      status === 'paused' ||
+      status === 'ended',
     load,
     play,
     pause,
