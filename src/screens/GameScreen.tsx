@@ -23,7 +23,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useScoresStore } from '@/store/useScoresStore';
 import { useGameStore } from '@/store/useGameStore';
-import { DIRECTIONS, type Direction, type Song } from '@/types/song';
+import { type Direction, type Song } from '@/types/song';
 import type { GameRunSummary } from '@/types/game';
 import type { RootStackParamList } from '@/types/navigation';
 import { accuracyToGrade } from '@/utils/grading';
@@ -385,25 +385,22 @@ export default function GameScreen(): React.ReactElement {
               overflow: 'hidden',
             }}
           >
-            {DIRECTIONS.map((dir, index) => {
-              const laneNotes = engine.visibleNotes.filter(
-                (n) => n.direction === dir,
-              );
-              return (
-                <Lane
-                  key={dir}
-                  width={laneWidth}
-                  left={index * laneWidth}
-                  top={0}
-                  height={laneAreaHeight}
-                  notes={laneNotes}
-                  noteSize={noteSize}
-                  isActive={laneNotes.length > 0}
-                  audioPosition={engine.audioPosition}
-                  fallDurationMs={engine.fallDurationMs}
-                />
-              );
-            })}
+            {engine.lanes.map((lane, index) => (
+              <Lane
+                key={index}
+                width={laneWidth}
+                left={index * laneWidth}
+                top={0}
+                height={laneAreaHeight}
+                noteSize={noteSize}
+                audioPosition={engine.audioPosition}
+                fallDurationMs={engine.fallDurationMs}
+                laneActive={lane.active}
+                laneTimeMs={lane.timeMs}
+                laneDirection={lane.direction}
+                laneHasNotes={lane.hasNotes}
+              />
+            ))}
           </View>
 
           <View
