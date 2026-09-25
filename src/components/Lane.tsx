@@ -1,6 +1,10 @@
+
 import React from 'react';
 import { View } from 'react-native';
-import type { SharedValue } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated';
 import FallingNote, { SLOT_COUNT } from '@/components/FallingNote';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -87,19 +91,10 @@ function LaneBackground({
   laneHasNotes: SharedValue<number>;
   primaryColor: string;
 }): React.ReactElement {
-  const { useAnimatedStyle } = require('react-native-reanimated') as {
-    useAnimatedStyle: <T>(fn: () => T) => T;
-  };
-  const Animated = require('react-native-reanimated').default as {
-    View: React.ComponentType<{
-      pointerEvents?: string;
-      style: unknown;
-    }>;
-  };
-
-  const style = useAnimatedStyle(() => {
+  const animatedStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: laneHasNotes.value === 1 ? `${primaryColor}0A` : 'transparent',
+      backgroundColor:
+        laneHasNotes.value === 1 ? `${primaryColor}0A` : 'transparent',
     };
   });
 
@@ -114,7 +109,7 @@ function LaneBackground({
           width,
           height,
         },
-        style,
+        animatedStyle,
       ]}
     />
   );
