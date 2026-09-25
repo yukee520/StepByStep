@@ -100,26 +100,15 @@ export default function GameScreen(): React.ReactElement {
   );
 
   // Feedback is deferred to the next frame so `hit()` doesn't block input.
-  const onNoteHit = useCallback((fb: HitFeedback): void => {
-    pendingFeedbackRef.current = fb;
-    if (feedbackRafRef.current !== null) {
-      return;
-    }
-    feedbackRafRef.current = requestAnimationFrame(() => {
-      feedbackRafRef.current = null;
-      const pending = pendingFeedbackRef.current;
-      if (!pending) {
-        return;
-      }
-      setFeedback(pending);
-      if (feedbackTimeoutRef.current !== null) {
-        clearTimeout(feedbackTimeoutRef.current);
-      }
-      feedbackTimeoutRef.current = setTimeout(() => {
-        setFeedback(null);
-      }, 260);
-    });
-  }, []);
+const onNoteHit = useCallback((fb: HitFeedback): void => {
+  setFeedback(fb);
+  if (feedbackTimeoutRef.current !== null) {
+    clearTimeout(feedbackTimeoutRef.current);
+  }
+  feedbackTimeoutRef.current = setTimeout(() => {
+    setFeedback(null);
+  }, 260);
+}, []);
 
   const hasAudio = Boolean(song?.audioPath);
 
