@@ -6,39 +6,38 @@ import {
 } from 'react-native';
 import ArrowButton from '@/components/ArrowButton';
 import type { Direction } from '@/types/song';
-import { NEON_PALETTE } from '@/theme/colors';
 
 const LANE_ORDER: Direction[] = ['left', 'down', 'up', 'right'];
 
 export type ArrowRowProps = {
-  /** Called immediately when a finger enters a lane. */
   onPress: (direction: Direction) => void;
-  /** Called when a finger leaves a lane or lifts. */
   onRelease: (direction: Direction) => void;
-  /** Size of each button in pixels. */
   buttonSize: number;
-  /** Gap between buttons. */
   gap: number;
-  /** Hot level (0..1) per direction — how much a note overlaps. */
   hotLevels: Record<Direction, number>;
-  /** Padding on the left/right of the row container. */
   horizontalPadding: number;
 };
 
-type LaneHit = {
-  direction: Direction;
-  index: number;
+type NativeTouch = {
+  identifier?: number;
+  locationX: number;
+  locationY: number;
+  pageX: number;
+  pageY: number;
 };
 
 /**
  * Manages a row of 4 arrow buttons with native multi-touch support.
  *
- * Each finger is tracked by its unique touch identifier. A single finger
- * moving across lanes will release its previous lane and press the new one.
- * Multiple fingers can press different lanes at the same time (chords).
+ * Every responder event processes the full `nativeEvent.touches` array,
+ * so multiple fingers landing on different buttons are all registered.
  *
- * Uses the raw Responder API instead of Pressable so there's no minimum
- * press duration — presses fire on the very first frame the finger lands.
+ * A single finger sliding across the row releases its previous lane and
+ * presses the new one. Multiple fingers can hold different lanes at once.
+ *
+ * The responder is set up with `onStartShouldSetResponderCapture` so the
+ * row claims every touch before any child view sees it — this prevents
+ * Android from routing the 2nd finger to a child that isn't listening.
  */
 export default function ArrowRow({
   onPress,
@@ -49,156 +48,183 @@ export default function ArrowRow({
   horizontalPadding,
 }: ArrowRowProps): React.ReactElement {
   const [rowWidth, setRowWidth] = useState<number>(0);
-  // Map from touch identifier -> lane index currently pressed by that finger
+
+  // Map from touch identifier -> lane index currently pressed
   const activeTouchesRef = useRef<Map<number, number>>(new Map());
-  // Map from lane index -> which touch identifier is currently pressing it
-  const laneOwnersRef = useRef<Map<number, number>>(new Map());
-  // Set of lane indices that are currently pressed (for UI feedback)
+  // Set of lane indices that are currently pressed by any finger
   const [pressedSet, setPressedSet] = useState<Set<number>>(new Set());
 
   const handleLayout = useCallback((e: LayoutChangeEvent): void => {
     setRowWidth(e.nativeEvent.layout.width);
   }, []);
 
-  /**
-   * Return which of the 4 lanes a touch at pageX is over, given the row's
-   * origin. Uses the touch's pageX minus the row's pageX.
-   */
   const hitTest = useCallback(
-    (localX: number): LaneHit | null => {
+    (localX: number): number | null => {
       if (rowWidth <= 0) {
         return null;
       }
-      const effectiveWidth = rowWidth - horizontalPadding * 2;
-      if (effectiveWidth <= 0) {
-        return null;
-      }
-      // localX here is relative to the row container
       const x = localX - horizontalPadding;
+      const effectiveWidth = rowWidth - horizontalPadding * 2;
       if (x < 0 || x > effectiveWidth) {
         return null;
       }
-      // Total width of 4 buttons + 3 gaps
-      const totalButtons = buttonSize * 4 + gap * 3;
-      if (totalButtons <= 0) {
-        return null;
-      }
-      // Distribute gaps between buttons
       const slotWidth = effectiveWidth / 4;
       const index = Math.min(3, Math.max(0, Math.floor(x / slotWidth)));
-      return { direction: LANE_ORDER[index], index };
+      return index;
     },
-    [rowWidth, horizontalPadding, buttonSize, gap],
+    [rowWidth, horizontalPadding],
+  );
+
+  const updatePressSet = useCallback((): void => {
+    setPressedSet(new Set(activeTouchesRef.current.values()));
+  }, []);
+
+  const pressLane = useCallback(
+    (index: number): void => {
+      onPress(LANE_ORDER[index]);
+      updatePressSet();
+    },
+    [onPress, updatePressSet],
+  );
+
+  const releaseLane = useCallback(
+    (index: number): void => {
+      onRelease(LANE_ORDER[index]);
+      updatePressSet();
+    },
+    [onRelease, updatePressSet],
   );
 
   /**
-   * Update the pressed state for a given touch identifier. If the finger has
-   * moved to a different lane, releases the previous and presses the new.
+   * Process a single touch from a native touch event. Called for every
+   * touch in nativeEvent.touches on every responder event.
    */
-  const updateTouch = useCallback(
-    (touchId: number, localX: number): void => {
-      const hit = hitTest(localX);
-      const previousIndex = activeTouchesRef.current.get(touchId);
+  const processTouch = useCallback(
+    (t: NativeTouch): void => {
+      const id = t.identifier ?? 0;
+      const index = hitTest(t.locationX);
+      const previous = activeTouchesRef.current.get(id);
 
-      // Finger left the row entirely
-      if (!hit) {
-        if (previousIndex !== undefined) {
-          activeTouchesRef.current.delete(touchId);
-          laneOwnersRef.current.delete(previousIndex);
-          setPressedSet(new Set(laneOwnersRef.current.keys()));
-          onRelease(LANE_ORDER[previousIndex]);
+      if (index === null) {
+        // Finger is outside the row — release whatever it was pressing
+        if (previous !== undefined) {
+          activeTouchesRef.current.delete(id);
+          releaseLane(previous);
         }
         return;
       }
 
-      // Same lane as before — nothing to do
-      if (previousIndex === hit.index) {
+      if (previous === index) {
         return;
       }
 
-      // Release the old lane if the finger moved
-      if (previousIndex !== undefined) {
-        laneOwnersRef.current.delete(previousIndex);
-        onRelease(LANE_ORDER[previousIndex]);
+      // Finger moved to a different lane or just landed
+      if (previous !== undefined) {
+        releaseLane(previous);
       }
-
-      // Claim the new lane
-      activeTouchesRef.current.set(touchId, hit.index);
-      laneOwnersRef.current.set(hit.index, touchId);
-      setPressedSet(new Set(laneOwnersRef.current.keys()));
-      onPress(hit.direction);
+      activeTouchesRef.current.set(id, index);
+      pressLane(index);
     },
-    [hitTest, onPress, onRelease],
+    [hitTest, pressLane, releaseLane],
   );
 
-  const endTouch = useCallback(
-    (touchId: number): void => {
-      const index = activeTouchesRef.current.get(touchId);
+  /**
+   * Release a specific touch identifier. Called from release / terminate
+   * events with the changedTouches array.
+   */
+  const releaseTouchById = useCallback(
+    (id: number): void => {
+      const index = activeTouchesRef.current.get(id);
       if (index === undefined) {
         return;
       }
-      activeTouchesRef.current.delete(touchId);
-      laneOwnersRef.current.delete(index);
-      setPressedSet(new Set(laneOwnersRef.current.keys()));
-      onRelease(LANE_ORDER[index]);
+      activeTouchesRef.current.delete(id);
+      releaseLane(index);
     },
-    [onRelease],
+    [releaseLane],
+  );
+
+  const processAllActiveTouches = useCallback(
+    (e: GestureResponderEvent): void => {
+      const nativeTouches = (e.nativeEvent as unknown as { touches?: NativeTouch[] })
+        .touches;
+      if (!nativeTouches || nativeTouches.length === 0) {
+        return;
+      }
+      for (const t of nativeTouches) {
+        processTouch(t);
+      }
+    },
+    [processTouch],
+  );
+
+  const processChangedTouches = useCallback(
+    (e: GestureResponderEvent): void => {
+      const changed = (
+        e.nativeEvent as unknown as { changedTouches?: NativeTouch[] }
+      ).changedTouches;
+      if (!changed || changed.length === 0) {
+        return;
+      }
+      for (const t of changed) {
+        const id = t.identifier ?? 0;
+        releaseTouchById(id);
+      }
+    },
+    [releaseTouchById],
   );
 
   const handleResponderGrant = useCallback(
     (e: GestureResponderEvent): void => {
-      const touch = e.nativeEvent;
-      const id = touch.identifier ?? 0;
-      const localX = touch.locationX;
-      updateTouch(id, localX);
+      processAllActiveTouches(e);
     },
-    [updateTouch],
+    [processAllActiveTouches],
   );
 
   const handleResponderMove = useCallback(
     (e: GestureResponderEvent): void => {
-      // Multi-touch: iterate over every active touch in the event
-      const touches = e.nativeEvent.touches;
-      if (!touches || touches.length === 0) {
-        return;
-      }
-      for (const t of touches) {
-        const id = t.identifier ?? 0;
-        updateTouch(id, t.locationX);
-      }
+      processAllActiveTouches(e);
     },
-    [updateTouch],
+    [processAllActiveTouches],
   );
 
   const handleResponderRelease = useCallback(
     (e: GestureResponderEvent): void => {
-      const touches = e.nativeEvent.changedTouches;
-      if (!touches || touches.length === 0) {
-        // Fallback: release everything
-        activeTouchesRef.current.forEach((_v, id) => endTouch(id));
-        return;
-      }
-      for (const t of touches) {
-        const id = t.identifier ?? 0;
-        endTouch(id);
+      processChangedTouches(e);
+      // In case native's changedTouches is empty on some devices, also
+      // release anything that is no longer present in `touches`.
+      const stillTouching = (
+        e.nativeEvent as unknown as { touches?: NativeTouch[] }
+      ).touches;
+      const stillIds = new Set<number>(
+        (stillTouching ?? []).map((t) => t.identifier ?? 0),
+      );
+      const ids = Array.from(activeTouchesRef.current.keys());
+      for (const id of ids) {
+        if (!stillIds.has(id)) {
+          releaseTouchById(id);
+        }
       }
     },
-    [endTouch],
+    [processChangedTouches, releaseTouchById],
   );
 
   const handleResponderTerminate = useCallback(
-    (e: GestureResponderEvent): void => {
-      // Lost responder — release all our touches
+    (_e: GestureResponderEvent): void => {
       const ids = Array.from(activeTouchesRef.current.keys());
-      ids.forEach((id) => endTouch(id));
-      void e;
+      for (const id of ids) {
+        releaseTouchById(id);
+      }
     },
-    [endTouch],
+    [releaseTouchById],
   );
 
   return (
     <View
       onLayout={handleLayout}
+      // Capture every touch before children see it — mandatory for multi-touch
+      onStartShouldSetResponderCapture={() => true}
+      onMoveShouldSetResponderCapture={() => true}
       onStartShouldSetResponder={() => true}
       onMoveShouldSetResponder={() => true}
       onResponderGrant={handleResponderGrant}
@@ -211,7 +237,6 @@ export default function ArrowRow({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: horizontalPadding,
-        // Prevent layout shift from capture offset
         minHeight: buttonSize,
       }}
     >
