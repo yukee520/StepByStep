@@ -69,6 +69,18 @@ class AudioPlayerService {
     if (this.status === 'playing') {
       const elapsed = Date.now() - this.playStartedAt;
       const pos = this.startPositionMs + elapsed;
+
+      // Force-end detection: if the estimated position has passed the
+      // audio's duration but the native callback hasn't fired yet
+      if (this.durationMs > 0 && pos >= this.durationMs + 100) {
+        this.ended = true;
+        this.startPositionMs = this.durationMs;
+        this.pausedPositionMs = this.durationMs;
+        this.status = 'ended';
+        this.emit();
+        return Math.round(this.durationMs);
+      }
+
       return Math.round(Math.max(0, pos));
     }
     if (this.status === 'paused') {
@@ -167,15 +179,51 @@ class AudioPlayerService {
     this.play(this.pausedPositionMs);
   }
 
-  stop(): void {
+  /**
+   * Stops playback and resets position to 0.
+   * Returns a promise that resolves once the native player has stopped.
+   */
+  async stop(): Promise<void> {
     if (!this.sound) {
-      return;
-    }
-    this.sound.stop(() => {
       this.startPositionMs = 0;
       this.pausedPositionMs = 0;
       this.ended = false;
-      this.setStatus('ready');
+      this.status = 'ready';
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      const s = this.sound;
+      if (!s) {
+        this.startPositionMs = 0;
+        this.pausedPositionMs = 0;
+        this.ended = false;
+        this.status = 'ready';
+        resolve();
+        return;
+      }
+      let settled = false;
+      const settle = (): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        this.startPositionMs = 0;
+        this.pausedPositionMs = 0;
+        this.ended = false;
+        this.setStatus('ready');
+        resolve();
+      };
+
+      try {
+        s.stop(() => {
+          settle();
+        });
+      } catch {
+        settle();
+      }
+
+      // Safety timeout in case native callback never fires
+      setTimeout(settle, 400);
     });
   }
 
