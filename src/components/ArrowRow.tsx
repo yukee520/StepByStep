@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 import {
   Gesture,
@@ -6,6 +6,7 @@ import {
   type GestureTouchEvent,
   type TouchData,
 } from 'react-native-gesture-handler';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 import ArrowButton from '@/components/ArrowButton';
 import type { Direction } from '@/types/song';
 
@@ -27,15 +28,9 @@ type RowFrame = {
   height: number;
 };
 
-/**
- * Manages a row of 4 arrow buttons with native multi-touch support.
- *
- * Uses react-native-gesture-handler's Pan gesture with up to 4 pointers
- * so each finger gets its own touch identifier and independent lane.
- *
- * Pressed-state updates are batched with `requestAnimationFrame` so a
- * burst of touch events produces at most one re-render per frame.
- */
+const PRESS_IN_MS = 60;
+const PRESS_OUT_MS = 120;
+
 export default function ArrowRow({
   onPress,
   onRelease,
@@ -46,46 +41,32 @@ export default function ArrowRow({
 }: ArrowRowProps): React.ReactElement {
   const rowRef = useRef<View>(null);
   const frameRef = useRef<RowFrame>({ x: 0, y: 0, width: 0, height: 0 });
-  const hasMeasuredRef = useRef<boolean>(false);
+
+  // Per-lane shared values — driving button visuals on the UI thread
+  const pressed0 = useSharedValue(0);
+  const pressed1 = useSharedValue(0);
+  const pressed2 = useSharedValue(0);
+  const pressed3 = useSharedValue(0);
+
+  const hot0 = useSharedValue(0);
+  const hot1 = useSharedValue(0);
+  const hot2 = useSharedValue(0);
+  const hot3 = useSharedValue(0);
+
+  const pressedValuesRef = useRef([pressed0, pressed1, pressed2, pressed3]);
+  const hotValuesRef = useRef([hot0, hot1, hot2, hot3]);
 
   // Map from touch id -> lane index currently pressed by that finger
   const activeTouchesRef = useRef<Map<number, number>>(new Map());
 
-  // Committed pressed set (used for rendering)
-  const [pressedSet, setPressedSet] = useState<Set<number>>(new Set());
-
-  // Pending flag so we only schedule one rAF per burst
-  const framePendingRef = useRef<boolean>(false);
-
-  /**
-   * Schedule a pressed-set update on the next animation frame. If many
-   * touch events arrive in the same frame, we still only update once.
-   */
-  const schedulePressedSetUpdate = useCallback((): void => {
-    if (framePendingRef.current) {
-      return;
+  // Sync hot levels from props into shared values
+  useEffect(() => {
+    const map: Direction[] = ['left', 'down', 'up', 'right'];
+    for (let i = 0; i < 4; i += 1) {
+      const level = hotLevels[map[i]] ?? 0;
+      hotValuesRef.current[i].value = withTiming(level, { duration: 80 });
     }
-    framePendingRef.current = true;
-    requestAnimationFrame(() => {
-      framePendingRef.current = false;
-      const next = new Set(activeTouchesRef.current.values());
-      setPressedSet((prev) => {
-        if (prev.size === next.size) {
-          let same = true;
-          for (const v of next) {
-            if (!prev.has(v)) {
-              same = false;
-              break;
-            }
-          }
-          if (same) {
-            return prev;
-          }
-        }
-        return next;
-      });
-    });
-  }, []);
+  }, [hotLevels]);
 
   const measureRow = useCallback((): void => {
     const node = rowRef.current;
@@ -94,7 +75,6 @@ export default function ArrowRow({
     }
     node.measureInWindow((x, y, width, height) => {
       frameRef.current = { x, y, width, height };
-      hasMeasuredRef.current = true;
     });
   }, []);
 
@@ -105,8 +85,6 @@ export default function ArrowRow({
     [measureRow],
   );
 
-  // Re-measure when the screen resizes (rotation, split-screen) — rare, but
-  // safe. This runs once.
   useEffect(() => {
     measureRow();
   }, [measureRow]);
@@ -128,25 +106,19 @@ export default function ArrowRow({
         return null;
       }
       const slotWidth = effectiveWidth / 4;
-      const index = Math.min(3, Math.max(0, Math.floor(x / slotWidth)));
-      return index;
+      return Math.min(3, Math.max(0, Math.floor(x / slotWidth)));
     },
     [horizontalPadding],
   );
 
-  const pressLane = useCallback(
-    (index: number): void => {
-      onPress(LANE_ORDER[index]);
-    },
-    [onPress],
-  );
-
-  const releaseLane = useCallback(
-    (index: number): void => {
-      onRelease(LANE_ORDER[index]);
-    },
-    [onRelease],
-  );
+  const setLanePressed = useCallback((index: number, pressed: boolean): void => {
+    const value = pressedValuesRef.current[index];
+    if (pressed) {
+      value.value = withTiming(1, { duration: PRESS_IN_MS });
+    } else {
+      value.value = withTiming(0, { duration: PRESS_OUT_MS });
+    }
+  }, []);
 
   const processTouch = useCallback(
     (touch: TouchData): void => {
@@ -157,8 +129,8 @@ export default function ArrowRow({
       if (index === null) {
         if (previous !== undefined) {
           activeTouchesRef.current.delete(id);
-          releaseLane(previous);
-          schedulePressedSetUpdate();
+          onRelease(LANE_ORDER[previous]);
+          setLanePressed(previous, false);
         }
         return;
       }
@@ -168,13 +140,14 @@ export default function ArrowRow({
       }
 
       if (previous !== undefined) {
-        releaseLane(previous);
+        onRelease(LANE_ORDER[previous]);
+        setLanePressed(previous, false);
       }
       activeTouchesRef.current.set(id, index);
-      pressLane(index);
-      schedulePressedSetUpdate();
+      onPress(LANE_ORDER[index]);
+      setLanePressed(index, true);
     },
-    [hitTest, pressLane, releaseLane, schedulePressedSetUpdate],
+    [hitTest, onPress, onRelease, setLanePressed],
   );
 
   const releaseTouchById = useCallback(
@@ -184,10 +157,10 @@ export default function ArrowRow({
         return;
       }
       activeTouchesRef.current.delete(id);
-      releaseLane(index);
-      schedulePressedSetUpdate();
+      onRelease(LANE_ORDER[index]);
+      setLanePressed(index, false);
     },
-    [releaseLane, schedulePressedSetUpdate],
+    [onRelease, setLanePressed],
   );
 
   const handleTouchesDown = useCallback(
@@ -248,15 +221,30 @@ export default function ArrowRow({
           minHeight: buttonSize,
         }}
       >
-        {LANE_ORDER.map((dir, index) => (
-          <ArrowButton
-            key={dir}
-            direction={dir}
-            size={buttonSize}
-            pressed={pressedSet.has(index)}
-            hotLevel={hotLevels[dir] ?? 0}
-          />
-        ))}
+        <ArrowButton
+          direction="left"
+          size={buttonSize}
+          pressedValue={pressed0}
+          hotValue={hot0}
+        />
+        <ArrowButton
+          direction="down"
+          size={buttonSize}
+          pressedValue={pressed1}
+          hotValue={hot1}
+        />
+        <ArrowButton
+          direction="up"
+          size={buttonSize}
+          pressedValue={pressed2}
+          hotValue={hot2}
+        />
+        <ArrowButton
+          direction="right"
+          size={buttonSize}
+          pressedValue={pressed3}
+          hotValue={hot3}
+        />
       </View>
     </GestureDetector>
   );
