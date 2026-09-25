@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSharedValue } from 'react-native-reanimated';
+import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 import {
   DIFFICULTY_FALL_MULTIPLIER,
   FALL_DURATION_MS,
@@ -26,6 +26,30 @@ export type HitFeedback = {
   timeMs: number;
 };
 
+const LANE_COUNT = 4;
+const SLOT_COUNT = 12;
+
+const LANE_INDEX: Record<Direction, number> = {
+  left: 0,
+  down: 1,
+  up: 2,
+  right: 3,
+};
+
+const DIRECTION_INDEX: Record<Direction, number> = {
+  left: 0,
+  down: 1,
+  up: 2,
+  right: 3,
+};
+
+export type LaneSharedValues = {
+  active: SharedValue<number[]>;
+  timeMs: SharedValue<number[]>;
+  direction: SharedValue<number[]>;
+  hasNotes: SharedValue<number>;
+};
+
 export type UseGameEngineOptions = {
   song: Song;
   inputOffsetMs: number;
@@ -44,8 +68,8 @@ export type UseGameEngineResult = {
   goodCount: number;
   missCount: number;
   accuracy: number;
-  visibleNotes: Note[];
-  audioPosition: ReturnType<typeof useSharedValue<number>>;
+  audioPosition: SharedValue<number>;
+  lanes: [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues];
   elapsedMs: number;
   durationMs: number;
   progress: number;
@@ -110,9 +134,38 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const [goodCount, setGoodCount] = useState<number>(0);
   const [missCount, setMissCount] = useState<number>(0);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
-  const [visibleNotes, setVisibleNotes] = useState<Note[]>([]);
 
   const audioPosition = useSharedValue<number>(0);
+
+  // Lane shared arrays
+  const lane0Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane0Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane0Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane0Has = useSharedValue<number>(0);
+
+  const lane1Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane1Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane1Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane1Has = useSharedValue<number>(0);
+
+  const lane2Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane2Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane2Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane2Has = useSharedValue<number>(0);
+
+  const lane3Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane3Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane3Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane3Has = useSharedValue<number>(0);
+
+  const lanesRef = useRef<
+    [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues]
+  >([
+    { active: lane0Active, timeMs: lane0Time, direction: lane0Dir, hasNotes: lane0Has },
+    { active: lane1Active, timeMs: lane1Time, direction: lane1Dir, hasNotes: lane1Has },
+    { active: lane2Active, timeMs: lane2Time, direction: lane2Dir, hasNotes: lane2Has },
+    { active: lane3Active, timeMs: lane3Time, direction: lane3Dir, hasNotes: lane3Has },
+  ]);
 
   const wallClockStartRef = useRef<number>(0);
   const wallClockPausedRef = useRef<number>(0);
@@ -122,8 +175,10 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const audioEndedAtRef = useRef<number>(0);
   const missPointerRef = useRef<number>(0);
   const lastElapsedUpdateRef = useRef<number>(0);
-  const visibleIdsRef = useRef<string>('');
   const lastFrameAtRef = useRef<number>(0);
+
+  // Per-lane visible notes buffers — reused each frame to avoid allocations
+  const laneBuffersRef = useRef<Note[][]>([[], [], [], []]);
 
   const statsRef = useRef<Stats>({
     score: 0,
@@ -135,47 +190,9 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     miss: 0,
   });
 
-  // Pending state updates — batched into a single rAF
-  const pendingFeedbackRef = useRef<HitFeedback[]>([]);
-  const pendingStatsRef = useRef<boolean>(false);
-  const flushRafRef = useRef<number | null>(null);
-
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
-
-  /**
-   * Schedule a batch of state updates to run on the next animation frame.
-   * Called from event handlers (like gesture callbacks) that run outside
-   * React's batching scope, so all our setStates happen in one render pass.
-   */
-  const scheduleFlush = useCallback((): void => {
-    if (flushRafRef.current !== null) {
-      return;
-    }
-    flushRafRef.current = requestAnimationFrame(() => {
-      flushRafRef.current = null;
-      const stats = statsRef.current;
-
-      if (pendingStatsRef.current) {
-        pendingStatsRef.current = false;
-        setScore(stats.score);
-        setCombo(stats.combo);
-        setMaxCombo(stats.maxCombo);
-        setPerfectCount(stats.perfect);
-        setGreatCount(stats.great);
-        setGoodCount(stats.good);
-        setMissCount(stats.miss);
-      }
-
-      if (pendingFeedbackRef.current.length > 0 && onNoteHit) {
-        // Deliver only the latest feedback — the pop only shows one at a time
-        const last = pendingFeedbackRef.current[pendingFeedbackRef.current.length - 1];
-        pendingFeedbackRef.current.length = 0;
-        onNoteHit(last);
-      }
-    });
-  }, [onNoteHit]);
 
   const resetStats = useCallback((): void => {
     statsRef.current = {
@@ -190,14 +207,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     judgedRef.current = new Set();
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
-    visibleIdsRef.current = '';
     lastFrameAtRef.current = 0;
-    pendingFeedbackRef.current = [];
-    pendingStatsRef.current = false;
-    if (flushRafRef.current !== null) {
-      cancelAnimationFrame(flushRafRef.current);
-      flushRafRef.current = null;
-    }
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
@@ -206,7 +216,14 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     setGoodCount(0);
     setMissCount(0);
     setElapsedMs(0);
-    setVisibleNotes([]);
+    // Clear lanes
+    const lanes = lanesRef.current;
+    for (let l = 0; l < LANE_COUNT; l += 1) {
+      lanes[l].active.value = new Array(SLOT_COUNT).fill(0);
+      lanes[l].timeMs.value = new Array(SLOT_COUNT).fill(0);
+      lanes[l].direction.value = new Array(SLOT_COUNT).fill(0);
+      lanes[l].hasNotes.value = 0;
+    }
   }, []);
 
   const buildSummary = useCallback((): GameRunSummary => {
@@ -266,44 +283,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     [fallDurationMs],
   );
 
-  /**
-   * Apply a hit's judgment to the stats ref only. No setState here — the
-   * caller schedules a batched flush via `scheduleFlush`.
-   */
-  const applyJudgmentRef = useCallback(
-    (judgment: Judgment, note: Note, signedDelta: number): void => {
-      const stats = statsRef.current;
-      const base = JUDGMENT_SCORE[judgment];
-      const tier = Math.floor(stats.combo / 10);
-      const multiplier = Math.min(1.0 + tier * 0.1, 2.0);
-      const awarded = judgment === 'miss' ? 0 : Math.round(base * multiplier);
-
-      stats.score += awarded;
-
-      if (judgment === 'miss') {
-        stats.combo = 0;
-        stats.miss += 1;
-      } else {
-        stats.combo += 1;
-        if (stats.combo > stats.maxCombo) {
-          stats.maxCombo = stats.combo;
-        }
-        if (judgment === 'perfect') {
-          stats.perfect += 1;
-        } else if (judgment === 'great') {
-          stats.great += 1;
-        } else {
-          stats.good += 1;
-        }
-      }
-
-      void awarded;
-      void signedDelta;
-      void note;
-    },
-    [],
-  );
-
   const processMisses = useCallback(
     (now: number): void => {
       const notes = sortedNotes.current;
@@ -317,32 +296,24 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
           statsRef.current.combo = 0;
           statsRef.current.miss += 1;
           missedThisFrame += 1;
-          const event: JudgmentEvent = {
-            id: genId('evt'),
-            noteId: note.id,
-            direction: note.direction,
-            judgment: 'miss',
-            deltaPx: 0,
-            timeMs: Date.now(),
-            comboAfter: 0,
-            scoreAwarded: 0,
-          };
-          pendingFeedbackRef.current.push({
-            direction: event.direction,
-            judgment: event.judgment,
-            key: event.id,
-            timeMs: event.timeMs,
-          });
+          if (onNoteHit) {
+            onNoteHit({
+              direction: note.direction,
+              judgment: 'miss',
+              key: genId('fb'),
+              timeMs: Date.now(),
+            });
+          }
         }
         i += 1;
       }
       missPointerRef.current = i;
       if (missedThisFrame > 0) {
-        pendingStatsRef.current = true;
-        scheduleFlush();
+        setCombo(0);
+        setMissCount(statsRef.current.miss);
       }
     },
-    [fallDurationMs, scheduleFlush],
+    [fallDurationMs, onNoteHit],
   );
 
   const loop = useCallback((): void => {
@@ -356,10 +327,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     }
     lastFrameAtRef.current = frameStart;
 
-    perfMonitor.mark('get_now');
     const now = getNow();
-    perfMonitor.record('get_now_ms', perfMonitor.since('get_now'));
-
     audioPosition.value = now;
 
     if (now - lastElapsedUpdateRef.current >= 100) {
@@ -367,12 +335,18 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       setElapsedMs(now);
     }
 
+    // Reset lane buffers
+    const buffers = laneBuffersRef.current;
+    for (let l = 0; l < LANE_COUNT; l += 1) {
+      buffers[l].length = 0;
+    }
+
+    // Fill with visible notes
     const notes = sortedNotes.current;
     const loTime = now - fallDurationMs * VISIBLE_BEHIND;
     const hiTime = now + fallDurationMs * VISIBLE_AHEAD;
     const startIdx = findFirstNoteAtOrAfter(notes, loTime);
 
-    const upcoming: Note[] = [];
     for (let i = startIdx; i < notes.length; i += 1) {
       const note = notes[i];
       if (note.timeMs > hiTime) {
@@ -381,17 +355,31 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (judgedRef.current.has(note.id)) {
         continue;
       }
-      upcoming.push(note);
+      const laneIdx = LANE_INDEX[note.direction];
+      const buf = buffers[laneIdx];
+      if (buf.length < SLOT_COUNT) {
+        buf.push(note);
+      }
     }
 
-    perfMonitor.record('visible_notes', upcoming.length);
-
-    const idKey = upcoming.map((n) => n.id).join('|');
-    if (idKey !== visibleIdsRef.current) {
-      visibleIdsRef.current = idKey;
-      const setStart = Date.now();
-      setVisibleNotes(upcoming);
-      perfMonitor.record('set_visible_ms', Date.now() - setStart);
+    // Write to shared values
+    const lanes = lanesRef.current;
+    for (let l = 0; l < LANE_COUNT; l += 1) {
+      const buf = buffers[l];
+      const lane = lanes[l];
+      const newActive = new Array(SLOT_COUNT).fill(0);
+      const newTime = new Array(SLOT_COUNT).fill(0);
+      const newDir = new Array(SLOT_COUNT).fill(0);
+      for (let s = 0; s < buf.length; s += 1) {
+        const note = buf[s];
+        newActive[s] = 1;
+        newTime[s] = note.timeMs;
+        newDir[s] = DIRECTION_INDEX[note.direction];
+      }
+      lane.active.value = newActive;
+      lane.timeMs.value = newTime;
+      lane.direction.value = newDir;
+      lane.hasNotes.value = buf.length > 0 ? 1 : 0;
     }
 
     processMisses(now);
@@ -476,6 +464,36 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     onFinish(summary);
   }, [buildSummary, onFinish, stopLoop]);
 
+  const applyJudgmentRef = useCallback(
+    (judgment: Judgment, _note: Note, _signedDelta: number): void => {
+      const stats = statsRef.current;
+      const base = JUDGMENT_SCORE[judgment];
+      const tier = Math.floor(stats.combo / 10);
+      const multiplier = Math.min(1.0 + tier * 0.1, 2.0);
+      const awarded = judgment === 'miss' ? 0 : Math.round(base * multiplier);
+
+      stats.score += awarded;
+
+      if (judgment === 'miss') {
+        stats.combo = 0;
+        stats.miss += 1;
+      } else {
+        stats.combo += 1;
+        if (stats.combo > stats.maxCombo) {
+          stats.maxCombo = stats.combo;
+        }
+        if (judgment === 'perfect') {
+          stats.perfect += 1;
+        } else if (judgment === 'great') {
+          stats.great += 1;
+        } else {
+          stats.good += 1;
+        }
+      }
+    },
+    [],
+  );
+
   const hit = useCallback(
     (direction: Direction): void => {
       if (statusRef.current !== 'playing') {
@@ -510,11 +528,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         }
       }
 
-      if (!bestNote) {
-        perfMonitor.record('hit_ms', Date.now() - hitStart);
-        return;
-      }
-      if (bestDelta > PIXEL_WINDOW.good) {
+      if (!bestNote || bestDelta > PIXEL_WINDOW.good) {
         perfMonitor.record('hit_ms', Date.now() - hitStart);
         return;
       }
@@ -532,26 +546,33 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       judgedRef.current.add(bestNote.id);
       applyJudgmentRef(judgment, bestNote, signedDelta);
 
-      const event: JudgmentEvent = {
-        id: genId('evt'),
-        noteId: bestNote.id,
-        direction: bestNote.direction,
-        judgment,
-        deltaPx: signedDelta,
-        timeMs: Date.now(),
-        comboAfter: statsRef.current.combo,
-        scoreAwarded: 0,
-      };
-      pendingFeedbackRef.current.push({
-        direction: event.direction,
-        judgment: event.judgment,
-        key: event.id,
-        timeMs: event.timeMs,
-      });
-      pendingStatsRef.current = true;
-      scheduleFlush();
+      setScore(statsRef.current.score);
+      setCombo(statsRef.current.combo);
+      setMaxCombo(statsRef.current.maxCombo);
+      setPerfectCount(statsRef.current.perfect);
+      setGreatCount(statsRef.current.great);
+      setGoodCount(statsRef.current.good);
+      setMissCount(statsRef.current.miss);
 
-      visibleIdsRef.current = '';
+      if (onNoteHit) {
+        const event: JudgmentEvent = {
+          id: genId('evt'),
+          noteId: bestNote.id,
+          direction: bestNote.direction,
+          judgment,
+          deltaPx: signedDelta,
+          timeMs: Date.now(),
+          comboAfter: statsRef.current.combo,
+          scoreAwarded: 0,
+        };
+        onNoteHit({
+          direction: event.direction,
+          judgment: event.judgment,
+          key: event.id,
+          timeMs: event.timeMs,
+        });
+      }
+
       perfMonitor.record('hit_ms', Date.now() - hitStart);
     },
     [
@@ -559,7 +580,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       computeYRatio,
       fallDurationMs,
       getNow,
-      scheduleFlush,
+      onNoteHit,
     ],
   );
 
@@ -570,10 +591,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   useEffect(() => {
     return () => {
       stopLoop();
-      if (flushRafRef.current !== null) {
-        cancelAnimationFrame(flushRafRef.current);
-        flushRafRef.current = null;
-      }
     };
   }, [stopLoop]);
 
@@ -596,8 +613,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     goodCount,
     missCount,
     accuracy,
-    visibleNotes,
     audioPosition,
+    lanes: lanesRef.current,
     elapsedMs,
     durationMs,
     progress,
