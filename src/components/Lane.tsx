@@ -1,20 +1,23 @@
 import React from 'react';
 import { View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
-import FallingNote from '@/components/FallingNote';
+import FallingNote, { SLOT_COUNT } from '@/components/FallingNote';
 import { useTheme } from '@/hooks/useTheme';
-import type { Note } from '@/types/song';
+
+export { SLOT_COUNT };
 
 export type LaneProps = {
   width: number;
   left: number;
   top: number;
   height: number;
-  notes: Note[];
   noteSize: number;
-  isActive?: boolean;
   audioPosition: SharedValue<number>;
   fallDurationMs: number;
+  laneActive: SharedValue<number[]>;
+  laneTimeMs: SharedValue<number[]>;
+  laneDirection: SharedValue<number[]>;
+  laneHasNotes: SharedValue<number>;
 };
 
 function LaneBase({
@@ -22,14 +25,21 @@ function LaneBase({
   left,
   top,
   height,
-  notes,
   noteSize,
-  isActive = false,
   audioPosition,
   fallDurationMs,
+  laneActive,
+  laneTimeMs,
+  laneDirection,
+  laneHasNotes,
 }: LaneProps): React.ReactElement {
   const { colors } = useTheme();
   const noteX = (width - noteSize) / 2;
+
+  const slots = React.useMemo(
+    () => Array.from({ length: SLOT_COUNT }, (_, i) => i),
+    [],
+  );
 
   return (
     <View
@@ -40,52 +50,75 @@ function LaneBase({
         top,
         width,
         height,
-        backgroundColor: isActive ? `${colors.primary}0A` : 'transparent',
       }}
     >
-      {notes.map((note) => (
+      <LaneBackground
+        width={width}
+        height={height}
+        laneHasNotes={laneHasNotes}
+        primaryColor={colors.primary}
+      />
+      {slots.map((slotIndex) => (
         <FallingNote
-          key={note.id}
-          direction={note.direction}
-          x={noteX}
+          key={slotIndex}
+          slotIndex={slotIndex}
+          laneActive={laneActive}
+          laneTimeMs={laneTimeMs}
+          laneDirection={laneDirection}
           audioPosition={audioPosition}
-          noteTimeMs={note.timeMs}
           fallDurationMs={fallDurationMs}
           laneHeight={height}
           noteSize={noteSize}
+          x={noteX}
         />
       ))}
     </View>
   );
 }
 
-function notesEqual(a: Note[], b: Note[]): boolean {
-  if (a === b) {
-    return true;
-  }
-  if (a.length !== b.length) {
-    return false;
-  }
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i].id !== b[i].id) {
-      return false;
-    }
-  }
-  return true;
+function LaneBackground({
+  width,
+  height,
+  laneHasNotes,
+  primaryColor,
+}: {
+  width: number;
+  height: number;
+  laneHasNotes: SharedValue<number>;
+  primaryColor: string;
+}): React.ReactElement {
+  const { useAnimatedStyle } = require('react-native-reanimated') as {
+    useAnimatedStyle: <T>(fn: () => T) => T;
+  };
+  const Animated = require('react-native-reanimated').default as {
+    View: React.ComponentType<{
+      pointerEvents?: string;
+      style: unknown;
+    }>;
+  };
+
+  const style = useAnimatedStyle(() => {
+    return {
+      backgroundColor: laneHasNotes.value === 1 ? `${primaryColor}0A` : 'transparent',
+    };
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width,
+          height,
+        },
+        style,
+      ]}
+    />
+  );
 }
 
-const Lane = React.memo(LaneBase, (prev, next) => {
-  return (
-    prev.width === next.width &&
-    prev.left === next.left &&
-    prev.top === next.top &&
-    prev.height === next.height &&
-    prev.noteSize === next.noteSize &&
-    prev.isActive === next.isActive &&
-    prev.fallDurationMs === next.fallDurationMs &&
-    prev.audioPosition === next.audioPosition &&
-    notesEqual(prev.notes, next.notes)
-  );
-});
-
+const Lane = React.memo(LaneBase);
 export default Lane;
