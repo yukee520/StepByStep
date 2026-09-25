@@ -10,7 +10,7 @@ export type PauseModalProps = {
   onQuit: () => void;
 };
 
-export default function PauseModal({
+function PauseModalBase({
   visible,
   onResume,
   onRestart,
@@ -106,3 +106,6 @@ export default function PauseModal({
     </Modal>
   );
 }
+
+const PauseModal = React.memo(PauseModalBase);
+export default PauseModal;
