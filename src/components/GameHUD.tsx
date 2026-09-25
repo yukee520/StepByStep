@@ -17,10 +17,10 @@ export type GameHUDProps = {
   onPause: () => void;
 };
 
-export default function GameHUD({
+function GameHUDBase({
   title,
   score,
-  combo,
+  combo: _combo,
   accuracy,
   elapsedMs,
   durationMs,
@@ -119,13 +119,12 @@ export default function GameHUD({
             width: `${pct * 100}%`,
             height: '100%',
             backgroundColor: NEON_PALETTE.primary,
-            shadowColor: NEON_PALETTE.primary,
-            shadowOpacity: 1,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 0 },
           }}
         />
       </View>
     </View>
   );
 }
+
+const GameHUD = React.memo(GameHUDBase);
+export default GameHUD;
