@@ -71,6 +71,8 @@ export default function GameScreen(): React.ReactElement {
   const [hudHeight, setHudHeight] = useState<number>(0);
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedbackRafRef = useRef<number | null>(null);
+  const pendingFeedbackRef = useRef<HitFeedback | null>(null);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pausedByBackgroundRef = useRef<boolean>(false);
 
@@ -97,14 +99,26 @@ export default function GameScreen(): React.ReactElement {
     [audio, navigation, setLastSummary, song, submitScore],
   );
 
+  // Feedback is deferred to the next frame so `hit()` doesn't block input.
   const onNoteHit = useCallback((fb: HitFeedback): void => {
-    setFeedback(fb);
-    if (feedbackTimeoutRef.current !== null) {
-      clearTimeout(feedbackTimeoutRef.current);
+    pendingFeedbackRef.current = fb;
+    if (feedbackRafRef.current !== null) {
+      return;
     }
-    feedbackTimeoutRef.current = setTimeout(() => {
-      setFeedback(null);
-    }, 260);
+    feedbackRafRef.current = requestAnimationFrame(() => {
+      feedbackRafRef.current = null;
+      const pending = pendingFeedbackRef.current;
+      if (!pending) {
+        return;
+      }
+      setFeedback(pending);
+      if (feedbackTimeoutRef.current !== null) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setFeedback(null);
+      }, 260);
+    });
   }, []);
 
   const hasAudio = Boolean(song?.audioPath);
@@ -194,6 +208,9 @@ export default function GameScreen(): React.ReactElement {
     return () => {
       if (feedbackTimeoutRef.current !== null) {
         clearTimeout(feedbackTimeoutRef.current);
+      }
+      if (feedbackRafRef.current !== null) {
+        cancelAnimationFrame(feedbackRafRef.current);
       }
     };
   }, []);
