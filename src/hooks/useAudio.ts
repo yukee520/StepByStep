@@ -13,6 +13,7 @@ export type UseAudioResult = {
   pause: () => void;
   resume: () => void;
   stop: () => Promise<void>;
+  restart: () => Promise<boolean>;
   release: () => Promise<void>;
   getPositionMs: () => number;
   isPlaying: () => boolean;
@@ -89,6 +90,13 @@ export function useAudio(): UseAudioResult {
     await audioPlayer.stop();
   }, [soundEnabled]);
 
+  const restart = useCallback(async (): Promise<boolean> => {
+    if (!soundEnabled) {
+      return false;
+    }
+    return audioPlayer.restart();
+  }, [soundEnabled]);
+
   const release = useCallback(async (): Promise<void> => {
     await audioPlayer.release();
     if (mountedRef.current) {
@@ -125,6 +133,7 @@ export function useAudio(): UseAudioResult {
     pause,
     resume,
     stop,
+    restart,
     release,
     getPositionMs,
     isPlaying,
