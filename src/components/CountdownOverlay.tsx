@@ -13,7 +13,7 @@ const FALLBACK_HUD_RATIO = 0.10;
 const FALLBACK_BUTTON_RATIO = 0.80;
 const CIRCLE_SIZE = 140;
 
-export default function CountdownOverlay({
+function CountdownOverlayBase({
   count,
   visible,
   laneTop,
@@ -78,3 +78,6 @@ export default function CountdownOverlay({
     </View>
   );
 }
+
+const CountdownOverlay = React.memo(CountdownOverlayBase);
+export default CountdownOverlay;
