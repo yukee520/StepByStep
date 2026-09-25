@@ -9,7 +9,7 @@ export type ComboOverlayProps = {
   labelSize: number;
 };
 
-export default function ComboOverlay({
+function ComboOverlayBase({
   combo,
   accentColor,
   mutedColor,
@@ -101,3 +101,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+
+const ComboOverlay = React.memo(ComboOverlayBase);
+export default ComboOverlay;
