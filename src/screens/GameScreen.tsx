@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
-import ArrowButton from '@/components/ArrowButton';
 import Lane from '@/components/Lane';
+import ArrowRow from '@/components/ArrowRow';
 import ComboOverlay from '@/components/ComboOverlay';
 import GameHUD from '@/components/GameHUD';
 import CountdownOverlay from '@/components/CountdownOverlay';
@@ -39,6 +39,13 @@ const BUTTON_ROW_TOP_RATIO = 0.80;
 const BUTTON_GAP = 8;
 const BUTTON_BOTTOM_PADDING = 24;
 
+const EMPTY_HOT_LEVELS: Record<Direction, number> = {
+  left: 0,
+  down: 0,
+  up: 0,
+  right: 0,
+};
+
 export default function GameScreen(): React.ReactElement {
   const route = useRoute<GameRoute>();
   const navigation = useNavigation<GameNav>();
@@ -60,11 +67,9 @@ export default function GameScreen(): React.ReactElement {
   const [showPause, setShowPause] = useState<boolean>(false);
   const [countdownActive, setCountdownActive] = useState<boolean>(false);
   const [audioReady, setAudioReady] = useState<boolean>(false);
-  const [pressedLane, setPressedLane] = useState<Direction | null>(null);
   const [hudHeight, setHudHeight] = useState<number>(0);
 
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pressedLaneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const pausedByBackgroundRef = useRef<boolean>(false);
 
@@ -191,9 +196,6 @@ export default function GameScreen(): React.ReactElement {
       if (feedbackTimeoutRef.current !== null) {
         clearTimeout(feedbackTimeoutRef.current);
       }
-      if (pressedLaneTimeoutRef.current !== null) {
-        clearTimeout(pressedLaneTimeoutRef.current);
-      }
     };
   }, []);
 
@@ -234,16 +236,10 @@ export default function GameScreen(): React.ReactElement {
     setShowPause(false);
     pausedByBackgroundRef.current = false;
 
-    // 1. Freeze the engine so it stops reading the audio position
     engine.pause();
-
-    // 2. Fully rebuild the audio player: stop → release → reload → play(0).
-    //    stop() + play() back-to-back silently fails on RN Sound 0.13.0.
     if (hasAudio) {
       await audio.restart();
     }
-
-    // 3. Reset the engine (stats + clock)
     engine.restart();
   }, [audio, engine, hasAudio]);
 
@@ -253,16 +249,13 @@ export default function GameScreen(): React.ReactElement {
     engine.quit();
   }, [audio, engine]);
 
-  const handleInput = useCallback(
+  /**
+   * Called by ArrowRow the instant a finger lands on a lane.
+   * Fires on the very first frame — no minimum duration.
+   */
+  const handleLanePress = useCallback(
     (direction: Direction): void => {
       vibrate('light');
-      setPressedLane(direction);
-      if (pressedLaneTimeoutRef.current !== null) {
-        clearTimeout(pressedLaneTimeoutRef.current);
-      }
-      pressedLaneTimeoutRef.current = setTimeout(() => {
-        setPressedLane(null);
-      }, 260);
       if (engine.status !== 'playing') {
         return;
       }
@@ -271,7 +264,11 @@ export default function GameScreen(): React.ReactElement {
     [engine, vibrate],
   );
 
-  const handleRelease = useCallback(
+  /**
+   * Called when the finger leaves the lane or lifts.
+   * Currently unused by the engine (no hold notes yet) but ready for Phase 1c.
+   */
+  const handleLaneRelease = useCallback(
     (direction: Direction): void => {
       engine.releaseInput(direction);
     },
@@ -362,6 +359,9 @@ export default function GameScreen(): React.ReactElement {
   const laneWidth = laneAreaWidth / LANE_COUNT;
   const noteSize = Math.min(laneWidth * 0.75, buttonSize * 0.9);
 
+  // Hot levels are all zero for Phase 1a. Phase 1b computes real overlap.
+  const hotLevels = EMPTY_HOT_LEVELS;
+
   return (
     <NeonBackground showGrid={false}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -412,7 +412,7 @@ export default function GameScreen(): React.ReactElement {
                   notes={laneNotes}
                   noteSize={noteSize}
                   isActive={laneNotes.length > 0}
-                  isPressed={pressedLane === dir}
+                  isPressed={false}
                   pressColor={NEON_PALETTE.lane[dir]}
                 />
               );
@@ -462,37 +462,16 @@ export default function GameScreen(): React.ReactElement {
               top: buttonRowTopInContainer,
               left: 0,
               right: 0,
-              paddingHorizontal: LANE_AREA_PADDING,
-              paddingTop: 8,
               paddingBottom: BUTTON_BOTTOM_PADDING,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
             }}
           >
-            <ArrowButton
-              direction="left"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
-            />
-            <ArrowButton
-              direction="down"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
-            />
-            <ArrowButton
-              direction="up"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
-            />
-            <ArrowButton
-              direction="right"
-              onPress={handleInput}
-              onRelease={handleRelease}
-              size={buttonSize}
+            <ArrowRow
+              onPress={handleLanePress}
+              onRelease={handleLaneRelease}
+              buttonSize={buttonSize}
+              gap={BUTTON_GAP}
+              hotLevels={hotLevels}
+              horizontalPadding={LANE_AREA_PADDING}
             />
           </View>
 
