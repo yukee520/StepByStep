@@ -65,6 +65,10 @@ class AudioPlayerService {
     return this.durationMs;
   }
 
+  getLoadedPath(): string | null {
+    return this.loadedPath;
+  }
+
   getPositionMs(): number {
     if (this.status === 'playing') {
       const elapsed = Date.now() - this.playStartedAt;
@@ -225,6 +229,77 @@ class AudioPlayerService {
       // Safety timeout in case native callback never fires
       setTimeout(settle, 400);
     });
+  }
+
+  /**
+   * Fully restarts playback: stops and releases the current sound, reloads
+   * the file from disk, and plays from position 0.
+   *
+   * Using stop() + play() back-to-back sometimes silently fails on
+   * react-native-sound 0.13.0 (native player stays in a "stopped" state).
+   * Rebuilding the Sound instance guarantees a clean restart.
+   */
+  async restart(): Promise<boolean> {
+    const path = this.loadedPath;
+    if (!path) {
+      return false;
+    }
+
+    const previous = this.sound;
+    this.sound = null;
+    this.startPositionMs = 0;
+    this.pausedPositionMs = 0;
+    this.ended = false;
+    this.status = 'ready';
+    this.emit();
+
+    if (previous) {
+      try {
+        previous.stop(() => {
+          try {
+            previous.release();
+          } catch {
+            // ignore
+          }
+        });
+      } catch {
+        try {
+          previous.release();
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    // Load a fresh Sound from the same path
+    const freshLoad = await new Promise<boolean>((resolve) => {
+      const sound = new Sound(path, '', (error) => {
+        if (error) {
+          resolve(false);
+          return;
+        }
+        this.sound = sound;
+        this.loadedPath = path;
+        this.durationMs = Math.round(sound.getDuration() * 1000);
+        this.startPositionMs = 0;
+        this.pausedPositionMs = 0;
+        this.ended = false;
+        this.setStatus('ready');
+        resolve(true);
+      });
+    });
+
+    if (!freshLoad) {
+      this.status = 'error';
+      this.emit();
+      return false;
+    }
+
+    // Give the native player a moment before playing
+    await new Promise<void>((resolve) => setTimeout(resolve, 50));
+
+    this.play(0);
+    return true;
   }
 
   async release(): Promise<void> {
