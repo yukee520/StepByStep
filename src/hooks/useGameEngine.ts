@@ -18,6 +18,7 @@ import { accuracyToGrade } from '@/utils/grading';
 import { genId } from '@/utils/id';
 import { audioPlayer } from '@/services/audioPlayer';
 import { perfMonitor } from '@/services/perfMonitor';
+import { useGameScoreStore } from '@/store/useGameScoreStore';
 
 export type HitFeedback = {
   direction: Direction;
@@ -60,14 +61,6 @@ export type UseGameEngineOptions = {
 
 export type UseGameEngineResult = {
   status: GameStatus;
-  score: number;
-  combo: number;
-  maxCombo: number;
-  perfectCount: number;
-  greatCount: number;
-  goodCount: number;
-  missCount: number;
-  accuracy: number;
   audioPosition: SharedValue<number>;
   lanes: [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues];
   elapsedMs: number;
@@ -126,18 +119,10 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   );
 
   const [status, setStatus] = useState<GameStatus>('idle');
-  const [score, setScore] = useState<number>(0);
-  const [combo, setCombo] = useState<number>(0);
-  const [maxCombo, setMaxCombo] = useState<number>(0);
-  const [perfectCount, setPerfectCount] = useState<number>(0);
-  const [greatCount, setGreatCount] = useState<number>(0);
-  const [goodCount, setGoodCount] = useState<number>(0);
-  const [missCount, setMissCount] = useState<number>(0);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
 
   const audioPosition = useSharedValue<number>(0);
 
-  // Lane shared arrays
   const lane0Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane0Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane0Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
@@ -176,8 +161,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const missPointerRef = useRef<number>(0);
   const lastElapsedUpdateRef = useRef<number>(0);
   const lastFrameAtRef = useRef<number>(0);
-
-  // Per-lane visible notes buffers — reused each frame to avoid allocations
   const laneBuffersRef = useRef<Note[][]>([[], [], [], []]);
 
   const statsRef = useRef<Stats>({
@@ -190,9 +173,36 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     miss: 0,
   });
 
+  // Score flush scheduling — coalesces multiple hits per frame into one store update
+  const scoreDirtyRef = useRef<boolean>(false);
+  const scoreRafRef = useRef<number | null>(null);
+
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  const flushScore = useCallback((): void => {
+    if (scoreRafRef.current !== null) {
+      return;
+    }
+    scoreRafRef.current = requestAnimationFrame(() => {
+      scoreRafRef.current = null;
+      if (!scoreDirtyRef.current) {
+        return;
+      }
+      scoreDirtyRef.current = false;
+      const s = statsRef.current;
+      useGameScoreStore.getState().applyAll({
+        score: s.score,
+        combo: s.combo,
+        maxCombo: s.maxCombo,
+        perfect: s.perfect,
+        great: s.great,
+        good: s.good,
+        miss: s.miss,
+      });
+    });
+  }, []);
 
   const resetStats = useCallback((): void => {
     statsRef.current = {
@@ -208,15 +218,14 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
     lastFrameAtRef.current = 0;
-    setScore(0);
-    setCombo(0);
-    setMaxCombo(0);
-    setPerfectCount(0);
-    setGreatCount(0);
-    setGoodCount(0);
-    setMissCount(0);
+    scoreDirtyRef.current = false;
+    if (scoreRafRef.current !== null) {
+      cancelAnimationFrame(scoreRafRef.current);
+      scoreRafRef.current = null;
+    }
     setElapsedMs(0);
-    // Clear lanes
+    useGameScoreStore.getState().resetAll();
+
     const lanes = lanesRef.current;
     for (let l = 0; l < LANE_COUNT; l += 1) {
       lanes[l].active.value = new Array(SLOT_COUNT).fill(0);
@@ -309,11 +318,11 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       }
       missPointerRef.current = i;
       if (missedThisFrame > 0) {
-        setCombo(0);
-        setMissCount(statsRef.current.miss);
+        scoreDirtyRef.current = true;
+        flushScore();
       }
     },
-    [fallDurationMs, onNoteHit],
+    [fallDurationMs, flushScore, onNoteHit],
   );
 
   const loop = useCallback((): void => {
@@ -335,13 +344,11 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       setElapsedMs(now);
     }
 
-    // Reset lane buffers
     const buffers = laneBuffersRef.current;
     for (let l = 0; l < LANE_COUNT; l += 1) {
       buffers[l].length = 0;
     }
 
-    // Fill with visible notes
     const notes = sortedNotes.current;
     const loTime = now - fallDurationMs * VISIBLE_BEHIND;
     const hiTime = now + fallDurationMs * VISIBLE_AHEAD;
@@ -362,7 +369,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       }
     }
 
-    // Write to shared values
     const lanes = lanesRef.current;
     for (let l = 0; l < LANE_COUNT; l += 1) {
       const buf = buffers[l];
@@ -546,13 +552,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       judgedRef.current.add(bestNote.id);
       applyJudgmentRef(judgment, bestNote, signedDelta);
 
-      setScore(statsRef.current.score);
-      setCombo(statsRef.current.combo);
-      setMaxCombo(statsRef.current.maxCombo);
-      setPerfectCount(statsRef.current.perfect);
-      setGreatCount(statsRef.current.great);
-      setGoodCount(statsRef.current.good);
-      setMissCount(statsRef.current.miss);
+      scoreDirtyRef.current = true;
+      flushScore();
 
       if (onNoteHit) {
         const event: JudgmentEvent = {
@@ -579,6 +580,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       applyJudgmentRef,
       computeYRatio,
       fallDurationMs,
+      flushScore,
       getNow,
       onNoteHit,
     ],
@@ -591,28 +593,18 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   useEffect(() => {
     return () => {
       stopLoop();
+      if (scoreRafRef.current !== null) {
+        cancelAnimationFrame(scoreRafRef.current);
+        scoreRafRef.current = null;
+      }
     };
   }, [stopLoop]);
 
-  const totalJudged = perfectCount + greatCount + goodCount + missCount;
-  const weighted =
-    perfectCount * JUDGMENT_ACCURACY_WEIGHT.perfect +
-    greatCount * JUDGMENT_ACCURACY_WEIGHT.great +
-    goodCount * JUDGMENT_ACCURACY_WEIGHT.good;
-  const accuracy = totalJudged > 0 ? weighted / totalJudged : 0;
   const progress =
     durationMs > 0 ? Math.max(0, Math.min(1, elapsedMs / durationMs)) : 0;
 
   return {
     status,
-    score,
-    combo,
-    maxCombo,
-    perfectCount,
-    greatCount,
-    goodCount,
-    missCount,
-    accuracy,
     audioPosition,
     lanes: lanesRef.current,
     elapsedMs,
