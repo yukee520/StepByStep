@@ -8,7 +8,7 @@ import Toast from 'react-native-toast-message';
 import LaneArea from '@/components/LaneArea';
 import GameButtonRow from '@/components/GameButtonRow';
 import GameHUDContainer from '@/components/GameHUDContainer';
-import ComboOverlay from '@/components/ComboOverlay';
+import ComboOverlay from '@/components/ComboOverlayContainer';
 import CountdownOverlay from '@/components/CountdownOverlay';
 import PauseModal from '@/components/PauseModal';
 import LoadingState from '@/components/LoadingState';
@@ -358,7 +358,6 @@ export default function GameScreen(): React.ReactElement {
         >
           <GameHUDContainer
             title={song.title}
-            accuracy={0}
             elapsedMs={engine.elapsedMs}
             durationMs={engine.durationMs}
             progress={engine.progress}
