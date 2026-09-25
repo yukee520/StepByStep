@@ -85,7 +85,7 @@ export default function GameScreen(): React.ReactElement {
       });
       const enriched: GameRunSummary = { ...summary, isHighScore: isHigh };
       setLastSummary(enriched);
-      audio.stop();
+      void audio.stop();
       navigation.replace('Results', { summary: enriched });
     },
     [audio, navigation, setLastSummary, song, submitScore],
@@ -159,7 +159,7 @@ export default function GameScreen(): React.ReactElement {
     void init();
     return () => {
       cancelled = true;
-      audio.stop();
+      void audio.stop();
       void audio.release();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -197,7 +197,7 @@ export default function GameScreen(): React.ReactElement {
     };
   }, []);
 
-  // Pause when app goes to background
+  // Auto-pause when app goes to background
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
       const prev = appStateRef.current;
@@ -230,28 +230,28 @@ export default function GameScreen(): React.ReactElement {
     audio.resume();
   }, [audio, engine]);
 
-  const handleRestart = useCallback((): void => {
+  const handleRestart = useCallback(async (): Promise<void> => {
     setShowPause(false);
     pausedByBackgroundRef.current = false;
 
-    // 1. Freeze the engine first so it stops reading the audio position.
+    // 1. Freeze the engine
     engine.pause();
 
-    // 2. Stop the audio player (native reset).
-    audio.stop();
+    // 2. Stop audio and WAIT for the native player to actually stop
+    await audio.stop();
 
-    // 3. Give the native player a beat to settle, then restart engine + audio together.
-    setTimeout(() => {
-      engine.restart();
-      if (hasAudio) {
-        audio.play(0);
-      }
-    }, 150);
+    // 3. Reset engine (stats + clock)
+    engine.restart();
+
+    // 4. Start audio from 0
+    if (hasAudio) {
+      audio.play(0);
+    }
   }, [audio, engine, hasAudio]);
 
   const handleQuit = useCallback((): void => {
     setShowPause(false);
-    audio.stop();
+    void audio.stop();
     engine.quit();
   }, [audio, engine]);
 
