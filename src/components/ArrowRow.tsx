@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 import {
   Gesture,
@@ -27,42 +27,90 @@ type RowFrame = {
   height: number;
 };
 
+/**
+ * Manages a row of 4 arrow buttons with native multi-touch support.
+ *
+ * Uses react-native-gesture-handler's Pan gesture with up to 4 pointers
+ * so each finger gets its own touch identifier and independent lane.
+ *
+ * Pressed-state updates are batched with `requestAnimationFrame` so a
+ * burst of touch events produces at most one re-render per frame.
+ */
 export default function ArrowRow({
   onPress,
   onRelease,
   buttonSize,
-  gap,
+  gap: _gap,
   hotLevels,
   horizontalPadding,
 }: ArrowRowProps): React.ReactElement {
   const rowRef = useRef<View>(null);
   const frameRef = useRef<RowFrame>({ x: 0, y: 0, width: 0, height: 0 });
+  const hasMeasuredRef = useRef<boolean>(false);
 
   // Map from touch id -> lane index currently pressed by that finger
   const activeTouchesRef = useRef<Map<number, number>>(new Map());
+
+  // Committed pressed set (used for rendering)
   const [pressedSet, setPressedSet] = useState<Set<number>>(new Set());
 
-  const handleLayout = useCallback((_e: LayoutChangeEvent): void => {
-    // Measure the row's position on screen so we can convert
-    // absolute touch coordinates into row-local coordinates.
+  // Pending flag so we only schedule one rAF per burst
+  const framePendingRef = useRef<boolean>(false);
+
+  /**
+   * Schedule a pressed-set update on the next animation frame. If many
+   * touch events arrive in the same frame, we still only update once.
+   */
+  const schedulePressedSetUpdate = useCallback((): void => {
+    if (framePendingRef.current) {
+      return;
+    }
+    framePendingRef.current = true;
+    requestAnimationFrame(() => {
+      framePendingRef.current = false;
+      const next = new Set(activeTouchesRef.current.values());
+      setPressedSet((prev) => {
+        if (prev.size === next.size) {
+          let same = true;
+          for (const v of next) {
+            if (!prev.has(v)) {
+              same = false;
+              break;
+            }
+          }
+          if (same) {
+            return prev;
+          }
+        }
+        return next;
+      });
+    });
+  }, []);
+
+  const measureRow = useCallback((): void => {
     const node = rowRef.current;
     if (!node) {
       return;
     }
     node.measureInWindow((x, y, width, height) => {
       frameRef.current = { x, y, width, height };
+      hasMeasuredRef.current = true;
     });
   }, []);
 
-  const updatePressedSet = useCallback((): void => {
-    setPressedSet(new Set(activeTouchesRef.current.values()));
-  }, []);
+  const handleLayout = useCallback(
+    (_e: LayoutChangeEvent): void => {
+      measureRow();
+    },
+    [measureRow],
+  );
 
-  /**
-   * Given an absolute (window-space) touch position, determine which of
-   * the 4 lanes the finger is over. Returns the lane index or null if
-   * outside the row.
-   */
+  // Re-measure when the screen resizes (rotation, split-screen) — rare, but
+  // safe. This runs once.
+  useEffect(() => {
+    measureRow();
+  }, [measureRow]);
+
   const hitTest = useCallback(
     (absoluteX: number, absoluteY: number): number | null => {
       const frame = frameRef.current;
@@ -89,23 +137,17 @@ export default function ArrowRow({
   const pressLane = useCallback(
     (index: number): void => {
       onPress(LANE_ORDER[index]);
-      updatePressedSet();
     },
-    [onPress, updatePressedSet],
+    [onPress],
   );
 
   const releaseLane = useCallback(
     (index: number): void => {
       onRelease(LANE_ORDER[index]);
-      updatePressedSet();
     },
-    [onRelease, updatePressedSet],
+    [onRelease],
   );
 
-  /**
-   * Process a single gesture-handler touch: either press a new lane,
-   * release the old one, or move between lanes.
-   */
   const processTouch = useCallback(
     (touch: TouchData): void => {
       const id = touch.id;
@@ -116,6 +158,7 @@ export default function ArrowRow({
         if (previous !== undefined) {
           activeTouchesRef.current.delete(id);
           releaseLane(previous);
+          schedulePressedSetUpdate();
         }
         return;
       }
@@ -129,8 +172,9 @@ export default function ArrowRow({
       }
       activeTouchesRef.current.set(id, index);
       pressLane(index);
+      schedulePressedSetUpdate();
     },
-    [hitTest, pressLane, releaseLane],
+    [hitTest, pressLane, releaseLane, schedulePressedSetUpdate],
   );
 
   const releaseTouchById = useCallback(
@@ -141,14 +185,11 @@ export default function ArrowRow({
       }
       activeTouchesRef.current.delete(id);
       releaseLane(index);
+      schedulePressedSetUpdate();
     },
-    [releaseLane],
+    [releaseLane, schedulePressedSetUpdate],
   );
 
-  /**
-   * Remap: gesture-handler gives us an array of touches for each event.
-   * We iterate the full array so multi-touch is handled natively.
-   */
   const handleTouchesDown = useCallback(
     (e: GestureTouchEvent): void => {
       for (const t of e.allTouches) {
@@ -185,11 +226,6 @@ export default function ArrowRow({
     [releaseTouchById],
   );
 
-  /**
-   * Build the gesture. Pan with up to 4 simultaneous pointers.
-   * We only care about the touch-tracking callbacks — the pan callbacks
-   * themselves are no-ops.
-   */
   const panGesture = Gesture.Pan()
     .minPointers(1)
     .maxPointers(4)
