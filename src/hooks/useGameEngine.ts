@@ -17,6 +17,7 @@ import type { Direction, Note, Song } from '@/types/song';
 import { accuracyToGrade } from '@/utils/grading';
 import { genId } from '@/utils/id';
 import { audioPlayer } from '@/services/audioPlayer';
+import { perfMonitor } from '@/services/perfMonitor';
 
 export type HitFeedback = {
   direction: Direction;
@@ -101,7 +102,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [visibleNotes, setVisibleNotes] = useState<Note[]>([]);
 
-  // The shared value that drives all note animations
   const audioPosition = useSharedValue<number>(0);
 
   const wallClockStartRef = useRef<number>(0);
@@ -113,6 +113,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const missPointerRef = useRef<number>(0);
   const lastElapsedUpdateRef = useRef<number>(0);
   const visibleIdsRef = useRef<string>('');
+  const lastFrameAtRef = useRef<number>(0);
 
   const statsRef = useRef({
     score: 0,
@@ -142,6 +143,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
     visibleIdsRef.current = '';
+    lastFrameAtRef.current = 0;
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
@@ -247,18 +249,24 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     if (statusRef.current !== 'playing') {
       return;
     }
-    const now = getNow();
 
-    // Drive the animation shared value — UI thread reads this
+    const frameStart = Date.now();
+    if (lastFrameAtRef.current > 0) {
+      perfMonitor.record('frame_ms', frameStart - lastFrameAtRef.current);
+    }
+    lastFrameAtRef.current = frameStart;
+
+    perfMonitor.mark('get_now');
+    const now = getNow();
+    perfMonitor.record('get_now_ms', perfMonitor.since('get_now'));
+
     audioPosition.value = now;
 
-    // Throttled elapsed update for HUD
     if (now - lastElapsedUpdateRef.current >= 100) {
       lastElapsedUpdateRef.current = now;
       setElapsedMs(now);
     }
 
-    // Find notes in the visible window
     const notes = sortedNotes.current;
     const loTime = now - fallDurationMs * VISIBLE_BEHIND;
     const hiTime = now + fallDurationMs * VISIBLE_AHEAD;
@@ -276,11 +284,14 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       upcoming.push(note);
     }
 
-    // Only update state if the visible ID set actually changed
+    perfMonitor.record('visible_notes', upcoming.length);
+
     const idKey = upcoming.map((n) => n.id).join('|');
     if (idKey !== visibleIdsRef.current) {
       visibleIdsRef.current = idKey;
+      const setStart = Date.now();
       setVisibleNotes(upcoming);
+      perfMonitor.record('set_visible_ms', Date.now() - setStart);
     }
 
     processMisses(now);
@@ -428,6 +439,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (statusRef.current !== 'playing') {
         return;
       }
+      const hitStart = Date.now();
       const now = getNow();
       const notes = sortedNotes.current;
       const loTime = now - fallDurationMs * PIXEL_WINDOW.good;
@@ -457,9 +469,11 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       }
 
       if (!bestNote) {
+        perfMonitor.record('hit_ms', Date.now() - hitStart);
         return;
       }
       if (bestDelta > PIXEL_WINDOW.good) {
+        perfMonitor.record('hit_ms', Date.now() - hitStart);
         return;
       }
 
@@ -476,8 +490,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       judgedRef.current.add(bestNote.id);
       applyJudgment(judgment, bestNote, signedDelta);
 
-      // Force visible-notes recompute on next frame
       visibleIdsRef.current = '';
+      perfMonitor.record('hit_ms', Date.now() - hitStart);
     },
     [applyJudgment, computeYRatio, fallDurationMs, getNow],
   );
