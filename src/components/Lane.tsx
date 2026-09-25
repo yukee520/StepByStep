@@ -17,7 +17,7 @@ export type LaneProps = {
   fallDurationMs: number;
 };
 
-export default function Lane({
+function LaneBase({
   width,
   left,
   top,
@@ -58,3 +58,34 @@ export default function Lane({
     </View>
   );
 }
+
+function notesEqual(a: Note[], b: Note[]): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i].id !== b[i].id) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const Lane = React.memo(LaneBase, (prev, next) => {
+  return (
+    prev.width === next.width &&
+    prev.left === next.left &&
+    prev.top === next.top &&
+    prev.height === next.height &&
+    prev.noteSize === next.noteSize &&
+    prev.isActive === next.isActive &&
+    prev.fallDurationMs === next.fallDurationMs &&
+    prev.audioPosition === next.audioPosition &&
+    notesEqual(prev.notes, next.notes)
+  );
+});
+
+export default Lane;
