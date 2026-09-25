@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSharedValue } from 'react-native-reanimated';
 import {
   DIFFICULTY_FALL_MULTIPLIER,
   FALL_DURATION_MS,
@@ -24,11 +25,6 @@ export type HitFeedback = {
   timeMs: number;
 };
 
-export type VisibleNote = {
-  note: Note;
-  yRatio: number;
-};
-
 export type UseGameEngineOptions = {
   song: Song;
   inputOffsetMs: number;
@@ -47,7 +43,8 @@ export type UseGameEngineResult = {
   goodCount: number;
   missCount: number;
   accuracy: number;
-  visibleNotes: VisibleNote[];
+  visibleNotes: Note[];
+  audioPosition: ReturnType<typeof useSharedValue<number>>;
   elapsedMs: number;
   durationMs: number;
   progress: number;
@@ -62,15 +59,9 @@ export type UseGameEngineResult = {
 };
 
 const FINISH_GRACE_MS = 1200;
-// How far before and after the hit line we still consider a note "visible"
-// (as a fraction of fallDurationMs)
 const VISIBLE_BEHIND = 0.2;
 const VISIBLE_AHEAD = 1.2;
 
-/**
- * Binary search: return the index of the first note with timeMs >= target.
- * Returns notes.length if none found.
- */
 function findFirstNoteAtOrAfter(notes: Note[], target: number): number {
   let lo = 0;
   let hi = notes.length;
@@ -108,7 +99,10 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const [goodCount, setGoodCount] = useState<number>(0);
   const [missCount, setMissCount] = useState<number>(0);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
-  const [visibleNotes, setVisibleNotes] = useState<VisibleNote[]>([]);
+  const [visibleNotes, setVisibleNotes] = useState<Note[]>([]);
+
+  // The shared value that drives all note animations
+  const audioPosition = useSharedValue<number>(0);
 
   const wallClockStartRef = useRef<number>(0);
   const wallClockPausedRef = useRef<number>(0);
@@ -116,10 +110,9 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const rafRef = useRef<number | null>(null);
   const statusRef = useRef<GameStatus>('idle');
   const audioEndedAtRef = useRef<number>(0);
-
-  // Moving pointers for O(1) per-frame scans
   const missPointerRef = useRef<number>(0);
   const lastElapsedUpdateRef = useRef<number>(0);
+  const visibleIdsRef = useRef<string>('');
 
   const statsRef = useRef({
     score: 0,
@@ -148,6 +141,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     judgedRef.current = new Set();
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
+    visibleIdsRef.current = '';
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
@@ -216,10 +210,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     [fallDurationMs],
   );
 
-  /**
-   * Walk the miss pointer forward, marking any note past the miss threshold.
-   * O(missedThisFrame) instead of O(totalNotes).
-   */
   const processMisses = useCallback(
     (now: number): void => {
       const notes = sortedNotes.current;
@@ -250,7 +240,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         setMissCount(statsRef.current.miss);
       }
     },
-    [onNoteHit],
+    [fallDurationMs, onNoteHit],
   );
 
   const loop = useCallback((): void => {
@@ -259,19 +249,22 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     }
     const now = getNow();
 
-    // Throttle elapsedMs state updates — only update if 16ms passed
-    if (now - lastElapsedUpdateRef.current >= 16) {
+    // Drive the animation shared value — UI thread reads this
+    audioPosition.value = now;
+
+    // Throttled elapsed update for HUD
+    if (now - lastElapsedUpdateRef.current >= 100) {
       lastElapsedUpdateRef.current = now;
       setElapsedMs(now);
     }
 
-    // Compute visible notes using a binary-searched window
+    // Find notes in the visible window
     const notes = sortedNotes.current;
     const loTime = now - fallDurationMs * VISIBLE_BEHIND;
     const hiTime = now + fallDurationMs * VISIBLE_AHEAD;
     const startIdx = findFirstNoteAtOrAfter(notes, loTime);
 
-    const upcoming: VisibleNote[] = [];
+    const upcoming: Note[] = [];
     for (let i = startIdx; i < notes.length; i += 1) {
       const note = notes[i];
       if (note.timeMs > hiTime) {
@@ -280,10 +273,15 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (judgedRef.current.has(note.id)) {
         continue;
       }
-      const ratio = computeYRatio(note, now);
-      upcoming.push({ note, yRatio: ratio });
+      upcoming.push(note);
     }
-    setVisibleNotes(upcoming);
+
+    // Only update state if the visible ID set actually changed
+    const idKey = upcoming.map((n) => n.id).join('|');
+    if (idKey !== visibleIdsRef.current) {
+      visibleIdsRef.current = idKey;
+      setVisibleNotes(upcoming);
+    }
 
     processMisses(now);
 
@@ -305,7 +303,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
     rafRef.current = requestAnimationFrame(loop);
   }, [
-    computeYRatio,
+    audioPosition,
     durationMs,
     fallDurationMs,
     finish,
@@ -319,11 +317,12 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     wallClockStartRef.current = Date.now();
     wallClockPausedRef.current = 0;
     audioEndedAtRef.current = 0;
+    audioPosition.value = 0;
     setStatus('playing');
     statusRef.current = 'playing';
     stopLoop();
     rafRef.current = requestAnimationFrame(loop);
-  }, [loop, resetStats, stopLoop]);
+  }, [audioPosition, loop, resetStats, stopLoop]);
 
   const pause = useCallback((): void => {
     if (statusRef.current !== 'playing') {
@@ -352,10 +351,11 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     wallClockStartRef.current = Date.now();
     wallClockPausedRef.current = 0;
     audioEndedAtRef.current = 0;
+    audioPosition.value = 0;
     setStatus('playing');
     statusRef.current = 'playing';
     rafRef.current = requestAnimationFrame(loop);
-  }, [loop, resetStats, stopLoop]);
+  }, [audioPosition, loop, resetStats, stopLoop]);
 
   const quit = useCallback((): void => {
     stopLoop();
@@ -430,8 +430,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       }
       const now = getNow();
       const notes = sortedNotes.current;
-
-      // Only search a narrow window around `now`
       const loTime = now - fallDurationMs * PIXEL_WINDOW.good;
       const hiTime = now + fallDurationMs * PIXEL_WINDOW.good;
       const startIdx = findFirstNoteAtOrAfter(notes, loTime);
@@ -477,6 +475,9 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
       judgedRef.current.add(bestNote.id);
       applyJudgment(judgment, bestNote, signedDelta);
+
+      // Force visible-notes recompute on next frame
+      visibleIdsRef.current = '';
     },
     [applyJudgment, computeYRatio, fallDurationMs, getNow],
   );
@@ -511,6 +512,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     missCount,
     accuracy,
     visibleNotes,
+    audioPosition,
     elapsedMs,
     durationMs,
     progress,
