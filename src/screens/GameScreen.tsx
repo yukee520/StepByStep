@@ -14,6 +14,7 @@ import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import NeonBackground from '@/components/NeonBackground';
 import PerfectPop from '@/components/PerfectPop';
+import PerfOverlay from '@/components/PerfOverlay';
 import { useSongs } from '@/hooks/useSongs';
 import { useGameEngine, type HitFeedback } from '@/hooks/useGameEngine';
 import { useAudio } from '@/hooks/useAudio';
@@ -478,6 +479,8 @@ export default function GameScreen(): React.ReactElement {
           }}
           onQuit={handleQuit}
         />
+
+        <PerfOverlay visible={true} />
       </SafeAreaView>
     </NeonBackground>
   );
