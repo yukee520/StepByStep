@@ -1,5 +1,7 @@
+// src/components/GameButtonRow.tsx
 import React from 'react';
 import { View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import ArrowRow from '@/components/ArrowRow';
 import type { Direction } from '@/types/song';
 
@@ -9,7 +11,11 @@ export type GameButtonRowProps = {
   buttonSize: number;
   gap: number;
   horizontalPadding: number;
-  hotLevels: Record<Direction, number>;
+  /**
+   * Per-direction hot-overlap shared values (0..1).
+   * Updated every frame by the game engine.
+   */
+  hotValues: Record<Direction, SharedValue<number>>;
   onPress: (direction: Direction) => void;
   onRelease: (direction: Direction) => void;
 };
@@ -20,7 +26,7 @@ function GameButtonRowBase({
   buttonSize,
   gap,
   horizontalPadding,
-  hotLevels,
+  hotValues,
   onPress,
   onRelease,
 }: GameButtonRowProps): React.ReactElement {
@@ -39,7 +45,7 @@ function GameButtonRowBase({
         onRelease={onRelease}
         buttonSize={buttonSize}
         gap={gap}
-        hotLevels={hotLevels}
+        hotValues={hotValues}
         horizontalPadding={horizontalPadding}
       />
     </View>
