@@ -35,7 +35,7 @@ export type HitFeedback = {
 };
 
 const LANE_COUNT = 4;
-const SLOT_COUNT = 12;
+const SLOT_COUNT = 8;
 
 const LANE_INDEX: Record<Direction, number> = {
   left: 0,
@@ -55,14 +55,10 @@ export type LaneSharedValues = {
   active: SharedValue<number[]>;
   timeMs: SharedValue<number[]>;
   direction: SharedValue<number[]>;
-  /** Per-slot hold duration in ms. 0 = tap note. */
   duration: SharedValue<number[]>;
-  /** Per-slot held flag: 1 if the note in this slot is currently held. */
   heldSlot: SharedValue<number[]>;
   hasNotes: SharedValue<number>;
-  /** 0..1 overlap of the best note in this lane with the button. */
   hot: SharedValue<number>;
-  /** 0..1 sustained-hold indicator for the lane (any slot). */
   held: SharedValue<number>;
 };
 
@@ -130,6 +126,21 @@ function findFirstNoteAtOrAfter(notes: Note[], target: number): number {
     }
   }
   return lo;
+}
+
+/**
+ * Cheap hash of a lane buffer's semantic contents. Used to skip shared value
+ * writes when nothing has changed since the last frame.
+ */
+function bufHash(buf: Note[]): number {
+  let h = buf.length;
+  for (let i = 0; i < buf.length; i += 1) {
+    const n = buf[i];
+    h = (h * 31 + n.timeMs) | 0;
+    h = (h * 31 + (n.durationMs ?? 0)) | 0;
+    h = (h * 31 + DIRECTION_INDEX[n.direction]) | 0;
+  }
+  return h;
 }
 
 export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResult {
@@ -216,44 +227,24 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues]
   >([
     {
-      active: lane0Active,
-      timeMs: lane0Time,
-      direction: lane0Dir,
-      duration: lane0Dur,
-      heldSlot: lane0HeldSlot,
-      hasNotes: lane0Has,
-      hot: lane0Hot,
-      held: lane0Held,
+      active: lane0Active, timeMs: lane0Time, direction: lane0Dir,
+      duration: lane0Dur, heldSlot: lane0HeldSlot,
+      hasNotes: lane0Has, hot: lane0Hot, held: lane0Held,
     },
     {
-      active: lane1Active,
-      timeMs: lane1Time,
-      direction: lane1Dir,
-      duration: lane1Dur,
-      heldSlot: lane1HeldSlot,
-      hasNotes: lane1Has,
-      hot: lane1Hot,
-      held: lane1Held,
+      active: lane1Active, timeMs: lane1Time, direction: lane1Dir,
+      duration: lane1Dur, heldSlot: lane1HeldSlot,
+      hasNotes: lane1Has, hot: lane1Hot, held: lane1Held,
     },
     {
-      active: lane2Active,
-      timeMs: lane2Time,
-      direction: lane2Dir,
-      duration: lane2Dur,
-      heldSlot: lane2HeldSlot,
-      hasNotes: lane2Has,
-      hot: lane2Hot,
-      held: lane2Held,
+      active: lane2Active, timeMs: lane2Time, direction: lane2Dir,
+      duration: lane2Dur, heldSlot: lane2HeldSlot,
+      hasNotes: lane2Has, hot: lane2Hot, held: lane2Held,
     },
     {
-      active: lane3Active,
-      timeMs: lane3Time,
-      direction: lane3Dir,
-      duration: lane3Dur,
-      heldSlot: lane3HeldSlot,
-      hasNotes: lane3Has,
-      hot: lane3Hot,
-      held: lane3Held,
+      active: lane3Active, timeMs: lane3Time, direction: lane3Dir,
+      duration: lane3Dur, heldSlot: lane3HeldSlot,
+      hasNotes: lane3Has, hot: lane3Hot, held: lane3Held,
     },
   ]);
 
@@ -267,18 +258,13 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lastElapsedUpdateRef = useRef<number>(0);
   const lastFrameAtRef = useRef<number>(0);
   const laneBuffersRef = useRef<Note[][]>([[], [], [], []]);
+  const lastBufHashRef = useRef<number[]>([-1, -1, -1, -1]);
 
   const activeHoldsRef = useRef<Map<string, ActiveHold>>(new Map());
   const pressedLanesRef = useRef<boolean[]>([false, false, false, false]);
 
   const statsRef = useRef<Stats>({
-    score: 0,
-    combo: 0,
-    maxCombo: 0,
-    perfect: 0,
-    great: 0,
-    good: 0,
-    miss: 0,
+    score: 0, combo: 0, maxCombo: 0, perfect: 0, great: 0, good: 0, miss: 0,
   });
 
   const scoreDirtyRef = useRef<boolean>(false);
@@ -314,6 +300,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     judgedRef.current = new Set();
     activeHoldsRef.current.clear();
     pressedLanesRef.current = [false, false, false, false];
+    lastBufHashRef.current = [-1, -1, -1, -1];
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
     lastFrameAtRef.current = 0;
@@ -548,8 +535,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     for (let i = startIdx; i < notes.length; i += 1) {
       const note = notes[i];
       if (note.timeMs > hiTime) break;
-      // Skip notes that are fully judged AND not currently held (a hold that
-      // has been pressed successfully stays in the buffer so its bar renders).
       const isActiveHold = activeHoldsRef.current.has(note.id);
       if (judgedRef.current.has(note.id) && !isActiveHold) continue;
       const laneIdx = LANE_INDEX[note.direction];
@@ -561,14 +546,30 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     for (let l = 0; l < LANE_COUNT; l += 1) {
       const buf = buffers[l];
       const lane = lanes[l];
+      const hash = bufHash(buf);
+      const bufChanged = hash !== lastBufHashRef.current[l];
+
+      // Always update hot + held — they change every frame.
+      let maxOverlap = 0;
+      let laneHeld = 0;
+      for (let s = 0; s < buf.length; s += 1) {
+        const note = buf[s];
+        if (activeHoldsRef.current.has(note.id)) laneHeld = 1;
+        const ov = overlapAt(note, now);
+        if (ov > maxOverlap) maxOverlap = ov;
+      }
+      lane.hot.value = maxOverlap;
+      lane.held.value = laneHeld;
+
+      // Only write arrays when the buffer contents actually changed.
+      if (!bufChanged) continue;
+      lastBufHashRef.current[l] = hash;
+
       const newActive = new Array(SLOT_COUNT).fill(0);
       const newTime = new Array(SLOT_COUNT).fill(0);
       const newDir = new Array(SLOT_COUNT).fill(0);
       const newDur = new Array(SLOT_COUNT).fill(0);
       const newHeldSlot = new Array(SLOT_COUNT).fill(0);
-
-      let maxOverlap = 0;
-      let laneHeld = 0;
 
       for (let s = 0; s < buf.length; s += 1) {
         const note = buf[s];
@@ -576,15 +577,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         newTime[s] = note.timeMs;
         newDir[s] = DIRECTION_INDEX[note.direction];
         newDur[s] = note.durationMs ?? 0;
-
-        // Is this slot's hold currently being held?
-        if (activeHoldsRef.current.has(note.id)) {
-          newHeldSlot[s] = 1;
-          laneHeld = 1;
-        }
-
-        const ov = overlapAt(note, now);
-        if (ov > maxOverlap) maxOverlap = ov;
+        if (activeHoldsRef.current.has(note.id)) newHeldSlot[s] = 1;
       }
 
       lane.active.value = newActive;
@@ -593,8 +586,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       lane.duration.value = newDur;
       lane.heldSlot.value = newHeldSlot;
       lane.hasNotes.value = buf.length > 0 ? 1 : 0;
-      lane.hot.value = maxOverlap;
-      lane.held.value = laneHeld;
     }
 
     processMisses(now);
@@ -631,176 +622,3 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     resetStats();
     wallClockStartRef.current = Date.now();
     wallClockPausedRef.current = 0;
-    audioEndedAtRef.current = 0;
-    audioPosition.value = 0;
-    setStatus('playing');
-    statusRef.current = 'playing';
-    stopLoop();
-    rafRef.current = requestAnimationFrame(loop);
-  }, [audioPosition, loop, resetStats, stopLoop]);
-
-  const pause = useCallback((): void => {
-    if (statusRef.current !== 'playing') return;
-    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
-    setStatus('paused');
-    statusRef.current = 'paused';
-    stopLoop();
-  }, [stopLoop]);
-
-  const resume = useCallback((): void => {
-    if (statusRef.current !== 'paused') return;
-    wallClockStartRef.current = Date.now() - wallClockPausedRef.current;
-    setStatus('playing');
-    statusRef.current = 'playing';
-    stopLoop();
-    rafRef.current = requestAnimationFrame(loop);
-  }, [loop, stopLoop]);
-
-  const restart = useCallback((): void => {
-    stopLoop();
-    resetStats();
-    wallClockStartRef.current = Date.now();
-    wallClockPausedRef.current = 0;
-    audioEndedAtRef.current = 0;
-    audioPosition.value = 0;
-    setStatus('playing');
-    statusRef.current = 'playing';
-    rafRef.current = requestAnimationFrame(loop);
-  }, [audioPosition, loop, resetStats, stopLoop]);
-
-  const quit = useCallback((): void => {
-    stopLoop();
-    setStatus('finished');
-    statusRef.current = 'finished';
-    const summary = buildSummary();
-    onFinish(summary);
-  }, [buildSummary, onFinish, stopLoop]);
-
-  const hit = useCallback(
-    (direction: Direction): void => {
-      if (statusRef.current !== 'playing') return;
-
-      const laneIdx = LANE_INDEX[direction];
-      pressedLanesRef.current[laneIdx] = true;
-
-      const hitStart = Date.now();
-      const now = getNow();
-      const notes = sortedNotes.current;
-
-      const searchRadiusMs = fallDurationMs * OVERLAP_WINDOWS.good * 1.5;
-      const loTime = now - searchRadiusMs;
-      const hiTime = now + searchRadiusMs;
-      const startIdx = findFirstNoteAtOrAfter(notes, loTime);
-
-      let bestNote: Note | null = null;
-      let bestOverlap = 0;
-
-      for (let i = startIdx; i < notes.length; i += 1) {
-        const note = notes[i];
-        if (note.timeMs > hiTime) break;
-        if (judgedRef.current.has(note.id)) continue;
-        if (note.direction !== direction) continue;
-        const ov = overlapAt(note, now);
-        if (ov > bestOverlap) {
-          bestOverlap = ov;
-          bestNote = note;
-        }
-      }
-
-      if (!bestNote || bestOverlap < OVERLAP_WINDOWS.good) {
-        perfMonitor.record('hit_ms', Date.now() - hitStart);
-        return;
-      }
-
-      const judgment = overlapToJudgment(bestOverlap);
-      const top = noteTopAt(bestNote, now);
-      const idealTop = noteTopForRatio(1, geometryRef.current);
-      const signedDelta =
-        (top - idealTop) / Math.max(1, geometryRef.current.noteHeight);
-
-      judgedRef.current.add(bestNote.id);
-      const { awarded } = applyJudgmentRef(judgment);
-
-      const dur = bestNote.durationMs ?? 0;
-      if (dur > 0) {
-        activeHoldsRef.current.set(bestNote.id, {
-          noteId: bestNote.id,
-          direction: bestNote.direction,
-          laneIndex: laneIdx,
-          endTimeMs: bestNote.timeMs + dur,
-          headJudgment: judgment,
-          headScoreAwarded: awarded,
-        });
-      }
-
-      scoreDirtyRef.current = true;
-      flushScore();
-
-      if (onNoteHit) {
-        const event: JudgmentEvent = {
-          id: genId('evt'),
-          noteId: bestNote.id,
-          direction: bestNote.direction,
-          judgment,
-          deltaPx: signedDelta,
-          timeMs: Date.now(),
-          comboAfter: statsRef.current.combo,
-          scoreAwarded: awarded,
-        };
-        onNoteHit({
-          direction: event.direction,
-          judgment: event.judgment,
-          key: event.id,
-          timeMs: event.timeMs,
-        });
-      }
-
-      perfMonitor.record('hit_ms', Date.now() - hitStart);
-    },
-    [
-      applyJudgmentRef,
-      fallDurationMs,
-      flushScore,
-      getNow,
-      noteTopAt,
-      onNoteHit,
-      overlapAt,
-    ],
-  );
-
-  const releaseInput = useCallback((direction: Direction): void => {
-    const laneIdx = LANE_INDEX[direction];
-    pressedLanesRef.current[laneIdx] = false;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      stopLoop();
-      if (scoreRafRef.current !== null) {
-        cancelAnimationFrame(scoreRafRef.current);
-        scoreRafRef.current = null;
-      }
-    };
-  }, [stopLoop]);
-
-  const progress =
-    durationMs > 0 ? Math.max(0, Math.min(1, elapsedMs / durationMs)) : 0;
-
-  return {
-    status,
-    audioPosition,
-    lanes: lanesRef.current,
-    geometry: geometryRef.current,
-    elapsedMs,
-    durationMs,
-    progress,
-    fallDurationMs,
-    start,
-    pause,
-    resume,
-    restart,
-    quit,
-    hit,
-    releaseInput,
-  };
-}
