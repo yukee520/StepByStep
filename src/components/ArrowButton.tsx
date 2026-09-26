@@ -1,261 +1,158 @@
-// src/components/ArrowRow.tsx
-import React, { useCallback, useEffect, useRef } from 'react';
-import { View, type LayoutChangeEvent } from 'react-native';
-import {
-  Gesture,
-  GestureDetector,
-  type GestureTouchEvent,
-  type TouchData,
-} from 'react-native-gesture-handler';
-import { useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
-import ArrowButton from '@/components/ArrowButton';
+// src/components/ArrowButton.tsx
+import React from 'react';
+import { View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Animated, {
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  type SharedValue,
+} from 'react-native-reanimated';
 import type { Direction } from '@/types/song';
+import { NEON_PALETTE } from '@/theme/colors';
+import { BURNING_OVERLAP, HOT_OVERLAP } from '@/types/game';
 
-const LANE_ORDER: Direction[] = ['left', 'down', 'up', 'right'];
-
-/**
- * Vertical tolerance (px) around the button row. A finger drifting within
- * this many pixels above or below the row still counts as "on the button".
- * Without this, tiny finger movement during a hold causes a false release.
- */
-const VERTICAL_TOLERANCE = 80;
-
-export type ArrowRowProps = {
-  onPress: (direction: Direction) => void;
-  onRelease: (direction: Direction) => void;
-  buttonSize: number;
-  gap: number;
-  hotValues: Record<Direction, SharedValue<number>>;
-  heldValues: Record<Direction, SharedValue<number>>;
-  horizontalPadding: number;
+export type ArrowButtonProps = {
+  direction: Direction;
+  size: number;
+  /** 0..1 — 1 when the finger is down on this lane. */
+  pressedValue: SharedValue<number>;
+  /** 0..1 — overlap of the best note in this lane with the button. */
+  hotValue: SharedValue<number>;
+  /**
+   * 0..1 — 1 while the player is holding a hold note on this lane.
+   * Set by the engine; independent of pressedValue.
+   */
+  heldValue?: SharedValue<number>;
+  disabled?: boolean;
 };
 
-type RowFrame = { x: number; y: number; width: number; height: number };
+const ICON_NAMES: Record<Direction, string> = {
+  left: 'chevron-back',
+  right: 'chevron-forward',
+  up: 'chevron-up',
+  down: 'chevron-down',
+};
 
-const PRESS_IN_MS = 60;
-const PRESS_OUT_MS = 120;
-
-function ArrowRowBase({
-  onPress,
-  onRelease,
-  buttonSize,
-  gap: _gap,
-  hotValues,
-  heldValues,
-  horizontalPadding,
-}: ArrowRowProps): React.ReactElement {
-  const rowRef = useRef<View>(null);
-  const frameRef = useRef<RowFrame>({ x: 0, y: 0, width: 0, height: 0 });
-
-  const pressed0 = useSharedValue(0);
-  const pressed1 = useSharedValue(0);
-  const pressed2 = useSharedValue(0);
-  const pressed3 = useSharedValue(0);
-
-  const pressedValuesRef = useRef([pressed0, pressed1, pressed2, pressed3]);
-  const activeTouchesRef = useRef<Map<number, number>>(new Map());
-
-  const onPressRef = useRef(onPress);
-  const onReleaseRef = useRef(onRelease);
-  useEffect(() => {
-    onPressRef.current = onPress;
-    onReleaseRef.current = onRelease;
-  }, [onPress, onRelease]);
-
-  const measureRow = useCallback((): void => {
-    const node = rowRef.current;
-    if (!node) return;
-    node.measureInWindow((x, y, width, height) => {
-      frameRef.current = { x, y, width, height };
-    });
-  }, []);
-
-  const handleLayout = useCallback(
-    (_e: LayoutChangeEvent): void => {
-      measureRow();
-    },
-    [measureRow],
-  );
-
-  useEffect(() => {
-    measureRow();
-  }, [measureRow]);
-
-  /**
-   * Hit-test a touch point. Returns the lane index if inside the row
-   * (with vertical tolerance), or null otherwise.
-   */
-  const hitTest = useCallback(
-    (absoluteX: number, absoluteY: number): number | null => {
-      const frame = frameRef.current;
-      if (frame.width <= 0) return null;
-
-      const localX = absoluteX - frame.x;
-      const localY = absoluteY - frame.y;
-
-      // Vertical tolerance: allow drift within ±VERTICAL_TOLERANCE.
-      if (localY < -VERTICAL_TOLERANCE || localY > frame.height + VERTICAL_TOLERANCE) {
-        return null;
-      }
-
-      // Horizontal: must be inside the row's padding-adjusted span.
-      const x = localX - horizontalPadding;
-      const effectiveWidth = frame.width - horizontalPadding * 2;
-      if (x < 0 || x > effectiveWidth) return null;
-
-      const slotWidth = effectiveWidth / 4;
-      return Math.min(3, Math.max(0, Math.floor(x / slotWidth)));
-    },
-    [horizontalPadding],
-  );
-
-  const setLanePressed = useCallback((index: number, pressed: boolean): void => {
-    const value = pressedValuesRef.current[index];
-    value.value = withTiming(pressed ? 1 : 0, {
-      duration: pressed ? PRESS_IN_MS : PRESS_OUT_MS,
-    });
-  }, []);
-
-  /**
-   * Touch-move handler. If the touch is already assigned to a lane, we do
-   * NOT release it just because the finger drifted out of bounds. We only
-   * release when the finger is lifted (see releaseTouchById), or if the
-   * touch clearly moved into a *different* lane horizontally.
-   *
-   * This is the fix for "hold breaks on finger jitter."
-   */
-  const processTouch = useCallback(
-    (touch: TouchData): void => {
-      const id = touch.id;
-      const index = hitTest(touch.absoluteX, touch.absoluteY);
-      const previous = activeTouchesRef.current.get(id);
-
-      // Out of bounds now.
-      if (index === null) {
-        // If we previously claimed a lane for this touch, KEEP it claimed.
-        // Do not fire release here. Release is handled by onTouchesUp.
-        return;
-      }
-
-      // Same lane as before — no change.
-      if (previous === index) {
-        return;
-      }
-
-      // Moved to a different lane horizontally: release old, press new.
-      if (previous !== undefined) {
-        onReleaseRef.current(LANE_ORDER[previous]);
-        setLanePressed(previous, false);
-      }
-      activeTouchesRef.current.set(id, index);
-      onPressRef.current(LANE_ORDER[index]);
-      setLanePressed(index, true);
-    },
-    [hitTest, setLanePressed],
-  );
-
-  const releaseTouchById = useCallback(
-    (id: number): void => {
-      const index = activeTouchesRef.current.get(id);
-      if (index === undefined) return;
-      activeTouchesRef.current.delete(id);
-      onReleaseRef.current(LANE_ORDER[index]);
-      setLanePressed(index, false);
-    },
-    [setLanePressed],
-  );
-
-  const handleTouchesDown = useCallback(
-    (e: GestureTouchEvent): void => {
-      for (const t of e.allTouches) processTouch(t);
-    },
-    [processTouch],
-  );
-
-  const handleTouchesMove = useCallback(
-    (e: GestureTouchEvent): void => {
-      for (const t of e.allTouches) processTouch(t);
-    },
-    [processTouch],
-  );
-
-  const handleTouchesUp = useCallback(
-    (e: GestureTouchEvent): void => {
-      for (const t of e.changedTouches) releaseTouchById(t.id);
-    },
-    [releaseTouchById],
-  );
-
-  const handleTouchesCancelled = useCallback(
-    (e: GestureTouchEvent): void => {
-      for (const t of e.changedTouches) releaseTouchById(t.id);
-    },
-    [releaseTouchById],
-  );
-
-  const panGesture = React.useMemo(
-    () =>
-      Gesture.Pan()
-        .minPointers(1)
-        .maxPointers(4)
-        .shouldCancelWhenOutside(false)
-        .onTouchesDown(handleTouchesDown)
-        .onTouchesMove(handleTouchesMove)
-        .onTouchesUp(handleTouchesUp)
-        .onTouchesCancelled(handleTouchesCancelled),
-    [
-      handleTouchesDown,
-      handleTouchesMove,
-      handleTouchesUp,
-      handleTouchesCancelled,
-    ],
-  );
-
-  return (
-    <GestureDetector gesture={panGesture}>
-      <View
-        ref={rowRef}
-        onLayout={handleLayout}
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: horizontalPadding,
-          minHeight: buttonSize,
-        }}
-      >
-        <ArrowButton
-          direction="left"
-          size={buttonSize}
-          pressedValue={pressed0}
-          hotValue={hotValues.left}
-          heldValue={heldValues.left}
-        />
-        <ArrowButton
-          direction="down"
-          size={buttonSize}
-          pressedValue={pressed1}
-          hotValue={hotValues.down}
-          heldValue={heldValues.down}
-        />
-        <ArrowButton
-          direction="up"
-          size={buttonSize}
-          pressedValue={pressed2}
-          hotValue={hotValues.up}
-          heldValue={heldValues.up}
-        />
-        <ArrowButton
-          direction="right"
-          size={buttonSize}
-          pressedValue={pressed3}
-          hotValue={hotValues.right}
-          heldValue={heldValues.right}
-        />
-      </View>
-    </GestureDetector>
-  );
+function hexToRgb(hex: string): string {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
 }
 
-const ArrowRow = React.memo(ArrowRowBase);
-export default ArrowRow;
+const AnimatedView = Animated.createAnimatedComponent(View);
+
+export default function ArrowButton({
+  direction,
+  size,
+  pressedValue,
+  hotValue,
+  heldValue,
+  disabled = false,
+}: ArrowButtonProps): React.ReactElement {
+  const color = NEON_PALETTE.lane[direction];
+  const rgb = hexToRgb(color);
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    const pressed = pressedValue.value;
+    const hot = hotValue.value;
+    const held = heldValue ? heldValue.value : 0;
+    const burning = hot >= BURNING_OVERLAP ? 1 : 0;
+    const warm = hot >= HOT_OVERLAP ? 1 : 0;
+
+    // Held glow is a strong, steady presence.
+    const heldBoost = held * 0.35;
+
+    const hotBg = warm * 0.18 + burning * 0.22 + heldBoost;
+    const bgOpacity = interpolate(
+      pressed,
+      [0, 1],
+      [Math.min(hotBg, 0.65), 0.75],
+      Extrapolation.CLAMP,
+    );
+
+    const borderWidth = interpolate(
+      Math.max(pressed, warm, burning, held),
+      [0, 0.5, 1],
+      [3, 3, 4],
+      Extrapolation.CLAMP,
+    );
+
+    const borderOpacity = 0.85 + warm * 0.15 + held * 0.15;
+
+    const scale = interpolate(
+      pressed,
+      [0, 1],
+      [1 + warm * 0.04 + held * 0.02, 0.94],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      borderWidth,
+      borderColor: `rgba(${rgb}, ${Math.min(1, borderOpacity)})`,
+      backgroundColor: `rgba(${rgb}, ${bgOpacity})`,
+      transform: [{ scale }],
+    };
+  });
+
+  const glowStyle = useAnimatedStyle(() => {
+    const hot = hotValue.value;
+    const held = heldValue ? heldValue.value : 0;
+    const burning = hot >= BURNING_OVERLAP ? 1 : 0;
+    const warm = hot >= HOT_OVERLAP ? 1 : 0;
+    const intensity = warm * 0.55 + burning * 0.35 + held * 0.4;
+    return {
+      opacity: Math.min(1, intensity),
+      transform: [{ scale: 1 + intensity * 0.15 }],
+    };
+  });
+
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {/* Outer glow — pulses when a note is on the button. */}
+      <AnimatedView
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            width: size * 1.35,
+            height: size * 1.35,
+            borderRadius: size,
+            backgroundColor: color,
+            opacity: 0,
+          },
+          glowStyle,
+        ]}
+      />
+      <AnimatedView
+        pointerEvents="none"
+        style={[
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 4,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: disabled ? 0.35 : 1,
+          },
+          animatedContainerStyle,
+        ]}
+      >
+        <Ionicons
+          name={ICON_NAMES[direction]}
+          size={size * 0.55}
+          color={color}
+        />
+      </AnimatedView>
+    </View>
+  );
+}
