@@ -622,3 +622,22 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     resetStats();
     wallClockStartRef.current = Date.now();
     wallClockPausedRef.current = 0;
+    audioEndedAtRef.current = 0;
+    audioPosition.value = 0;
+    setStatus('playing');
+    statusRef.current = 'playing';
+    stopLoop();
+    rafRef.current = requestAnimationFrame(loop);
+  }, [audioPosition, loop, resetStats, stopLoop]);
+
+  const pause = useCallback((): void => {
+    if (statusRef.current !== 'playing') return;
+    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
+    setStatus('paused');
+    statusRef.current = 'paused';
+    stopLoop();
+  }, [stopLoop]);
+
+  const resume = useCallback((): void => {
+    if (statusRef.current !== 'paused') return;
+    wallClockStartRef.cu
