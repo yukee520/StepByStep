@@ -11,11 +11,8 @@ export type GameButtonRowProps = {
   buttonSize: number;
   gap: number;
   horizontalPadding: number;
-  /**
-   * Per-direction hot-overlap shared values (0..1).
-   * Updated every frame by the game engine.
-   */
   hotValues: Record<Direction, SharedValue<number>>;
+  heldValues: Record<Direction, SharedValue<number>>;
   onPress: (direction: Direction) => void;
   onRelease: (direction: Direction) => void;
 };
@@ -27,6 +24,7 @@ function GameButtonRowBase({
   gap,
   horizontalPadding,
   hotValues,
+  heldValues,
   onPress,
   onRelease,
 }: GameButtonRowProps): React.ReactElement {
@@ -46,6 +44,7 @@ function GameButtonRowBase({
         buttonSize={buttonSize}
         gap={gap}
         hotValues={hotValues}
+        heldValues={heldValues}
         horizontalPadding={horizontalPadding}
       />
     </View>
