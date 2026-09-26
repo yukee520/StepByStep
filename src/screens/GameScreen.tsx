@@ -1,4 +1,4 @@
-
+// src/screens/GameScreen.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, AppStateStatus, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,13 +39,6 @@ const HUD_FALLBACK_RATIO = 0.10;
 const BUTTON_ROW_TOP_RATIO = 0.80;
 const BUTTON_GAP = 8;
 const BUTTON_BOTTOM_PADDING = 24;
-
-const EMPTY_HOT_LEVELS: Record<Direction, number> = {
-  left: 0,
-  down: 0,
-  up: 0,
-  right: 0,
-};
 
 export default function GameScreen(): React.ReactElement {
   const route = useRoute<GameRoute>();
@@ -109,6 +102,37 @@ export default function GameScreen(): React.ReactElement {
 
   const hasAudio = Boolean(song?.audioPath);
 
+  // ---- Layout-derived geometry, computed before the engine is created ----
+
+  const laneAreaTop =
+    hudHeight > 0 ? hudHeight : SCREEN_H * HUD_FALLBACK_RATIO;
+  const buttonRowTopScreen = SCREEN_H * BUTTON_ROW_TOP_RATIO;
+  // Extend the lane area DOWN so it covers the button row region.
+  // This is the space notes fall through; the button row overlays the bottom.
+  const buttonRowHeight = SCREEN_H - buttonRowTopScreen - BUTTON_BOTTOM_PADDING;
+  const laneAreaHeight = SCREEN_H - laneAreaTop;
+  const buttonTopInLane = buttonRowTopScreen - laneAreaTop;
+  const laneAreaWidth = SCREEN_W - LANE_AREA_PADDING * 2;
+  const laneWidth = laneAreaWidth / LANE_COUNT;
+
+  const buttonSize = useMemo(() => {
+    const available =
+      SCREEN_W - LANE_AREA_PADDING * 2 - BUTTON_GAP * (LANE_COUNT - 1);
+    return Math.min(84, available / LANE_COUNT);
+  }, [SCREEN_W]);
+
+  // Note sprite size: fits in lane, smaller than the button.
+  const noteSize = useMemo(
+    () => Math.min(laneWidth * 0.75, buttonSize * 0.9),
+    [laneWidth, buttonSize],
+  );
+
+  // Effective button height used for overlap judgment.
+  // We derive it from buttonSize (the actual rendered square), not the row.
+  const buttonHeightForGeometry = buttonSize;
+  const buttonTopForGeometry =
+    buttonTopInLane + (buttonRowHeight - buttonSize) / 2;
+
   const engine = useGameEngine({
     song:
       song ?? {
@@ -125,9 +149,28 @@ export default function GameScreen(): React.ReactElement {
       },
     inputOffsetMs,
     useAudioClock: hasAudio,
+    laneHeight: laneAreaHeight,
+    buttonHeight: buttonHeightForGeometry,
+    noteHeight: noteSize,
     onFinish,
     onNoteHit,
   });
+
+  // Fix button top in the geometry — the engine places it at lane bottom.
+  // We want it where GameButtonRow actually renders it.
+  useEffect(() => {
+    engine.geometry.laneHeight = laneAreaHeight;
+    engine.geometry.buttonHeight = buttonHeightForGeometry;
+    engine.geometry.buttonTop = buttonTopForGeometry;
+    engine.geometry.buttonCenterY = buttonTopForGeometry + buttonHeightForGeometry / 2;
+    engine.geometry.noteHeight = noteSize;
+  }, [
+    engine,
+    laneAreaHeight,
+    buttonHeightForGeometry,
+    buttonTopForGeometry,
+    noteSize,
+  ]);
 
   const beginPlay = useCallback((): void => {
     engine.start();
@@ -290,12 +333,6 @@ export default function GameScreen(): React.ReactElement {
     }
   }, [colors, feedback]);
 
-  const buttonSize = useMemo(() => {
-    const available =
-      SCREEN_W - LANE_AREA_PADDING * 2 - BUTTON_GAP * (LANE_COUNT - 1);
-    return Math.min(84, available / LANE_COUNT);
-  }, [SCREEN_W]);
-
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: NEON_PALETTE.background }}>
@@ -340,13 +377,7 @@ export default function GameScreen(): React.ReactElement {
     );
   }
 
-  const laneAreaTop = hudHeight > 0 ? hudHeight : SCREEN_H * HUD_FALLBACK_RATIO;
-  const buttonRowTopScreen = SCREEN_H * BUTTON_ROW_TOP_RATIO;
-  const laneAreaHeight = buttonRowTopScreen - laneAreaTop;
   const buttonRowTopInContainer = buttonRowTopScreen - laneAreaTop;
-  const laneAreaWidth = SCREEN_W - LANE_AREA_PADDING * 2;
-  const laneWidth = laneAreaWidth / LANE_COUNT;
-  const noteSize = Math.min(laneWidth * 0.75, buttonSize * 0.9);
 
   return (
     <View style={{ flex: 1, backgroundColor: NEON_PALETTE.background }}>
@@ -366,6 +397,8 @@ export default function GameScreen(): React.ReactElement {
         </View>
 
         <View style={{ flex: 1 }}>
+          {/* Lane area extends all the way to the bottom of the screen.
+              The button row draws on top of the lower portion. */}
           <LaneArea
             width={laneAreaWidth}
             height={laneAreaHeight}
@@ -376,6 +409,7 @@ export default function GameScreen(): React.ReactElement {
             audioPosition={engine.audioPosition}
             fallDurationMs={engine.fallDurationMs}
             lanes={engine.lanes}
+            geometry={engine.geometry}
           />
 
           <View
@@ -420,7 +454,12 @@ export default function GameScreen(): React.ReactElement {
             buttonSize={buttonSize}
             gap={BUTTON_GAP}
             horizontalPadding={LANE_AREA_PADDING}
-            hotLevels={EMPTY_HOT_LEVELS}
+            hotValues={[
+              engine.lanes[0].hot,
+              engine.lanes[1].hot,
+              engine.lanes[2].hot,
+              engine.lanes[3].hot,
+            ]}
             onPress={handleLanePress}
             onRelease={handleLaneRelease}
           />
