@@ -1,3 +1,4 @@
+// src/services/chartGenerator.ts
 import type { BeatMarker, ChartGenerationOptions } from '@/types/builder';
 import type { Difficulty, Direction, Note } from '@/types/song';
 import { DIFFICULTY_NOTE_DENSITY } from '@/types/song';
@@ -30,16 +31,42 @@ function mulberry32(seed: number): () => number {
 }
 
 // ---------------------------------------------------------------------------
-// Pattern banks — many more than before
-// Each pattern is an array of directions to play in sequence over a phrase.
+// Chord configuration (Batch 1c-1)
 // ---------------------------------------------------------------------------
 
-type Pattern = {
-  id: number;
-  seq: Direction[];
+/**
+ * Probability that any given "note tick" gets a chord partner.
+ *
+ *   easy:   none
+ *   normal: casual (~8%)
+ *   hard:   standard (~20%)
+ *   expert: standard+ (~28%)
+ */
+const CHORD_CHANCE: Record<Difficulty, number> = {
+  easy: 0,
+  normal: 0.08,
+  hard: 0.2,
+  expert: 0.28,
 };
 
-// 16 short patterns per difficulty, deliberately varied
+/**
+ * Minimum time gap (ms) to the *next* note in either candidate lane for a
+ * chord to be fair. If either lane has a note within this window (before or
+ * after), the chord is skipped for this tick.
+ */
+const CHORD_MIN_GAP_MS = 250;
+
+/**
+ * Skip chords during the first and last N ms of the song — openings and
+ * endings should breathe.
+ */
+const CHORD_SKIP_HEAD_MS = 2000;
+const CHORD_SKIP_TAIL_MS = 2000;
+
+// ---------------------------------------------------------------------------
+// Pattern banks
+// ---------------------------------------------------------------------------
+
 const EASY_PATTERNS: Direction[][] = [
   ['left', 'right'],
   ['down', 'up'],
@@ -137,15 +164,178 @@ function patternsFor(difficulty: Difficulty): Direction[][] {
 function subdivisionsFor(difficulty: Difficulty): number {
   const density = DIFFICULTY_NOTE_DENSITY[difficulty];
   if (density <= 0.5) {
-    return 0.5; // one note every 2 beats
+    return 0.5;
   }
   if (density <= 1) {
-    return 1; // one note per beat
+    return 1;
   }
   if (density <= 2) {
-    return 2; // two notes per beat
+    return 2;
   }
-  return 3; // three notes per beat (expert)
+  return 3;
+}
+
+// ---------------------------------------------------------------------------
+// Chord pass (Batch 1c-1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Given a set of tap notes (already sorted by time), return a NEW array with
+ * chord partners added based on difficulty.
+ *
+ * A chord is two notes in DIFFERENT lanes with the exact same `timeMs`.
+ * Never three or more. Never two in the same lane.
+ *
+ * Deterministic: same input + same `songId` produces the same output.
+ */
+function applyChords(
+  notes: Note[],
+  difficulty: Difficulty,
+  songId: string,
+  durationMs: number,
+): Note[] {
+  const chance = CHORD_CHANCE[difficulty];
+  if (chance <= 0 || notes.length === 0) {
+    return notes;
+  }
+
+  const seed = hashString(`${songId}|chords|${difficulty}`);
+  const rng = mulberry32(seed);
+
+  // Bucket notes by lane for fast neighbour checks. We rebuild these
+  // incrementally as we add chord partners, so later chords see earlier ones.
+  const byLane: Record<Direction, Note[]> = {
+    left: [],
+    down: [],
+    up: [],
+    right: [],
+  };
+  for (const n of notes) {
+    byLane[n.direction].push(n);
+  }
+  for (const d of LANES) {
+    byLane[d].sort((a, b) => a.timeMs - b.timeMs);
+  }
+
+  const headLimit = CHORD_SKIP_HEAD_MS;
+  const tailLimit = durationMs - CHORD_SKIP_TAIL_MS;
+
+  const output: Note[] = [];
+  const recentlyUsedLanes = new Set<Direction>();
+  let lastChordTime = -Infinity;
+
+  // Group notes by exact timeMs so we only chord once per tick.
+  let i = 0;
+  while (i < notes.length) {
+    const group: Note[] = [notes[i]];
+    let j = i + 1;
+    while (j < notes.length && notes[j].timeMs === notes[i].timeMs) {
+      group.push(notes[j]);
+      j += 1;
+    }
+
+    const anchor = group[0];
+    const t = anchor.timeMs;
+
+    // Already a chord at this tick? (Shouldn't happen from base generator,
+    // but be safe.) Push as-is and move on.
+    if (group.length >= 2) {
+      for (const n of group) {
+        output.push({ ...n, isChord: true });
+      }
+      recentlyUsedLanes.clear();
+      recentlyUsedLanes.add(group[0].direction);
+      recentlyUsedLanes.add(group[1].direction);
+      lastChordTime = t;
+      i = j;
+      continue;
+    }
+
+    // Clear "recently used lanes" memory after enough time has passed.
+    if (t - lastChordTime > CHORD_MIN_GAP_MS * 4) {
+      recentlyUsedLanes.clear();
+    }
+
+    // Eligibility checks.
+    const canChord =
+      t >= headLimit && t <= tailLimit && rng() < chance;
+
+    if (!canChord) {
+      output.push(anchor);
+      i = j;
+      continue;
+    }
+
+    // Candidate lanes: different from anchor's, not recently used, and no
+    // nearby note within CHORD_MIN_GAP_MS.
+    const candidates: Direction[] = LANES.filter((d) => {
+      if (d === anchor.direction) {
+        return false;
+      }
+      if (recentlyUsedLanes.has(d)) {
+        return false;
+      }
+      if (hasNeighbourWithin(byLane[d], t, CHORD_MIN_GAP_MS)) {
+        return false;
+      }
+      return true;
+    });
+
+    if (candidates.length === 0) {
+      // Can't safely chord — just push the anchor.
+      output.push(anchor);
+      i = j;
+      continue;
+    }
+
+    const partnerLane = candidates[Math.floor(rng() * candidates.length)];
+    const partnerNote: Note = {
+      id: genId('note'),
+      timeMs: t,
+      direction: partnerLane,
+      isChord: true,
+    };
+
+    output.push({ ...anchor, isChord: true });
+    output.push(partnerNote);
+
+    // Register the new note for future neighbour checks.
+    byLane[partnerLane].push(partnerNote);
+    byLane[partnerLane].sort((a, b) => a.timeMs - b.timeMs);
+
+    recentlyUsedLanes.clear();
+    recentlyUsedLanes.add(anchor.direction);
+    recentlyUsedLanes.add(partnerLane);
+    lastChordTime = t;
+
+    i = j;
+  }
+
+  return output;
+}
+
+/**
+ * Returns true if `laneNotes` (sorted by time) contains any note within
+ * `gapMs` of `t`, excluding a note at exactly `t`.
+ */
+function hasNeighbourWithin(
+  laneNotes: Note[],
+  t: number,
+  gapMs: number,
+): boolean {
+  for (let i = 0; i < laneNotes.length; i += 1) {
+    const dt = Math.abs(laneNotes[i].timeMs - t);
+    if (dt === 0) {
+      continue;
+    }
+    if (dt <= gapMs) {
+      return true;
+    }
+    if (laneNotes[i].timeMs > t + gapMs) {
+      break;
+    }
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -181,7 +371,7 @@ export function generateChart(
   // Current pattern state
   let currentPatternIndex = Math.floor(rng() * patternBank.length);
   let patternCursor = 0;
-  let beatsUntilNextPattern = 4 + Math.floor(rng() * 4); // 4-7 beats
+  let beatsUntilNextPattern = 4 + Math.floor(rng() * 4);
   let lastPatternIndex = -1;
 
   const notes: Note[] = [];
@@ -211,16 +401,11 @@ export function generateChart(
     return candidate;
   };
 
-  /**
-   * Swap a direction with its "opposite lane" if the recent lane history is
-   * over-using that direction.
-   */
   const balanceLane = (direction: Direction): Direction => {
     const recentUse = recentLanes.filter((d) => d === direction).length;
     if (recentUse < 3) {
       return direction;
     }
-    // Pick a lane that hasn't been used much recently
     const usage: Record<Direction, number> = {
       left: 0,
       down: 0,
@@ -247,7 +432,6 @@ export function generateChart(
       break;
     }
 
-    // Rotate pattern after N beats
     if (beatsUntilNextPattern <= 0) {
       lastPatternIndex = currentPatternIndex;
       currentPatternIndex = pickPatternIndex();
@@ -261,54 +445,25 @@ export function generateChart(
     beatsUntilNextPattern -= 1;
 
     if (subsPerBeat >= 1) {
-      // Normal and above: 1+ notes per beat
       const subCount = Math.floor(subsPerBeat);
       for (let s = 0; s < subCount; s += 1) {
         const t = anchor + s * subBeatMs;
         if (t > endMs) {
           break;
         }
-        // Choose lane from pattern with occasional lane-balancing
         let lane = pattern[(patternCursor + s) % pattern.length];
         lane = balanceLane(lane);
         pushNote(t, lane);
       }
     } else {
-      // Easy: one note every two beats
       if (i % 2 === 0) {
         const lane = balanceLane(dir);
         pushNote(anchor, lane);
       }
     }
-
-    // Double-note logic — scaled by difficulty and randomness
-    if (options.includeDoubles) {
-      const accented =
-        options.difficulty === 'expert'
-          ? i % 3 === 0
-          : options.difficulty === 'hard'
-            ? i % 4 === 0
-            : i % 8 === 0;
-
-      // Add a small random chance
-      const roll = rng();
-      const chance =
-        options.difficulty === 'expert'
-          ? 0.35
-          : options.difficulty === 'hard'
-            ? 0.2
-            : 0.1;
-
-      if (accented && roll < chance) {
-        const primary = dir;
-        const partner =
-          LANES[(LANES.indexOf(primary) + 1 + Math.floor(rng() * 3)) % 4];
-        pushNote(anchor, partner);
-      }
-    }
   }
 
-  // Sort and deduplicate stacked notes
+  // Sort by time then by lane order.
   notes.sort((a, b) => {
     if (a.timeMs !== b.timeMs) {
       return a.timeMs - b.timeMs;
@@ -316,7 +471,27 @@ export function generateChart(
     return LANES.indexOf(a.direction) - LANES.indexOf(b.direction);
   });
 
-  return dedupeStacked(notes);
+  const deduped = dedupeStacked(notes);
+
+  // Chord pass — Batch 1c-1.
+  const withChords = applyChords(
+    deduped,
+    options.difficulty,
+    options.songId ?? 'default',
+    options.endAtMs > 0 ? options.endAtMs : deduped.length > 0
+      ? deduped[deduped.length - 1].timeMs + 2000
+      : 0,
+  );
+
+  // Final sort to ensure chord partners interleave correctly.
+  withChords.sort((a, b) => {
+    if (a.timeMs !== b.timeMs) {
+      return a.timeMs - b.timeMs;
+    }
+    return LANES.indexOf(a.direction) - LANES.indexOf(b.direction);
+  });
+
+  return withChords;
 }
 
 function dedupeStacked(notes: Note[]): Note[] {
