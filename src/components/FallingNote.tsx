@@ -40,7 +40,6 @@ export type FallingNoteProps = {
   laneTimeMs: SharedValue<number[]>;
   laneDirection: SharedValue<number[]>;
   laneDuration: SharedValue<number[]>;
-  /** Per-slot flag: 1 if this slot's hold is currently being held. */
   laneHeldSlot: SharedValue<number[]>;
   audioPosition: SharedValue<number>;
   fallDurationMs: number;
@@ -64,23 +63,21 @@ export default function FallingNote({
 }: FallingNoteProps): React.ReactElement {
   const borderWidth = Math.max(2, noteSize * 0.06);
 
-  // Hold bar: positioned ABOVE the head (bar sits between head and tail).
-  // Length is the visual travel distance covered by the hold's duration.
   const bodyStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
     if (active === 0) {
-      return { opacity: 0, height: 0 };
+      return { display: 'none' };
     }
     const dur = laneDuration.value[slotIndex] ?? 0;
     if (dur <= 0) {
-      return { opacity: 0, height: 0 };
+      return { display: 'none' };
     }
-    const lengthPx = (dur / fallDurationMs) * geometry.laneHeight;
     const held = laneHeldSlot.value[slotIndex] ?? 0;
+    const lengthPx = (dur / fallDurationMs) * geometry.laneHeight;
     return {
-      opacity: 1,
+      display: 'flex',
       height: lengthPx,
-      // Fill opacity: 0.08 outline-idle, 0.55 while held.
+      opacity: 1,
       backgroundColor:
         held > 0 ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.08)',
     };
@@ -90,7 +87,7 @@ export default function FallingNote({
     const active = laneActive.value[slotIndex] ?? 0;
     if (active === 0) {
       return {
-        opacity: 0,
+        display: 'none',
         transform: [{ translateY: -1000 }, { scale: 1 }],
       };
     }
@@ -117,6 +114,7 @@ export default function FallingNote({
     );
 
     return {
+      display: 'flex',
       transform: [{ translateY: y }, { scale }],
       opacity: fade,
     };
@@ -155,7 +153,6 @@ export default function FallingNote({
         headStyle,
       ]}
     >
-      {/* Hold bar extends UPWARD from the head (tail is higher than head). */}
       <AnimatedView
         pointerEvents="none"
         style={[
