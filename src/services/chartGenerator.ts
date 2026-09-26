@@ -7,7 +7,7 @@ import { genId } from '@/utils/id';
 const LANES: Direction[] = ['left', 'down', 'up', 'right'];
 
 // ---------------------------------------------------------------------------
-// Seeded RNG (mulberry32) — deterministic per songId
+// Seeded RNG (mulberry32)
 // ---------------------------------------------------------------------------
 
 function hashString(input: string): number {
@@ -34,14 +34,6 @@ function mulberry32(seed: number): () => number {
 // Chord configuration (Batch 1c-1)
 // ---------------------------------------------------------------------------
 
-/**
- * Probability that any given "note tick" gets a chord partner.
- *
- *   easy:   none
- *   normal: casual (~8%)
- *   hard:   standard (~20%)
- *   expert: standard+ (~28%)
- */
 const CHORD_CHANCE: Record<Difficulty, number> = {
   easy: 0,
   normal: 0.08,
@@ -49,19 +41,40 @@ const CHORD_CHANCE: Record<Difficulty, number> = {
   expert: 0.28,
 };
 
-/**
- * Minimum time gap (ms) to the *next* note in either candidate lane for a
- * chord to be fair. If either lane has a note within this window (before or
- * after), the chord is skipped for this tick.
- */
 const CHORD_MIN_GAP_MS = 250;
-
-/**
- * Skip chords during the first and last N ms of the song — openings and
- * endings should breathe.
- */
 const CHORD_SKIP_HEAD_MS = 2000;
 const CHORD_SKIP_TAIL_MS = 2000;
+
+// ---------------------------------------------------------------------------
+// Hold configuration (Batch 1c-2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Probability that any given tick *without a chord partner nearby* becomes a
+ * hold note. Holds never fire on back-to-back ticks (see HOLD_MIN_GAP_MS).
+ */
+const HOLD_CHANCE: Record<Difficulty, number> = {
+  easy: 0,
+  normal: 0.05,
+  hard: 0.12,
+  expert: 0.18,
+};
+
+/**
+ * How long a hold lasts, in beats. Chosen per difficulty.
+ * The generator picks randomly in [min, max] and snaps to a beat fraction.
+ */
+const HOLD_BEATS: Record<Difficulty, { min: number; max: number }> = {
+  easy: { min: 0, max: 0 },
+  normal: { min: 1, max: 1 },
+  hard: { min: 1, max: 2 },
+  expert: { min: 1, max: 2 },
+};
+
+/** Minimum gap (ms) between two hold starts in the same song. */
+const HOLD_MIN_GAP_MS = 1200;
+const HOLD_SKIP_HEAD_MS = 3000;
+const HOLD_SKIP_TAIL_MS = 3000;
 
 // ---------------------------------------------------------------------------
 // Pattern banks
@@ -157,37 +170,18 @@ function patternsFor(difficulty: Difficulty): Direction[][] {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Subdivision — how many notes per beat
-// ---------------------------------------------------------------------------
-
 function subdivisionsFor(difficulty: Difficulty): number {
   const density = DIFFICULTY_NOTE_DENSITY[difficulty];
-  if (density <= 0.5) {
-    return 0.5;
-  }
-  if (density <= 1) {
-    return 1;
-  }
-  if (density <= 2) {
-    return 2;
-  }
+  if (density <= 0.5) return 0.5;
+  if (density <= 1) return 1;
+  if (density <= 2) return 2;
   return 3;
 }
 
 // ---------------------------------------------------------------------------
-// Chord pass (Batch 1c-1)
+// Chord pass (1c-1) — unchanged
 // ---------------------------------------------------------------------------
 
-/**
- * Given a set of tap notes (already sorted by time), return a NEW array with
- * chord partners added based on difficulty.
- *
- * A chord is two notes in DIFFERENT lanes with the exact same `timeMs`.
- * Never three or more. Never two in the same lane.
- *
- * Deterministic: same input + same `songId` produces the same output.
- */
 function applyChords(
   notes: Note[],
   difficulty: Difficulty,
@@ -202,8 +196,6 @@ function applyChords(
   const seed = hashString(`${songId}|chords|${difficulty}`);
   const rng = mulberry32(seed);
 
-  // Bucket notes by lane for fast neighbour checks. We rebuild these
-  // incrementally as we add chord partners, so later chords see earlier ones.
   const byLane: Record<Direction, Note[]> = {
     left: [],
     down: [],
@@ -224,7 +216,6 @@ function applyChords(
   const recentlyUsedLanes = new Set<Direction>();
   let lastChordTime = -Infinity;
 
-  // Group notes by exact timeMs so we only chord once per tick.
   let i = 0;
   while (i < notes.length) {
     const group: Note[] = [notes[i]];
@@ -237,8 +228,6 @@ function applyChords(
     const anchor = group[0];
     const t = anchor.timeMs;
 
-    // Already a chord at this tick? (Shouldn't happen from base generator,
-    // but be safe.) Push as-is and move on.
     if (group.length >= 2) {
       for (const n of group) {
         output.push({ ...n, isChord: true });
@@ -251,12 +240,10 @@ function applyChords(
       continue;
     }
 
-    // Clear "recently used lanes" memory after enough time has passed.
     if (t - lastChordTime > CHORD_MIN_GAP_MS * 4) {
       recentlyUsedLanes.clear();
     }
 
-    // Eligibility checks.
     const canChord =
       t >= headLimit && t <= tailLimit && rng() < chance;
 
@@ -266,23 +253,14 @@ function applyChords(
       continue;
     }
 
-    // Candidate lanes: different from anchor's, not recently used, and no
-    // nearby note within CHORD_MIN_GAP_MS.
     const candidates: Direction[] = LANES.filter((d) => {
-      if (d === anchor.direction) {
-        return false;
-      }
-      if (recentlyUsedLanes.has(d)) {
-        return false;
-      }
-      if (hasNeighbourWithin(byLane[d], t, CHORD_MIN_GAP_MS)) {
-        return false;
-      }
+      if (d === anchor.direction) return false;
+      if (recentlyUsedLanes.has(d)) return false;
+      if (hasNeighbourWithin(byLane[d], t, CHORD_MIN_GAP_MS)) return false;
       return true;
     });
 
     if (candidates.length === 0) {
-      // Can't safely chord — just push the anchor.
       output.push(anchor);
       i = j;
       continue;
@@ -299,7 +277,6 @@ function applyChords(
     output.push({ ...anchor, isChord: true });
     output.push(partnerNote);
 
-    // Register the new note for future neighbour checks.
     byLane[partnerLane].push(partnerNote);
     byLane[partnerLane].sort((a, b) => a.timeMs - b.timeMs);
 
@@ -314,10 +291,6 @@ function applyChords(
   return output;
 }
 
-/**
- * Returns true if `laneNotes` (sorted by time) contains any note within
- * `gapMs` of `t`, excluding a note at exactly `t`.
- */
 function hasNeighbourWithin(
   laneNotes: Note[],
   t: number,
@@ -325,17 +298,120 @@ function hasNeighbourWithin(
 ): boolean {
   for (let i = 0; i < laneNotes.length; i += 1) {
     const dt = Math.abs(laneNotes[i].timeMs - t);
-    if (dt === 0) {
-      continue;
-    }
-    if (dt <= gapMs) {
-      return true;
-    }
-    if (laneNotes[i].timeMs > t + gapMs) {
-      break;
-    }
+    if (dt === 0) continue;
+    if (dt <= gapMs) return true;
+    if (laneNotes[i].timeMs > t + gapMs) break;
   }
   return false;
+}
+
+// ---------------------------------------------------------------------------
+// Hold pass (1c-2) — new
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert some tap notes into hold notes.
+ *
+ * Rules:
+ * - A note can be converted regardless of whether it's a chord member.
+ * - A chord where BOTH notes are holds is skipped (would require holding two
+ *   buttons at once; disorienting).
+ * - Holds in different lanes can overlap in time.
+ * - A hold's tail must not collide with another note in the SAME lane —
+ *   ensure the hold ends before the next note in that lane.
+ * - Consecutive holds in the same song are spaced by HOLD_MIN_GAP_MS.
+ */
+function applyHolds(
+  notes: Note[],
+  difficulty: Difficulty,
+  songId: string,
+  bpm: number,
+  durationMs: number,
+): Note[] {
+  const chance = HOLD_CHANCE[difficulty];
+  if (chance <= 0 || notes.length === 0) {
+    return notes;
+  }
+
+  const seed = hashString(`${songId}|holds|${difficulty}`);
+  const rng = mulberry32(seed);
+  const beatMs = 60000 / Math.max(1, bpm);
+  const { min: minBeats, max: maxBeats } = HOLD_BEATS[difficulty];
+
+  const headLimit = HOLD_SKIP_HEAD_MS;
+  const tailLimit = durationMs - HOLD_SKIP_TAIL_MS;
+
+  // Index by time to detect chord partners quickly.
+  const notesByTime = new Map<number, Note[]>();
+  for (const n of notes) {
+    const arr = notesByTime.get(n.timeMs);
+    if (arr) arr.push(n);
+    else notesByTime.set(n.timeMs, [n]);
+  }
+
+  // Index by lane so we can check for collisions with the hold tail.
+  const byLane: Record<Direction, Note[]> = {
+    left: [],
+    down: [],
+    up: [],
+    right: [],
+  };
+  for (const n of notes) {
+    byLane[n.direction].push(n);
+  }
+  for (const d of LANES) {
+    byLane[d].sort((a, b) => a.timeMs - b.timeMs);
+  }
+
+  let lastHoldEnd = -Infinity;
+  let lastHoldTime = -Infinity;
+
+  const result: Note[] = notes.map((n) => ({ ...n }));
+
+  for (let i = 0; i < result.length; i += 1) {
+    const note = result[i];
+
+    if (note.timeMs < headLimit || note.timeMs > tailLimit) continue;
+    if (note.timeMs - lastHoldTime < HOLD_MIN_GAP_MS) continue;
+    if (note.timeMs < lastHoldEnd) continue;
+
+    // Do we already have a hold at this tick?
+    const tickGroup = notesByTime.get(note.timeMs) ?? [];
+    const hasHoldAtTick = tickGroup.some((n) => (n.durationMs ?? 0) > 0);
+    if (hasHoldAtTick) continue;
+
+    // If this is a chord, only allow ONE of the two to be a hold.
+    // We convert whichever comes first in the sorted array.
+    // (Since we iterate in order, the first one we reach wins.)
+
+    if (rng() >= chance) continue;
+
+    // Compute hold duration: pick beats in [min, max], rounded to nearest
+    // half-beat for musicality.
+    const beats = minBeats + rng() * (maxBeats - minBeats);
+    const snappedBeats = Math.round(beats * 2) / 2;
+    let holdMs = Math.max(200, snappedBeats * beatMs);
+
+    // Find the next note in the SAME lane after this one; the hold must end
+    // before that.
+    const laneNotes = byLane[note.direction];
+    const idx = laneNotes.findIndex((n) => n.id === note.id);
+    const nextInLane = idx >= 0 ? laneNotes[idx + 1] : undefined;
+    if (nextInLane) {
+      const maxMs = nextInLane.timeMs - note.timeMs - 120;
+      if (maxMs < 200) {
+        // Not enough room for a hold here.
+        continue;
+      }
+      holdMs = Math.min(holdMs, maxMs);
+    }
+
+    note.durationMs = Math.round(holdMs);
+    lastHoldEnd = note.timeMs + note.durationMs;
+    lastHoldTime = note.timeMs;
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -365,10 +441,7 @@ export function generateChart(
 
   const patternBank = patternsFor(options.difficulty);
 
-  // Recent lane history for balance — last 8 directions
   const recentLanes: Direction[] = [];
-
-  // Current pattern state
   let currentPatternIndex = Math.floor(rng() * patternBank.length);
   let patternCursor = 0;
   let beatsUntilNextPattern = 4 + Math.floor(rng() * 4);
@@ -377,18 +450,14 @@ export function generateChart(
   const notes: Note[] = [];
 
   const pushNote = (timeMs: number, direction: Direction): void => {
-    if (timeMs < startMs || timeMs > endMs) {
-      return;
-    }
+    if (timeMs < startMs || timeMs > endMs) return;
     notes.push({
       id: genId('note'),
       timeMs: Math.round(timeMs),
       direction,
     });
     recentLanes.push(direction);
-    if (recentLanes.length > 8) {
-      recentLanes.shift();
-    }
+    if (recentLanes.length > 8) recentLanes.shift();
   };
 
   const pickPatternIndex = (): number => {
@@ -403,18 +472,9 @@ export function generateChart(
 
   const balanceLane = (direction: Direction): Direction => {
     const recentUse = recentLanes.filter((d) => d === direction).length;
-    if (recentUse < 3) {
-      return direction;
-    }
-    const usage: Record<Direction, number> = {
-      left: 0,
-      down: 0,
-      up: 0,
-      right: 0,
-    };
-    for (const d of recentLanes) {
-      usage[d] += 1;
-    }
+    if (recentUse < 3) return direction;
+    const usage: Record<Direction, number> = { left: 0, down: 0, up: 0, right: 0 };
+    for (const d of recentLanes) usage[d] += 1;
     let best: Direction = direction;
     let bestCount = recentUse;
     for (const lane of LANES) {
@@ -428,9 +488,7 @@ export function generateChart(
 
   for (let i = 0; i < sorted.length; i += 1) {
     const anchor = sorted[i].timeMs + offsetMs;
-    if (anchor > endMs) {
-      break;
-    }
+    if (anchor > endMs) break;
 
     if (beatsUntilNextPattern <= 0) {
       lastPatternIndex = currentPatternIndex;
@@ -448,9 +506,7 @@ export function generateChart(
       const subCount = Math.floor(subsPerBeat);
       for (let s = 0; s < subCount; s += 1) {
         const t = anchor + s * subBeatMs;
-        if (t > endMs) {
-          break;
-        }
+        if (t > endMs) break;
         let lane = pattern[(patternCursor + s) % pattern.length];
         lane = balanceLane(lane);
         pushNote(t, lane);
@@ -463,35 +519,43 @@ export function generateChart(
     }
   }
 
-  // Sort by time then by lane order.
   notes.sort((a, b) => {
-    if (a.timeMs !== b.timeMs) {
-      return a.timeMs - b.timeMs;
-    }
+    if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
     return LANES.indexOf(a.direction) - LANES.indexOf(b.direction);
   });
 
   const deduped = dedupeStacked(notes);
 
-  // Chord pass — Batch 1c-1.
+  const effectiveDuration =
+    options.endAtMs > 0
+      ? options.endAtMs
+      : deduped.length > 0
+        ? deduped[deduped.length - 1].timeMs + 2000
+        : 0;
+
+  // 1) Chords first — adds partners.
   const withChords = applyChords(
     deduped,
     options.difficulty,
     options.songId ?? 'default',
-    options.endAtMs > 0 ? options.endAtMs : deduped.length > 0
-      ? deduped[deduped.length - 1].timeMs + 2000
-      : 0,
+    effectiveDuration,
   );
 
-  // Final sort to ensure chord partners interleave correctly.
-  withChords.sort((a, b) => {
-    if (a.timeMs !== b.timeMs) {
-      return a.timeMs - b.timeMs;
-    }
+  // 2) Holds second — converts taps (chord members included) into holds.
+  const withHolds = applyHolds(
+    withChords,
+    options.difficulty,
+    options.songId ?? 'default',
+    options.bpm,
+    effectiveDuration,
+  );
+
+  withHolds.sort((a, b) => {
+    if (a.timeMs !== b.timeMs) return a.timeMs - b.timeMs;
     return LANES.indexOf(a.direction) - LANES.indexOf(b.direction);
   });
 
-  return withChords;
+  return withHolds;
 }
 
 function dedupeStacked(notes: Note[]): Note[] {
@@ -500,9 +564,7 @@ function dedupeStacked(notes: Note[]): Note[] {
     const clash = out.find(
       (n) => n.timeMs === note.timeMs && n.direction === note.direction,
     );
-    if (!clash) {
-      out.push(note);
-    }
+    if (!clash) out.push(note);
   }
   return out;
 }
@@ -512,8 +574,6 @@ export function maxPossibleScore(noteCount: number): number {
 }
 
 export function estimateChartDuration(notes: Note[]): number {
-  if (notes.length === 0) {
-    return 0;
-  }
+  if (notes.length === 0) return 0;
   return notes[notes.length - 1].timeMs;
 }
