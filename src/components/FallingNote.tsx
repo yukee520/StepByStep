@@ -1,3 +1,4 @@
+// src/components/FallingNote.tsx
 import React from 'react';
 import { View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -9,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { Direction } from '@/types/song';
 import { NEON_PALETTE } from '@/theme/colors';
+import type { LaneGeometry } from '@/types/game';
 
 const SLOT_COUNT = 12;
 
@@ -28,8 +30,6 @@ const LANE_COLORS: Record<Direction, string> = {
   right: NEON_PALETTE.lane.right,
 };
 
-const DIRECTION_ORDER: Direction[] = ['left', 'down', 'up', 'right'];
-
 // Direction index for shared arrays: 0=left, 1=down, 2=up, 3=right
 const INDEX_TO_DIRECTION: Direction[] = ['left', 'down', 'up', 'right'];
 
@@ -42,7 +42,7 @@ export type FallingNoteProps = {
   laneDirection: SharedValue<number[]>;
   audioPosition: SharedValue<number>;
   fallDurationMs: number;
-  laneHeight: number;
+  geometry: LaneGeometry;
   noteSize: number;
   /** Absolute x within the lane container. */
   x: number;
@@ -55,7 +55,7 @@ export default function FallingNote({
   laneDirection,
   audioPosition,
   fallDurationMs,
-  laneHeight,
+  geometry,
   noteSize,
   x,
 }: FallingNoteProps): React.ReactElement {
@@ -73,11 +73,14 @@ export default function FallingNote({
     const noteTimeMs = laneTimeMs.value[slotIndex] ?? 0;
     const delta = noteTimeMs - now;
     const ratio = 1 - delta / fallDurationMs;
-    const y = ratio * laneHeight - noteSize / 2;
+
+    // Center the note on the button at ratio=1; travel distance = laneHeight.
+    const centerY = geometry.buttonCenterY - (1 - ratio) * geometry.laneHeight;
+    const y = centerY - noteSize / 2;
 
     const fade = interpolate(
       ratio,
-      [-0.2, 0, 0.05, 1.05, 1.15],
+      [-0.2, 0, 0.05, 1.05, 1.2],
       [0, 1, 1, 1, 0],
       Extrapolation.CLAMP,
     );
@@ -129,9 +132,6 @@ export default function FallingNote({
     </AnimatedView>
   );
 }
-
-void ICON_NAMES;
-void DIRECTION_ORDER;
 
 function DirectionalIcon({
   slotIndex,
