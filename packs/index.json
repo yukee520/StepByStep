@@ -1,6 +1,17 @@
 {
-  "version": 2,
+  "version": 3,
   "packs": [
+    {
+      "id": "test",
+      "title": "test",
+      "artist": "Unknown Artist",
+      "bpm": 120,
+      "difficulty": "hard",
+      "sizeBytes": 2768324,
+      "manifestUrl": "https://raw.githubusercontent.com/yukee520/StepByStep/main/packs/test/manifest.json",
+      "audioUrl": "https://raw.githubusercontent.com/yukee520/StepByStep/main/packs/test/audio.m4a",
+      "version": 1
+    },
     {
       "id": "talking-to-the-moon",
       "title": "talking to the moon",
