@@ -460,6 +460,12 @@ export default function GameScreen(): React.ReactElement {
     up:    engine.lanes[2].hot,
     right: engine.lanes[3].hot,
   }}
+  heldValues={{
+    left:  engine.lanes[0].held,
+    down:  engine.lanes[1].held,
+    up:    engine.lanes[2].held,
+    right: engine.lanes[3].held,
+  }}
   onPress={handleLanePress}
   onRelease={handleLaneRelease}
 />
