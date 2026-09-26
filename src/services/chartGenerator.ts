@@ -321,6 +321,17 @@ function hasNeighbourWithin(
  *   ensure the hold ends before the next note in that lane.
  * - Consecutive holds in the same song are spaced by HOLD_MIN_GAP_MS.
  */
+/**
+ * Convert some tap notes into hold notes.
+ *
+ * Safety rules — the "max 2 simultaneous inputs" guarantee:
+ * - A hold's duration must not overlap with any CHORD tick (a tick with 2
+ *   notes). Chord + hold at the SAME tick is fine (2 fingers), but a chord
+ *   starting while a hold is ongoing would require 3 fingers.
+ * - A hold's duration must not overlap with any other note in the SAME lane.
+ * - Consecutive holds are spaced by HOLD_MIN_GAP_MS.
+ * - Only one note per tick may become a hold.
+ */
 function applyHolds(
   notes: Note[],
   difficulty: Difficulty,
@@ -341,15 +352,7 @@ function applyHolds(
   const headLimit = HOLD_SKIP_HEAD_MS;
   const tailLimit = durationMs - HOLD_SKIP_TAIL_MS;
 
-  // Index by time to detect chord partners quickly.
-  const notesByTime = new Map<number, Note[]>();
-  for (const n of notes) {
-    const arr = notesByTime.get(n.timeMs);
-    if (arr) arr.push(n);
-    else notesByTime.set(n.timeMs, [n]);
-  }
-
-  // Index by lane so we can check for collisions with the hold tail.
+  // Index by lane for same-lane collision checks.
   const byLane: Record<Direction, Note[]> = {
     left: [],
     down: [],
@@ -363,10 +366,40 @@ function applyHolds(
     byLane[d].sort((a, b) => a.timeMs - b.timeMs);
   }
 
-  let lastHoldEnd = -Infinity;
-  let lastHoldTime = -Infinity;
+  /**
+   * A tick is a "chord tick" if 2+ notes share its timeMs.
+   * Precompute a set of chord tick times for O(1) lookup.
+   */
+  const chordTicks = new Set<number>();
+  {
+    let i = 0;
+    while (i < notes.length) {
+      let j = i + 1;
+      while (j < notes.length && notes[j].timeMs === notes[i].timeMs) {
+        j += 1;
+      }
+      if (j - i >= 2) {
+        chordTicks.add(notes[i].timeMs);
+      }
+      i = j;
+    }
+  }
+
+  /**
+   * Does the time window (startExclusive, endExclusive) contain any chord
+   * tick? Chords at exactly `start` are OK (that's a "hold + tap" chord).
+   */
+  const hasChordInside = (start: number, end: number): boolean => {
+    for (const t of chordTicks) {
+      if (t > start && t < end) return true;
+    }
+    return false;
+  };
 
   const result: Note[] = notes.map((n) => ({ ...n }));
+
+  let lastHoldEnd = -Infinity;
+  let lastHoldTime = -Infinity;
 
   for (let i = 0; i < result.length; i += 1) {
     const note = result[i];
@@ -375,35 +408,51 @@ function applyHolds(
     if (note.timeMs - lastHoldTime < HOLD_MIN_GAP_MS) continue;
     if (note.timeMs < lastHoldEnd) continue;
 
-    // Do we already have a hold at this tick?
-    const tickGroup = notesByTime.get(note.timeMs) ?? [];
-    const hasHoldAtTick = tickGroup.some((n) => (n.durationMs ?? 0) > 0);
-    if (hasHoldAtTick) continue;
-
-    // If this is a chord, only allow ONE of the two to be a hold.
-    // We convert whichever comes first in the sorted array.
-    // (Since we iterate in order, the first one we reach wins.)
+    // Skip if a hold already exists at this tick.
+    // (Iterating in order means the first note at a tick is the winner.)
+    let tickHasHold = false;
+    for (const other of result) {
+      if (other.timeMs !== note.timeMs) continue;
+      if ((other.durationMs ?? 0) > 0) {
+        tickHasHold = true;
+        break;
+      }
+    }
+    if (tickHasHold) continue;
 
     if (rng() >= chance) continue;
 
-    // Compute hold duration: pick beats in [min, max], rounded to nearest
-    // half-beat for musicality.
     const beats = minBeats + rng() * (maxBeats - minBeats);
     const snappedBeats = Math.round(beats * 2) / 2;
     let holdMs = Math.max(200, snappedBeats * beatMs);
 
-    // Find the next note in the SAME lane after this one; the hold must end
-    // before that.
+    // Clamp against the next same-lane note.
     const laneNotes = byLane[note.direction];
     const idx = laneNotes.findIndex((n) => n.id === note.id);
     const nextInLane = idx >= 0 ? laneNotes[idx + 1] : undefined;
     if (nextInLane) {
       const maxMs = nextInLane.timeMs - note.timeMs - 120;
-      if (maxMs < 200) {
-        // Not enough room for a hold here.
-        continue;
-      }
+      if (maxMs < 200) continue;
       holdMs = Math.min(holdMs, maxMs);
+    }
+
+    // Clamp against any chord tick during the hold span.
+    // Find the earliest chord tick strictly after this note.
+    let nextChordTime = Infinity;
+    for (const t of chordTicks) {
+      if (t > note.timeMs && t < note.timeMs + holdMs) {
+        if (t < nextChordTime) nextChordTime = t;
+      }
+    }
+    if (nextChordTime < Infinity) {
+      const maxMs = nextChordTime - note.timeMs - 60;
+      if (maxMs < 200) continue;
+      holdMs = Math.min(holdMs, maxMs);
+    }
+
+    // Final safety: nothing that would create a chord should be inside.
+    if (hasChordInside(note.timeMs, note.timeMs + holdMs)) {
+      continue;
     }
 
     note.durationMs = Math.round(holdMs);
