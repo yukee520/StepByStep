@@ -64,4 +64,95 @@ export default function ArrowButton({
     const warm = hot >= HOT_OVERLAP ? 1 : 0;
 
     // Held glow is a strong, steady presence.
-    const heldBoost = held * 0
+    const heldBoost = held * 0.35;
+
+    const hotBg = warm * 0.18 + burning * 0.22 + heldBoost;
+    const bgOpacity = interpolate(
+      pressed,
+      [0, 1],
+      [Math.min(hotBg, 0.65), 0.75],
+      Extrapolation.CLAMP,
+    );
+
+    const borderWidth = interpolate(
+      Math.max(pressed, warm, burning, held),
+      [0, 0.5, 1],
+      [3, 3, 4],
+      Extrapolation.CLAMP,
+    );
+
+    const borderOpacity = 0.85 + warm * 0.15 + held * 0.15;
+
+    const scale = interpolate(
+      pressed,
+      [0, 1],
+      [1 + warm * 0.04 + held * 0.02, 0.94],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      borderWidth,
+      borderColor: `rgba(${rgb}, ${Math.min(1, borderOpacity)})`,
+      backgroundColor: `rgba(${rgb}, ${bgOpacity})`,
+      transform: [{ scale }],
+    };
+  });
+
+  const glowStyle = useAnimatedStyle(() => {
+    const hot = hotValue.value;
+    const held = heldValue ? heldValue.value : 0;
+    const burning = hot >= BURNING_OVERLAP ? 1 : 0;
+    const warm = hot >= HOT_OVERLAP ? 1 : 0;
+    const intensity = warm * 0.55 + burning * 0.35 + held * 0.4;
+    return {
+      opacity: Math.min(1, intensity),
+      transform: [{ scale: 1 + intensity * 0.15 }],
+    };
+  });
+
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <AnimatedView
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            width: size * 1.35,
+            height: size * 1.35,
+            borderRadius: size,
+            backgroundColor: color,
+            opacity: 0,
+          },
+          glowStyle,
+        ]}
+      />
+      <AnimatedView
+        pointerEvents="none"
+        style={[
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 4,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: disabled ? 0.35 : 1,
+          },
+          animatedContainerStyle,
+        ]}
+      >
+        <Ionicons
+          name={ICON_NAMES[direction]}
+          size={size * 0.55}
+          color={color}
+        />
+      </AnimatedView>
+    </View>
+  );
+}
