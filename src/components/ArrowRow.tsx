@@ -13,25 +13,19 @@ import type { Direction } from '@/types/song';
 
 const LANE_ORDER: Direction[] = ['left', 'down', 'up', 'right'];
 
+const VERTICAL_TOLERANCE = 80;
+
 export type ArrowRowProps = {
   onPress: (direction: Direction) => void;
   onRelease: (direction: Direction) => void;
   buttonSize: number;
   gap: number;
-  /**
-   * Per-direction hot-overlap shared values (0..1).
-   * Driven directly by the game engine's RAF loop — NOT copied.
-   */
   hotValues: Record<Direction, SharedValue<number>>;
+  heldValues: Record<Direction, SharedValue<number>>;
   horizontalPadding: number;
 };
 
-type RowFrame = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+type RowFrame = { x: number; y: number; width: number; height: number };
 
 const PRESS_IN_MS = 60;
 const PRESS_OUT_MS = 120;
@@ -42,6 +36,7 @@ function ArrowRowBase({
   buttonSize,
   gap: _gap,
   hotValues,
+  heldValues,
   horizontalPadding,
 }: ArrowRowProps): React.ReactElement {
   const rowRef = useRef<View>(null);
@@ -55,8 +50,6 @@ function ArrowRowBase({
   const pressedValuesRef = useRef([pressed0, pressed1, pressed2, pressed3]);
   const activeTouchesRef = useRef<Map<number, number>>(new Map());
 
-  // Keep refs for the callbacks so we don't need to rebuild the gesture
-  // when the parent re-renders with new closures.
   const onPressRef = useRef(onPress);
   const onReleaseRef = useRef(onRelease);
   useEffect(() => {
@@ -66,9 +59,7 @@ function ArrowRowBase({
 
   const measureRow = useCallback((): void => {
     const node = rowRef.current;
-    if (!node) {
-      return;
-    }
+    if (!node) return;
     node.measureInWindow((x, y, width, height) => {
       frameRef.current = { x, y, width, height };
     });
@@ -88,19 +79,22 @@ function ArrowRowBase({
   const hitTest = useCallback(
     (absoluteX: number, absoluteY: number): number | null => {
       const frame = frameRef.current;
-      if (frame.width <= 0) {
-        return null;
-      }
+      if (frame.width <= 0) return null;
+
       const localX = absoluteX - frame.x;
       const localY = absoluteY - frame.y;
-      if (localY < 0 || localY > frame.height) {
+
+      if (
+        localY < -VERTICAL_TOLERANCE ||
+        localY > frame.height + VERTICAL_TOLERANCE
+      ) {
         return null;
       }
+
       const x = localX - horizontalPadding;
       const effectiveWidth = frame.width - horizontalPadding * 2;
-      if (x < 0 || x > effectiveWidth) {
-        return null;
-      }
+      if (x < 0 || x > effectiveWidth) return null;
+
       const slotWidth = effectiveWidth / 4;
       return Math.min(3, Math.max(0, Math.floor(x / slotWidth)));
     },
@@ -120,12 +114,8 @@ function ArrowRowBase({
       const index = hitTest(touch.absoluteX, touch.absoluteY);
       const previous = activeTouchesRef.current.get(id);
 
+      // Out of bounds: keep the touch claimed (do NOT release).
       if (index === null) {
-        if (previous !== undefined) {
-          activeTouchesRef.current.delete(id);
-          onReleaseRef.current(LANE_ORDER[previous]);
-          setLanePressed(previous, false);
-        }
         return;
       }
 
@@ -147,9 +137,7 @@ function ArrowRowBase({
   const releaseTouchById = useCallback(
     (id: number): void => {
       const index = activeTouchesRef.current.get(id);
-      if (index === undefined) {
-        return;
-      }
+      if (index === undefined) return;
       activeTouchesRef.current.delete(id);
       onReleaseRef.current(LANE_ORDER[index]);
       setLanePressed(index, false);
@@ -159,42 +147,32 @@ function ArrowRowBase({
 
   const handleTouchesDown = useCallback(
     (e: GestureTouchEvent): void => {
-      for (const t of e.allTouches) {
-        processTouch(t);
-      }
+      for (const t of e.allTouches) processTouch(t);
     },
     [processTouch],
   );
 
   const handleTouchesMove = useCallback(
     (e: GestureTouchEvent): void => {
-      for (const t of e.allTouches) {
-        processTouch(t);
-      }
+      for (const t of e.allTouches) processTouch(t);
     },
     [processTouch],
   );
 
   const handleTouchesUp = useCallback(
     (e: GestureTouchEvent): void => {
-      for (const t of e.changedTouches) {
-        releaseTouchById(t.id);
-      }
+      for (const t of e.changedTouches) releaseTouchById(t.id);
     },
     [releaseTouchById],
   );
 
   const handleTouchesCancelled = useCallback(
     (e: GestureTouchEvent): void => {
-      for (const t of e.changedTouches) {
-        releaseTouchById(t.id);
-      }
+      for (const t of e.changedTouches) releaseTouchById(t.id);
     },
     [releaseTouchById],
   );
 
-  // Gesture is built once and reused across renders. Callbacks are stable
-  // (they use refs to reach the latest props).
   const panGesture = React.useMemo(
     () =>
       Gesture.Pan()
@@ -231,24 +209,28 @@ function ArrowRowBase({
           size={buttonSize}
           pressedValue={pressed0}
           hotValue={hotValues.left}
+          heldValue={heldValues.left}
         />
         <ArrowButton
           direction="down"
           size={buttonSize}
           pressedValue={pressed1}
           hotValue={hotValues.down}
+          heldValue={heldValues.down}
         />
         <ArrowButton
           direction="up"
           size={buttonSize}
           pressedValue={pressed2}
           hotValue={hotValues.up}
+          heldValue={heldValues.up}
         />
         <ArrowButton
           direction="right"
           size={buttonSize}
           pressedValue={pressed3}
           hotValue={hotValues.right}
+          heldValue={heldValues.right}
         />
       </View>
     </GestureDetector>
