@@ -641,4 +641,195 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   }, [audioPosition, loop, resetStats, stopLoop]);
 
   const pause = useCallback((): void => {
-    if (statusRef.current !== 'playin
+    if (statusRef.current !== 'playing') return;
+    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
+    setStatus('paused');
+    statusRef.current = 'paused';
+    stopLoop();
+  }, [stopLoop]);
+
+  const resume = useCallback((): void => {
+    if (statusRef.current !== 'paused') return;
+    wallClockStartRef.current = Date.now() - wallClockPausedRef.current;
+    setStatus('playing');
+    statusRef.current = 'playing';
+    stopLoop();
+    rafRef.current = requestAnimationFrame(loop);
+  }, [loop, stopLoop]);
+
+  const restart = useCallback((): void => {
+    stopLoop();
+    resetStats();
+    wallClockStartRef.current = Date.now();
+    wallClockPausedRef.current = 0;
+    audioEndedAtRef.current = 0;
+    audioPosition.value = 0;
+    setStatus('playing');
+    statusRef.current = 'playing';
+    rafRef.current = requestAnimationFrame(loop);
+  }, [audioPosition, loop, resetStats, stopLoop]);
+
+  const quit = useCallback((): void => {
+    stopLoop();
+    setStatus('finished');
+    statusRef.current = 'finished';
+    const summary = buildSummary();
+    onFinish(summary);
+  }, [buildSummary, onFinish, stopLoop]);
+
+  const hit = useCallback(
+    (direction: Direction): void => {
+      if (statusRef.current !== 'playing') return;
+
+      const laneIdx = LANE_INDEX[direction];
+      pressedLanesRef.current[laneIdx] = true;
+      useDevLogStore
+        .getState()
+        .push(`[HIT] press lane=${laneIdx} dir=${direction}`);
+
+      const hitStart = Date.now();
+      const now = getNow();
+      const notes = sortedNotes.current;
+
+      const searchRadiusMs = fallDurationMs * OVERLAP_WINDOWS.good * 1.5;
+      const loTime = now - searchRadiusMs;
+      const hiTime = now + searchRadiusMs;
+      const startIdx = findFirstNoteAtOrAfter(notes, loTime);
+
+      let bestNote: Note | null = null;
+      let bestOverlap = 0;
+
+      for (let i = startIdx; i < notes.length; i += 1) {
+        const note = notes[i];
+        if (note.timeMs > hiTime) break;
+        if (judgedRef.current.has(note.id)) continue;
+        if (note.direction !== direction) continue;
+        const ov = overlapAt(note, now);
+        if (ov > bestOverlap) {
+          bestOverlap = ov;
+          bestNote = note;
+        }
+      }
+
+      if (!bestNote || bestOverlap < OVERLAP_WINDOWS.good) {
+        useDevLogStore
+          .getState()
+          .push(
+            `[HIT] no match bestOv=${bestOverlap.toFixed(2)} best=${
+              bestNote ? bestNote.id.slice(-4) : 'null'
+            }`,
+          );
+        perfMonitor.record('hit_ms', Date.now() - hitStart);
+        return;
+      }
+
+      const judgment = overlapToJudgment(bestOverlap);
+      const top = noteTopAt(bestNote, now);
+      const idealTop = noteTopForRatio(1, geometryRef.current);
+      const signedDelta =
+        (top - idealTop) / Math.max(1, geometryRef.current.noteHeight);
+
+      judgedRef.current.add(bestNote.id);
+      const { awarded } = applyJudgmentRef(judgment);
+
+      const dur = bestNote.durationMs ?? 0;
+      useDevLogStore
+        .getState()
+        .push(
+          `[HIT] match id=${bestNote.id.slice(-4)} j=${judgment} dur=${dur} ov=${bestOverlap.toFixed(
+            2,
+          )}`,
+        );
+
+      if (dur > 0) {
+        activeHoldsRef.current.set(bestNote.id, {
+          noteId: bestNote.id,
+          direction: bestNote.direction,
+          laneIndex: laneIdx,
+          endTimeMs: bestNote.timeMs + dur,
+          headJudgment: judgment,
+          headScoreAwarded: awarded,
+        });
+        useDevLogStore
+          .getState()
+          .push(
+            `[HIT] hold reg end=${Math.round(
+              bestNote.timeMs + dur,
+            )} active=${activeHoldsRef.current.size}`,
+          );
+      }
+
+      scoreDirtyRef.current = true;
+      flushScore();
+
+      if (onNoteHit) {
+        const event: JudgmentEvent = {
+          id: genId('evt'),
+          noteId: bestNote.id,
+          direction: bestNote.direction,
+          judgment,
+          deltaPx: signedDelta,
+          timeMs: Date.now(),
+          comboAfter: statsRef.current.combo,
+          scoreAwarded: awarded,
+        };
+        onNoteHit({
+          direction: event.direction,
+          judgment: event.judgment,
+          key: event.id,
+          timeMs: event.timeMs,
+        });
+      }
+
+      perfMonitor.record('hit_ms', Date.now() - hitStart);
+    },
+    [
+      applyJudgmentRef,
+      fallDurationMs,
+      flushScore,
+      getNow,
+      noteTopAt,
+      onNoteHit,
+      overlapAt,
+    ],
+  );
+
+  const releaseInput = useCallback((direction: Direction): void => {
+    const laneIdx = LANE_INDEX[direction];
+    pressedLanesRef.current[laneIdx] = false;
+    useDevLogStore
+      .getState()
+      .push(`[HIT] release lane=${laneIdx} dir=${direction}`);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopLoop();
+      if (scoreRafRef.current !== null) {
+        cancelAnimationFrame(scoreRafRef.current);
+        scoreRafRef.current = null;
+      }
+    };
+  }, [stopLoop]);
+
+  const progress =
+    durationMs > 0 ? Math.max(0, Math.min(1, elapsedMs / durationMs)) : 0;
+
+  return {
+    status,
+    audioPosition,
+    lanes: lanesRef.current,
+    geometry: geometryRef.current,
+    elapsedMs,
+    durationMs,
+    progress,
+    fallDurationMs,
+    start,
+    pause,
+    resume,
+    restart,
+    quit,
+    hit,
+    releaseInput,
+  };
+}
