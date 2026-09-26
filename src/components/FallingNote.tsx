@@ -1,4 +1,3 @@
-
 // src/components/FallingNote.tsx
 import React from 'react';
 import { View } from 'react-native';
@@ -31,7 +30,6 @@ const LANE_COLORS: Record<Direction, string> = {
   right: NEON_PALETTE.lane.right,
 };
 
-// Direction index for shared arrays: 0=left, 1=down, 2=up, 3=right
 const INDEX_TO_DIRECTION: Direction[] = ['left', 'down', 'up', 'right'];
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -41,13 +39,13 @@ export type FallingNoteProps = {
   laneActive: SharedValue<number[]>;
   laneTimeMs: SharedValue<number[]>;
   laneDirection: SharedValue<number[]>;
-  /** Per-slot durationMs. 0 or missing = tap note. */
   laneDuration: SharedValue<number[]>;
+  /** Per-slot flag: 1 if this slot's hold is currently being held. */
+  laneHeldSlot: SharedValue<number[]>;
   audioPosition: SharedValue<number>;
   fallDurationMs: number;
   geometry: LaneGeometry;
   noteSize: number;
-  /** Absolute x within the lane container. */
   x: number;
 };
 
@@ -57,6 +55,7 @@ export default function FallingNote({
   laneTimeMs,
   laneDirection,
   laneDuration,
+  laneHeldSlot,
   audioPosition,
   fallDurationMs,
   geometry,
@@ -65,8 +64,8 @@ export default function FallingNote({
 }: FallingNoteProps): React.ReactElement {
   const borderWidth = Math.max(2, noteSize * 0.06);
 
-  // Body (hold tail) — animated separately. Height is computed inline so the
-  // worklet does not have to call an imported function.
+  // Hold bar: positioned ABOVE the head (bar sits between head and tail).
+  // Length is the visual travel distance covered by the hold's duration.
   const bodyStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
     if (active === 0) {
@@ -76,12 +75,14 @@ export default function FallingNote({
     if (dur <= 0) {
       return { opacity: 0, height: 0 };
     }
-    // Inline version of holdLengthPx(dur, fallDurationMs, geometry):
-    //   (dur / fallDurationMs) * laneHeight
     const lengthPx = (dur / fallDurationMs) * geometry.laneHeight;
+    const held = laneHeldSlot.value[slotIndex] ?? 0;
     return {
       opacity: 1,
       height: lengthPx,
+      // Fill opacity: 0.08 outline-idle, 0.55 while held.
+      backgroundColor:
+        held > 0 ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.08)',
     };
   });
 
@@ -98,7 +99,6 @@ export default function FallingNote({
     const delta = noteTimeMs - now;
     const ratio = 1 - delta / fallDurationMs;
 
-    // Center the head on the button at ratio=1.
     const centerY = geometry.buttonCenterY - (1 - ratio) * geometry.laneHeight;
     const y = centerY - noteSize / 2;
 
@@ -128,10 +128,10 @@ export default function FallingNote({
     return { borderColor: LANE_COLORS[dir] };
   });
 
-  const bodyColorStyle = useAnimatedStyle(() => {
+  const bodyOutlineStyle = useAnimatedStyle(() => {
     const idx = laneDirection.value[slotIndex] ?? 0;
     const dir = INDEX_TO_DIRECTION[idx] ?? 'left';
-    return { backgroundColor: LANE_COLORS[dir] };
+    return { borderColor: LANE_COLORS[dir] };
   });
 
   return (
@@ -148,25 +148,26 @@ export default function FallingNote({
           borderWidth,
           backgroundColor: 'transparent',
           alignItems: 'center',
-          justifyContent: 'flex-start',
+          justifyContent: 'center',
+          overflow: 'visible',
         },
         colorStyle,
         headStyle,
       ]}
     >
-      {/* Hold body extends below the head. */}
+      {/* Hold bar extends UPWARD from the head (tail is higher than head). */}
       <AnimatedView
         pointerEvents="none"
         style={[
           {
             position: 'absolute',
-            top: noteSize - borderWidth,
+            bottom: noteSize - borderWidth,
             left: borderWidth,
             right: borderWidth,
             borderRadius: noteSize / 6,
-            opacity: 0.55,
+            borderWidth: 1,
           },
-          bodyColorStyle,
+          bodyOutlineStyle,
           bodyStyle,
         ]}
       />
