@@ -1,12 +1,12 @@
 {
-  "version": 2,
+  "version": 3,
   "packs": [
     {
       "id": "talking-to-the-moon",
       "title": "Talking to the moon",
       "artist": "Bruno",
       "bpm": 120,
-      "difficulty": "hard",
+      "difficulty": "normal",
       "sizeBytes": 1310295,
       "manifestUrl": "https://raw.githubusercontent.com/yukee520/StepByStep/main/packs/talking-to-the-moon/manifest.json",
       "audioUrl": "https://raw.githubusercontent.com/yukee520/StepByStep/main/packs/talking-to-the-moon/audio.m4a",
