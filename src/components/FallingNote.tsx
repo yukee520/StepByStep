@@ -1,3 +1,4 @@
+
 // src/components/FallingNote.tsx
 import React from 'react';
 import { View } from 'react-native';
@@ -10,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { Direction } from '@/types/song';
 import { NEON_PALETTE } from '@/theme/colors';
-import { holdLengthPx, type LaneGeometry } from '@/types/game';
+import type { LaneGeometry } from '@/types/game';
 
 const SLOT_COUNT = 12;
 
@@ -30,6 +31,7 @@ const LANE_COLORS: Record<Direction, string> = {
   right: NEON_PALETTE.lane.right,
 };
 
+// Direction index for shared arrays: 0=left, 1=down, 2=up, 3=right
 const INDEX_TO_DIRECTION: Direction[] = ['left', 'down', 'up', 'right'];
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -45,6 +47,7 @@ export type FallingNoteProps = {
   fallDurationMs: number;
   geometry: LaneGeometry;
   noteSize: number;
+  /** Absolute x within the lane container. */
   x: number;
 };
 
@@ -62,7 +65,8 @@ export default function FallingNote({
 }: FallingNoteProps): React.ReactElement {
   const borderWidth = Math.max(2, noteSize * 0.06);
 
-  // Body (hold tail) — animated separately so its height follows duration.
+  // Body (hold tail) — animated separately. Height is computed inline so the
+  // worklet does not have to call an imported function.
   const bodyStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
     if (active === 0) {
@@ -72,7 +76,9 @@ export default function FallingNote({
     if (dur <= 0) {
       return { opacity: 0, height: 0 };
     }
-    const lengthPx = holdLengthPx(dur, fallDurationMs, geometry);
+    // Inline version of holdLengthPx(dur, fallDurationMs, geometry):
+    //   (dur / fallDurationMs) * laneHeight
+    const lengthPx = (dur / fallDurationMs) * geometry.laneHeight;
     return {
       opacity: 1,
       height: lengthPx,
@@ -148,7 +154,7 @@ export default function FallingNote({
         headStyle,
       ]}
     >
-      {/* Hold body extends from below the head downward. */}
+      {/* Hold body extends below the head. */}
       <AnimatedView
         pointerEvents="none"
         style={[
