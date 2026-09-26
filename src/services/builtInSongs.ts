@@ -1,3 +1,4 @@
+// src/services/builtInSongs.ts
 import { genId } from '@/utils/id';
 import type { Direction, Note, Song } from '@/types/song';
 
@@ -63,6 +64,80 @@ const rushSeeds: SeedPattern[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Dev-only hold demo — see comment below
+// ---------------------------------------------------------------------------
+
+/**
+ * Dev-only demo chart: pure hold notes, one per bar, alternating lanes.
+ * No audio, no chords, no randomness. Purpose: isolate hold lifecycle.
+ *
+ * 90 BPM  =>  beat = 666.67 ms
+ * Bar     =>  4 beats = 2666.67 ms
+ *
+ * Notes arrive at (from song start):
+ *   bar 0: left,   hold 1 beat (667 ms)   @ ~2000 ms
+ *   bar 1: down,   hold 2 beats (1333 ms) @ ~4667 ms
+ *   bar 2: up,     hold 3 beats (2000 ms) @ ~7333 ms
+ *   bar 3: right,  hold 4 beats (2667 ms) @ ~10000 ms
+ *   bar 4: left,   hold 1 beat            @ ~12667 ms
+ *   bar 5: down,   hold 2 beats           @ ~15333 ms
+ *   bar 6: up,     hold 3 beats           @ ~18000 ms
+ *   bar 7: right,  hold 4 beats           @ ~20667 ms
+ */
+function buildHoldDemoNotes(): Note[] {
+  const beat = 60000 / 90; // 666.67 ms
+  const bar = beat * 4;    // 2666.67 ms
+  const leadIn = 2000;
+
+  const lanes: Direction[] = [
+    'left',
+    'down',
+    'up',
+    'right',
+    'left',
+    'down',
+    'up',
+    'right',
+  ];
+  const holdBeats = [1, 2, 3, 4, 1, 2, 3, 4];
+
+  const notes: Note[] = [];
+  for (let i = 0; i < lanes.length; i += 1) {
+    notes.push({
+      id: `demo_hold_${i}`,
+      timeMs: Math.round(leadIn + i * bar),
+      direction: lanes[i],
+      durationMs: Math.round(holdBeats[i] * beat),
+      isChord: false,
+    });
+  }
+  return notes;
+}
+
+export const DEMO_HOLD_SONG: Song = {
+  id: 'demo-holds',
+  title: 'DEV — Hold Demo',
+  artist: 'Internal',
+  bpm: 90,
+  durationMs: 2000 + 8 * 2666 + 3000,
+  difficulty: 'normal',
+  offsetMs: 0,
+  source: 'builtin',
+  version: 1,
+  license: 'Internal',
+  generatedBy: 'Demo',
+  chart: {
+    difficulty: 'normal',
+    laneCount: 4,
+    notes: buildHoldDemoNotes(),
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Public export
+// ---------------------------------------------------------------------------
+
 export const builtInSongs: Song[] = [
   {
     id: 'builtin-metronome',
@@ -118,4 +193,7 @@ export const builtInSongs: Song[] = [
       notes: buildChart(rushSeeds[0]),
     },
   },
+  // Dev-only demo — always present in the array; the SongSelect screen
+  // filters it out unless dev mode is on.
+  DEMO_HOLD_SONG,
 ];
