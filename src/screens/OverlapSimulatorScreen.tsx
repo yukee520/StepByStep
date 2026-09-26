@@ -10,6 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import {
+  DIFFICULTY_FALL_MULTIPLIER,
+  FALL_DURATION_MS,
   OVERLAP_WINDOWS,
   computeOverlap,
   noteTopForRatio,
@@ -20,15 +22,14 @@ import {
 import { NEON_PALETTE } from '@/theme/colors';
 
 // ---------------------------------------------------------------------------
-// Layout — a self-contained mock of a lane.
+// Layout — self-contained mock of a lane.
 // ---------------------------------------------------------------------------
 
-const LANE_WIDTH = 120;
+const LANE_WIDTH = 130;
 const LANE_HEIGHT = 520;
 const BUTTON_HEIGHT = 84;
 const NOTE_HEIGHT = 72;
 
-// Button sits at the bottom of the lane area.
 const BUTTON_TOP = LANE_HEIGHT - BUTTON_HEIGHT;
 const BUTTON_CENTER_Y = BUTTON_TOP + BUTTON_HEIGHT / 2;
 
@@ -40,9 +41,6 @@ const GEOMETRY: LaneGeometry = {
   noteHeight: NOTE_HEIGHT,
 };
 
-// ratio = 0  → note spawns one lane-height above the button center
-// ratio = 1  → note center is exactly on button center (bullseye)
-// ratio > 1  → note has fallen past the button
 const RATIO_MIN = 0;
 const RATIO_MAX = 1.3;
 const RATIO_STEP = 0.01;
@@ -60,43 +58,60 @@ type Preset = {
   judgment: Judgment;
 };
 
-// Preset overlaps — one exactly on each threshold, plus a clear miss.
-// Use a tiny +epsilon so the preset lands inside the window, not under it.
 const EPS = 1e-6;
 const PRESETS: Preset[] = [
-  { label: 'Perfect (≥80%)', overlap: OVERLAP_WINDOWS.perfect + EPS, judgment: 'perfect' },
-  { label: 'Great (≥50%)',   overlap: OVERLAP_WINDOWS.great + EPS,   judgment: 'great'   },
-  { label: 'Good (≥20%)',    overlap: OVERLAP_WINDOWS.good + EPS,    judgment: 'good'    },
-  { label: 'Miss (<20%)',    overlap: Math.max(0, OVERLAP_WINDOWS.good - 0.05), judgment: 'miss' },
+  {
+    label: 'Perfect (≥80%)',
+    overlap: OVERLAP_WINDOWS.perfect + EPS,
+    judgment: 'perfect',
+  },
+  {
+    label: 'Great (≥50%)',
+    overlap: OVERLAP_WINDOWS.great + EPS,
+    judgment: 'great',
+  },
+  {
+    label: 'Good (≥20%)',
+    overlap: OVERLAP_WINDOWS.good + EPS,
+    judgment: 'good',
+  },
+  {
+    label: 'Miss (<20%)',
+    overlap: Math.max(0, OVERLAP_WINDOWS.good - 0.05),
+    judgment: 'miss',
+  },
 ];
+
+// Reference fall duration — matches a Normal chart.
+const REFERENCE_FALL_MS =
+  FALL_DURATION_MS * DIFFICULTY_FALL_MULTIPLIER.normal;
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Inverse of computeOverlap: given a target overlap (0..1), find the ratio
- * that produces it. Exact when the note is fully inside the button's vertical
- * span (the common case for Perfect/Great/Good), and correct for partial
- * overlap too.
- *
- * Derivation: overlap = intersect / noteHeight, and intersect is the overlap
- * of [noteTop, noteTop+noteHeight] with [buttonTop, buttonTop+buttonHeight].
- * For our geometry (buttonHeight >= noteHeight), the note is fully inside the
- * button when its center is within (buttonTop + noteHeight/2) and
- * (buttonTop + buttonHeight - noteHeight/2). We solve overlap = t on the
- * "entering from above" branch, which is what a player actually sees.
- */
 function ratioForOverlap(targetOverlap: number, geom: LaneGeometry): number {
-  // intersect = targetOverlap * noteHeight
   const intersect = targetOverlap * geom.noteHeight;
-  // On the entry branch, the note's bottom is `intersect` past buttonTop.
   const noteBottom = geom.buttonTop + intersect;
   const noteTop = noteBottom - geom.noteHeight;
   const noteCenter = noteTop + geom.noteHeight / 2;
-  // ratio such that noteCenter = buttonCenterY - (1 - ratio) * laneHeight
   const ratio = 1 - (geom.buttonCenterY - noteCenter) / geom.laneHeight;
   return ratio;
+}
+
+/**
+ * Convert a ratio to a millisecond offset relative to the hit time.
+ *   ratio 1.00 → 0 ms (bullseye)
+ *   ratio 0.80 → -X ms (early)
+ *   ratio 1.20 → +X ms (late)
+ */
+function ratioToMs(ratio: number, fallMs: number): number {
+  return (ratio - 1) * fallMs;
+}
+
+function formatMs(ms: number): string {
+  const sign = ms >= 0 ? '+' : '−';
+  return `${sign}${Math.abs(ms).toFixed(0)} ms`;
 }
 
 function round2(v: number): string {
@@ -112,19 +127,20 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
   const [sweeping, setSweeping] = useState<boolean>(false);
   const sweepRafRef = useRef<number | null>(null);
 
-  // Derived state — recomputed on every ratio change.
   const derived = useMemo(() => {
     const noteTopY = noteTopForRatio(ratio, GEOMETRY);
     const noteBottomY = noteTopY + GEOMETRY.noteHeight;
     const buttonBottomY = GEOMETRY.buttonTop + GEOMETRY.buttonHeight;
     const overlap = computeOverlap(noteTopY, GEOMETRY.noteHeight, GEOMETRY);
     const judgment = overlapToJudgment(overlap);
+    const deltaMs = ratioToMs(ratio, REFERENCE_FALL_MS);
     return {
       noteTopY,
       noteBottomY,
       buttonBottomY,
       overlap,
       judgment,
+      deltaMs,
     };
   }, [ratio]);
 
@@ -168,7 +184,6 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
 
   const judgmentColor = JUDGMENT_COLORS[derived.judgment];
 
-  // Vertical positions inside the preview lane. Everything is in lane coords.
   const previewWidth = LANE_WIDTH;
   const previewHeight = LANE_HEIGHT;
 
@@ -177,13 +192,14 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.title}>Overlap Simulator</Text>
         <Text style={styles.subtitle}>
-          Reads the same thresholds the engine uses: perfect ≥{' '}
+          Uses the same thresholds the engine uses: perfect ≥{' '}
           {(OVERLAP_WINDOWS.perfect * 100).toFixed(0)}%, great ≥{' '}
           {(OVERLAP_WINDOWS.great * 100).toFixed(0)}%, good ≥{' '}
-          {(OVERLAP_WINDOWS.good * 100).toFixed(0)}%.
+          {(OVERLAP_WINDOWS.good * 100).toFixed(0)}%. Timing shown for a
+          Normal chart ({REFERENCE_FALL_MS.toFixed(0)} ms fall).
         </Text>
 
-        {/* ------------------------------ Preview ------------------------------ */}
+        {/* Preview */}
         <View style={styles.previewRow}>
           <View
             style={[
@@ -191,7 +207,6 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
               { width: previewWidth, height: previewHeight },
             ]}
           >
-            {/* Button rectangle */}
             <View
               style={[
                 styles.buttonRect,
@@ -208,7 +223,6 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
               </Text>
             </View>
 
-            {/* Note rectangle */}
             <View
               style={[
                 styles.noteRect,
@@ -220,7 +234,6 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
               ]}
             />
 
-            {/* Overlap highlight — the intersection slice, drawn last */}
             <OverlapSlice
               noteTop={derived.noteTopY}
               noteHeight={NOTE_HEIGHT}
@@ -228,15 +241,12 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
               color={judgmentColor}
             />
 
-            {/* Button center line (bullseye) */}
             <View
               style={[
                 styles.centerLine,
                 { top: BUTTON_CENTER_Y, backgroundColor: '#FFFFFF33' },
               ]}
             />
-
-            {/* Note center line */}
             <View
               style={[
                 styles.centerLine,
@@ -249,7 +259,13 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
           </View>
 
           <View style={styles.readouts}>
-            <Readout label="ratio"        value={round2(ratio)} />
+            <Readout label="ratio" value={round2(ratio)} />
+            <Readout
+              label="timing"
+              value={formatMs(derived.deltaMs)}
+              emphasize={judgmentColor}
+            />
+            <View style={styles.divider} />
             <Readout
               label="note top"
               value={`${derived.noteTopY.toFixed(1)} px`}
@@ -258,7 +274,7 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
               label="note bottom"
               value={`${derived.noteBottomY.toFixed(1)} px`}
             />
-            <Readout label="button top"   value={`${BUTTON_TOP} px`} />
+            <Readout label="button top" value={`${BUTTON_TOP} px`} />
             <Readout
               label="button bottom"
               value={`${derived.buttonBottomY.toFixed(1)} px`}
@@ -277,7 +293,7 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
           </View>
         </View>
 
-        {/* ------------------------------ Slider ------------------------------ */}
+        {/* Slider */}
         <Text style={styles.sectionLabel}>ratio</Text>
         <Slider
           minimumValue={RATIO_MIN}
@@ -307,11 +323,12 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
           </Pressable>
         </View>
 
-        {/* ------------------------------ Presets ------------------------------ */}
+        {/* Presets */}
         <Text style={styles.sectionLabel}>threshold presets</Text>
         <View style={styles.presets}>
           {PRESETS.map((p) => {
             const r = ratioForOverlap(p.overlap, GEOMETRY);
+            const ms = ratioToMs(r, REFERENCE_FALL_MS);
             return (
               <Pressable
                 key={p.label}
@@ -330,14 +347,15 @@ export default function OverlapSimulatorScreen(): React.ReactElement {
                   {p.label}
                 </Text>
                 <Text style={styles.presetMeta}>
-                  overlap {Math.round(p.overlap * 100)}% · ratio {round2(r)}
+                  ratio {round2(r)} · {formatMs(ms)} · overlap{' '}
+                  {Math.round(p.overlap * 100)}%
                 </Text>
               </Pressable>
             );
           })}
         </View>
 
-        {/* ------------------------------ Table ------------------------------ */}
+        {/* Tier table */}
         <Text style={styles.sectionLabel}>tier map</Text>
         <TierTable geometry={GEOMETRY} />
       </ScrollView>
@@ -362,10 +380,7 @@ function Readout({
     <View style={styles.readoutRow}>
       <Text style={styles.readoutLabel}>{label}</Text>
       <Text
-        style={[
-          styles.readoutValue,
-          emphasize ? { color: emphasize } : null,
-        ]}
+        style={[styles.readoutValue, emphasize ? { color: emphasize } : null]}
       >
         {value}
       </Text>
@@ -408,27 +423,43 @@ function OverlapSlice({
   );
 }
 
-function TierTable({ geometry }: { geometry: LaneGeometry }): React.ReactElement {
+function TierTable({
+  geometry,
+}: {
+  geometry: LaneGeometry;
+}): React.ReactElement {
   const tiers: { name: string; minOverlap: number; maxOverlap: number }[] = [
     { name: 'Perfect', minOverlap: OVERLAP_WINDOWS.perfect, maxOverlap: 1.0 },
-    { name: 'Great',   minOverlap: OVERLAP_WINDOWS.great,   maxOverlap: OVERLAP_WINDOWS.perfect },
-    { name: 'Good',    minOverlap: OVERLAP_WINDOWS.good,    maxOverlap: OVERLAP_WINDOWS.great },
-    { name: 'Miss',    minOverlap: 0,                        maxOverlap: OVERLAP_WINDOWS.good },
+    {
+      name: 'Great',
+      minOverlap: OVERLAP_WINDOWS.great,
+      maxOverlap: OVERLAP_WINDOWS.perfect,
+    },
+    {
+      name: 'Good',
+      minOverlap: OVERLAP_WINDOWS.good,
+      maxOverlap: OVERLAP_WINDOWS.great,
+    },
+    { name: 'Miss', minOverlap: 0, maxOverlap: OVERLAP_WINDOWS.good },
   ];
 
   return (
     <View style={styles.table}>
       <View style={[styles.tableRow, styles.tableHead]}>
-        <Text style={[styles.tableCell, styles.tableHeadText, styles.cellWide]}>
+        <Text
+          style={[styles.tableCell, styles.tableHeadText, styles.cellWide]}
+        >
           tier
         </Text>
         <Text style={[styles.tableCell, styles.tableHeadText]}>overlap</Text>
-        <Text style={[styles.tableCell, styles.tableHeadText]}>ratio from</Text>
-        <Text style={[styles.tableCell, styles.tableHeadText]}>ratio to</Text>
+        <Text style={[styles.tableCell, styles.tableHeadText]}>ratio</Text>
+        <Text style={[styles.tableCell, styles.tableHeadText]}>timing</Text>
       </View>
       {tiers.map((t) => {
         const rMin = ratioForOverlap(t.minOverlap, geometry);
         const rMax = ratioForOverlap(t.maxOverlap, geometry);
+        const msMin = ratioToMs(rMin, REFERENCE_FALL_MS);
+        const msMax = ratioToMs(rMax, REFERENCE_FALL_MS);
         return (
           <View key={t.name} style={styles.tableRow}>
             <Text
@@ -441,10 +472,15 @@ function TierTable({ geometry }: { geometry: LaneGeometry }): React.ReactElement
               {t.name}
             </Text>
             <Text style={styles.tableCell}>
-              {(t.minOverlap * 100).toFixed(0)}–{(t.maxOverlap * 100).toFixed(0)}%
+              {(t.minOverlap * 100).toFixed(0)}–
+              {(t.maxOverlap * 100).toFixed(0)}%
             </Text>
-            <Text style={styles.tableCell}>{round2(rMin)}</Text>
-            <Text style={styles.tableCell}>{round2(rMax)}</Text>
+            <Text style={styles.tableCell}>
+              {round2(rMin)}–{round2(rMax)}
+            </Text>
+            <Text style={styles.tableCell}>
+              {formatMs(msMin)} to {formatMs(msMax)}
+            </Text>
           </View>
         );
       })}
@@ -457,7 +493,6 @@ function TierTable({ geometry }: { geometry: LaneGeometry }): React.ReactElement
 // ---------------------------------------------------------------------------
 
 function withAlpha(hex: string, alpha: number): string {
-  // Supports #RRGGBB.
   const clean = hex.replace('#', '');
   const r = parseInt(clean.slice(0, 2), 16);
   const g = parseInt(clean.slice(2, 4), 16);
@@ -634,9 +669,9 @@ const styles = StyleSheet.create({
   tableCell: {
     flex: 1,
     color: NEON_PALETTE.text,
-    fontSize: 12,
+    fontSize: 11,
     paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     fontVariant: ['tabular-nums'],
   },
   tableHeadText: {
@@ -647,6 +682,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   cellWide: {
-    flex: 1.2,
+    flex: 1.1,
   },
 });
