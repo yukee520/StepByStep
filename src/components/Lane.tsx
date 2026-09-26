@@ -1,4 +1,4 @@
-
+// src/components/Lane.tsx
 import React from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import FallingNote, { SLOT_COUNT } from '@/components/FallingNote';
 import { useTheme } from '@/hooks/useTheme';
+import type { LaneGeometry } from '@/types/game';
 
 export { SLOT_COUNT };
 
@@ -22,6 +23,8 @@ export type LaneProps = {
   laneTimeMs: SharedValue<number[]>;
   laneDirection: SharedValue<number[]>;
   laneHasNotes: SharedValue<number>;
+  /** Geometry used to place notes correctly relative to the button row. */
+  geometry: LaneGeometry;
 };
 
 function LaneBase({
@@ -36,6 +39,7 @@ function LaneBase({
   laneTimeMs,
   laneDirection,
   laneHasNotes,
+  geometry,
 }: LaneProps): React.ReactElement {
   const { colors } = useTheme();
   const noteX = (width - noteSize) / 2;
@@ -71,7 +75,7 @@ function LaneBase({
           laneDirection={laneDirection}
           audioPosition={audioPosition}
           fallDurationMs={fallDurationMs}
-          laneHeight={height}
+          geometry={geometry}
           noteSize={noteSize}
           x={noteX}
         />
