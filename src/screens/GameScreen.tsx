@@ -449,20 +449,20 @@ export default function GameScreen(): React.ReactElement {
           ) : null}
 
           <GameButtonRow
-            top={buttonRowTopInContainer}
-            bottomPadding={BUTTON_BOTTOM_PADDING}
-            buttonSize={buttonSize}
-            gap={BUTTON_GAP}
-            horizontalPadding={LANE_AREA_PADDING}
-            hotValues={[
-              engine.lanes[0].hot,
-              engine.lanes[1].hot,
-              engine.lanes[2].hot,
-              engine.lanes[3].hot,
-            ]}
-            onPress={handleLanePress}
-            onRelease={handleLaneRelease}
-          />
+  top={buttonRowTopInContainer}
+  bottomPadding={BUTTON_BOTTOM_PADDING}
+  buttonSize={buttonSize}
+  gap={BUTTON_GAP}
+  horizontalPadding={LANE_AREA_PADDING}
+  hotValues={{
+    left:  engine.lanes[0].hot,
+    down:  engine.lanes[1].hot,
+    up:    engine.lanes[2].hot,
+    right: engine.lanes[3].hot,
+  }}
+  onPress={handleLanePress}
+  onRelease={handleLaneRelease}
+/>
 
           <CountdownOverlay
             count={countdown.count}
