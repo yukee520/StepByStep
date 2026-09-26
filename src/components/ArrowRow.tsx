@@ -108,25 +108,24 @@ function ArrowRowBase({
     });
   }, []);
 
+  /**
+   * Claim-once semantics: the first time a touch lands inside the row, we
+   * claim a lane for it and never switch on move. The lane is only released
+   * on touch-up. This prevents horizontal finger jitter from firing a
+   * spurious release + re-press, which was breaking holds mid-sustain.
+   */
   const processTouch = useCallback(
     (touch: TouchData): void => {
       const id = touch.id;
+
+      // Already claimed — do nothing on move.
+      if (activeTouchesRef.current.has(id)) {
+        return;
+      }
+
       const index = hitTest(touch.absoluteX, touch.absoluteY);
-      const previous = activeTouchesRef.current.get(id);
+      if (index === null) return;
 
-      // Out of bounds: keep the touch claimed (do NOT release).
-      if (index === null) {
-        return;
-      }
-
-      if (previous === index) {
-        return;
-      }
-
-      if (previous !== undefined) {
-        onReleaseRef.current(LANE_ORDER[previous]);
-        setLanePressed(previous, false);
-      }
       activeTouchesRef.current.set(id, index);
       onPressRef.current(LANE_ORDER[index]);
       setLanePressed(index, true);
