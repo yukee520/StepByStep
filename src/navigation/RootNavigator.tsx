@@ -1,3 +1,4 @@
+// src/navigation/RootNavigator.tsx
 import React from 'react';
 import { NavigationContainer, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -12,6 +13,7 @@ import ResultsScreen from '@/screens/ResultsScreen';
 import BuilderScreen from '@/screens/BuilderScreen';
 import SettingsScreen from '@/screens/SettingsScreen';
 import HowToPlayScreen from '@/screens/HowToPlayScreen';
+import OverlapSimulatorScreen from '@/screens/OverlapSimulatorScreen';
 import type { RootStackParamList } from '@/types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -71,6 +73,10 @@ export default function RootNavigator(): React.ReactElement {
         <Stack.Screen name="Builder" component={BuilderScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="HowToPlay" component={HowToPlayScreen} />
+        <Stack.Screen
+          name="OverlapSimulator"
+          component={OverlapSimulatorScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
