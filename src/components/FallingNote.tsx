@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { Direction } from '@/types/song';
 import { NEON_PALETTE } from '@/theme/colors';
-import type { LaneGeometry } from '@/types/game';
+import { holdLengthPx, type LaneGeometry } from '@/types/game';
 
 const SLOT_COUNT = 12;
 
@@ -30,7 +30,6 @@ const LANE_COLORS: Record<Direction, string> = {
   right: NEON_PALETTE.lane.right,
 };
 
-// Direction index for shared arrays: 0=left, 1=down, 2=up, 3=right
 const INDEX_TO_DIRECTION: Direction[] = ['left', 'down', 'up', 'right'];
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -40,11 +39,12 @@ export type FallingNoteProps = {
   laneActive: SharedValue<number[]>;
   laneTimeMs: SharedValue<number[]>;
   laneDirection: SharedValue<number[]>;
+  /** Per-slot durationMs. 0 or missing = tap note. */
+  laneDuration: SharedValue<number[]>;
   audioPosition: SharedValue<number>;
   fallDurationMs: number;
   geometry: LaneGeometry;
   noteSize: number;
-  /** Absolute x within the lane container. */
   x: number;
 };
 
@@ -53,6 +53,7 @@ export default function FallingNote({
   laneActive,
   laneTimeMs,
   laneDirection,
+  laneDuration,
   audioPosition,
   fallDurationMs,
   geometry,
@@ -61,7 +62,24 @@ export default function FallingNote({
 }: FallingNoteProps): React.ReactElement {
   const borderWidth = Math.max(2, noteSize * 0.06);
 
-  const animatedStyle = useAnimatedStyle(() => {
+  // Body (hold tail) — animated separately so its height follows duration.
+  const bodyStyle = useAnimatedStyle(() => {
+    const active = laneActive.value[slotIndex] ?? 0;
+    if (active === 0) {
+      return { opacity: 0, height: 0 };
+    }
+    const dur = laneDuration.value[slotIndex] ?? 0;
+    if (dur <= 0) {
+      return { opacity: 0, height: 0 };
+    }
+    const lengthPx = holdLengthPx(dur, fallDurationMs, geometry);
+    return {
+      opacity: 1,
+      height: lengthPx,
+    };
+  });
+
+  const headStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
     if (active === 0) {
       return {
@@ -74,7 +92,7 @@ export default function FallingNote({
     const delta = noteTimeMs - now;
     const ratio = 1 - delta / fallDurationMs;
 
-    // Center the note on the button at ratio=1; travel distance = laneHeight.
+    // Center the head on the button at ratio=1.
     const centerY = geometry.buttonCenterY - (1 - ratio) * geometry.laneHeight;
     const y = centerY - noteSize / 2;
 
@@ -104,6 +122,12 @@ export default function FallingNote({
     return { borderColor: LANE_COLORS[dir] };
   });
 
+  const bodyColorStyle = useAnimatedStyle(() => {
+    const idx = laneDirection.value[slotIndex] ?? 0;
+    const dir = INDEX_TO_DIRECTION[idx] ?? 'left';
+    return { backgroundColor: LANE_COLORS[dir] };
+  });
+
   return (
     <AnimatedView
       pointerEvents="none"
@@ -118,12 +142,29 @@ export default function FallingNote({
           borderWidth,
           backgroundColor: 'transparent',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'flex-start',
         },
         colorStyle,
-        animatedStyle,
+        headStyle,
       ]}
     >
+      {/* Hold body extends from below the head downward. */}
+      <AnimatedView
+        pointerEvents="none"
+        style={[
+          {
+            position: 'absolute',
+            top: noteSize - borderWidth,
+            left: borderWidth,
+            right: borderWidth,
+            borderRadius: noteSize / 6,
+            opacity: 0.55,
+          },
+          bodyColorStyle,
+          bodyStyle,
+        ]}
+      />
+
       <DirectionalIcon
         slotIndex={slotIndex}
         laneDirection={laneDirection}
