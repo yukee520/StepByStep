@@ -26,6 +26,7 @@ import { genId } from '@/utils/id';
 import { audioPlayer } from '@/services/audioPlayer';
 import { perfMonitor } from '@/services/perfMonitor';
 import { useGameScoreStore } from '@/store/useGameScoreStore';
+import { useDevLogStore } from '@/store/useDevLogStore';
 
 export type HitFeedback = {
   direction: Direction;
@@ -128,10 +129,6 @@ function findFirstNoteAtOrAfter(notes: Note[], target: number): number {
   return lo;
 }
 
-/**
- * Cheap hash of a lane buffer's semantic contents. Used to skip shared value
- * writes when nothing has changed since the last frame.
- */
 function bufHash(buf: Note[]): number {
   let h = buf.length;
   for (let i = 0; i < buf.length; i += 1) {
@@ -311,6 +308,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     }
     setElapsedMs(0);
     useGameScoreStore.getState().resetAll();
+    useDevLogStore.getState().clear();
 
     const lanes = lanesRef.current;
     for (let l = 0; l < LANE_COUNT; l += 1) {
@@ -482,7 +480,18 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         const tailTime = hold.endTimeMs;
         const releaseThreshold = tailTime - RELEASE_GRACE_MS;
 
+        useDevLogStore.getState().push(
+          `[HOLD] id=${hold.noteId.slice(-4)} lane=${
+            hold.laneIndex
+          } now=${Math.round(now)} tail=${Math.round(
+            tailTime,
+          )} p=${isPressed ? 1 : 0}`,
+        );
+
         if (!isPressed && now < releaseThreshold) {
+          useDevLogStore.getState().push(
+            `[HOLD] BREAK -> ${hold.noteId.slice(-4)}`,
+          );
           revokeJudgment(hold.headJudgment, hold.headScoreAwarded);
           if (onNoteHit) {
             onNoteHit({
@@ -495,6 +504,9 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
           released.push(hold.noteId);
           scoreDirtyRef.current = true;
         } else if (now >= tailTime) {
+          useDevLogStore.getState().push(
+            `[HOLD] COMPLETE -> ${hold.noteId.slice(-4)}`,
+          );
           released.push(hold.noteId);
         }
       });
@@ -549,7 +561,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       const hash = bufHash(buf);
       const bufChanged = hash !== lastBufHashRef.current[l];
 
-      // Always update hot + held — they change every frame.
       let maxOverlap = 0;
       let laneHeld = 0;
       for (let s = 0; s < buf.length; s += 1) {
@@ -561,7 +572,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       lane.hot.value = maxOverlap;
       lane.held.value = laneHeld;
 
-      // Only write arrays when the buffer contents actually changed.
       if (!bufChanged) continue;
       lastBufHashRef.current[l] = hash;
 
@@ -631,167 +641,4 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   }, [audioPosition, loop, resetStats, stopLoop]);
 
   const pause = useCallback((): void => {
-    if (statusRef.current !== 'playing') return;
-    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
-    setStatus('paused');
-    statusRef.current = 'paused';
-    stopLoop();
-  }, [stopLoop]);
-
-  const resume = useCallback((): void => {
-    if (statusRef.current !== 'paused') return;
-    wallClockStartRef.current = Date.now() - wallClockPausedRef.current;
-    setStatus('playing');
-    statusRef.current = 'playing';
-    stopLoop();
-    rafRef.current = requestAnimationFrame(loop);
-  }, [loop, stopLoop]);
-
-  const restart = useCallback((): void => {
-    stopLoop();
-    resetStats();
-    wallClockStartRef.current = Date.now();
-    wallClockPausedRef.current = 0;
-    audioEndedAtRef.current = 0;
-    audioPosition.value = 0;
-    setStatus('playing');
-    statusRef.current = 'playing';
-    rafRef.current = requestAnimationFrame(loop);
-  }, [audioPosition, loop, resetStats, stopLoop]);
-
-  const quit = useCallback((): void => {
-    stopLoop();
-    setStatus('finished');
-    statusRef.current = 'finished';
-    const summary = buildSummary();
-    onFinish(summary);
-  }, [buildSummary, onFinish, stopLoop]);
-
-  const hit = useCallback(
-    (direction: Direction): void => {
-      if (statusRef.current !== 'playing') return;
-
-      const laneIdx = LANE_INDEX[direction];
-      pressedLanesRef.current[laneIdx] = true;
-
-      const hitStart = Date.now();
-      const now = getNow();
-      const notes = sortedNotes.current;
-
-      const searchRadiusMs = fallDurationMs * OVERLAP_WINDOWS.good * 1.5;
-      const loTime = now - searchRadiusMs;
-      const hiTime = now + searchRadiusMs;
-      const startIdx = findFirstNoteAtOrAfter(notes, loTime);
-
-      let bestNote: Note | null = null;
-      let bestOverlap = 0;
-
-      for (let i = startIdx; i < notes.length; i += 1) {
-        const note = notes[i];
-        if (note.timeMs > hiTime) break;
-        if (judgedRef.current.has(note.id)) continue;
-        if (note.direction !== direction) continue;
-        const ov = overlapAt(note, now);
-        if (ov > bestOverlap) {
-          bestOverlap = ov;
-          bestNote = note;
-        }
-      }
-
-      if (!bestNote || bestOverlap < OVERLAP_WINDOWS.good) {
-        perfMonitor.record('hit_ms', Date.now() - hitStart);
-        return;
-      }
-
-      const judgment = overlapToJudgment(bestOverlap);
-      const top = noteTopAt(bestNote, now);
-      const idealTop = noteTopForRatio(1, geometryRef.current);
-      const signedDelta =
-        (top - idealTop) / Math.max(1, geometryRef.current.noteHeight);
-
-      judgedRef.current.add(bestNote.id);
-      const { awarded } = applyJudgmentRef(judgment);
-
-      const dur = bestNote.durationMs ?? 0;
-      if (dur > 0) {
-        activeHoldsRef.current.set(bestNote.id, {
-          noteId: bestNote.id,
-          direction: bestNote.direction,
-          laneIndex: laneIdx,
-          endTimeMs: bestNote.timeMs + dur,
-          headJudgment: judgment,
-          headScoreAwarded: awarded,
-        });
-      }
-
-      scoreDirtyRef.current = true;
-      flushScore();
-
-      if (onNoteHit) {
-        const event: JudgmentEvent = {
-          id: genId('evt'),
-          noteId: bestNote.id,
-          direction: bestNote.direction,
-          judgment,
-          deltaPx: signedDelta,
-          timeMs: Date.now(),
-          comboAfter: statsRef.current.combo,
-          scoreAwarded: awarded,
-        };
-        onNoteHit({
-          direction: event.direction,
-          judgment: event.judgment,
-          key: event.id,
-          timeMs: event.timeMs,
-        });
-      }
-
-      perfMonitor.record('hit_ms', Date.now() - hitStart);
-    },
-    [
-      applyJudgmentRef,
-      fallDurationMs,
-      flushScore,
-      getNow,
-      noteTopAt,
-      onNoteHit,
-      overlapAt,
-    ],
-  );
-
-  const releaseInput = useCallback((direction: Direction): void => {
-    const laneIdx = LANE_INDEX[direction];
-    pressedLanesRef.current[laneIdx] = false;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      stopLoop();
-      if (scoreRafRef.current !== null) {
-        cancelAnimationFrame(scoreRafRef.current);
-        scoreRafRef.current = null;
-      }
-    };
-  }, [stopLoop]);
-
-  const progress =
-    durationMs > 0 ? Math.max(0, Math.min(1, elapsedMs / durationMs)) : 0;
-
-  return {
-    status,
-    audioPosition,
-    lanes: lanesRef.current,
-    geometry: geometryRef.current,
-    elapsedMs,
-    durationMs,
-    progress,
-    fallDurationMs,
-    start,
-    pause,
-    resume,
-    restart,
-    quit,
-    hit,
-    releaseInput,
-  };
-}
+    if (statusRef.current !== 'playin
