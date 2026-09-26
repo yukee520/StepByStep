@@ -57,10 +57,12 @@ export type LaneSharedValues = {
   direction: SharedValue<number[]>;
   /** Per-slot hold duration in ms. 0 = tap note. */
   duration: SharedValue<number[]>;
+  /** Per-slot held flag: 1 if the note in this slot is currently held. */
+  heldSlot: SharedValue<number[]>;
   hasNotes: SharedValue<number>;
   /** 0..1 overlap of the best note in this lane with the button. */
   hot: SharedValue<number>;
-  /** 0..1 sustained-hold indicator. 1 while player is holding a hold. */
+  /** 0..1 sustained-hold indicator for the lane (any slot). */
   held: SharedValue<number>;
 };
 
@@ -107,12 +109,6 @@ type Stats = {
   miss: number;
 };
 
-/**
- * Live hold tracking.
- * When a hold is successfully pressed, we record it here. The note's score
- * has already been awarded. If the player releases before the tail time
- * minus RELEASE_GRACE_MS, we revoke the score by awarding a miss instead.
- */
 type ActiveHold = {
   noteId: string;
   direction: Direction;
@@ -184,6 +180,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lane0Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane0Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane0Dur = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane0HeldSlot = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane0Has = useSharedValue<number>(0);
   const lane0Hot = useSharedValue<number>(0);
   const lane0Held = useSharedValue<number>(0);
@@ -192,6 +189,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lane1Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane1Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane1Dur = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane1HeldSlot = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane1Has = useSharedValue<number>(0);
   const lane1Hot = useSharedValue<number>(0);
   const lane1Held = useSharedValue<number>(0);
@@ -200,6 +198,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lane2Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane2Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane2Dur = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane2HeldSlot = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane2Has = useSharedValue<number>(0);
   const lane2Hot = useSharedValue<number>(0);
   const lane2Held = useSharedValue<number>(0);
@@ -208,6 +207,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lane3Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane3Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane3Dur = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
+  const lane3HeldSlot = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane3Has = useSharedValue<number>(0);
   const lane3Hot = useSharedValue<number>(0);
   const lane3Held = useSharedValue<number>(0);
@@ -215,10 +215,46 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lanesRef = useRef<
     [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues]
   >([
-    { active: lane0Active, timeMs: lane0Time, direction: lane0Dir, duration: lane0Dur, hasNotes: lane0Has, hot: lane0Hot, held: lane0Held },
-    { active: lane1Active, timeMs: lane1Time, direction: lane1Dir, duration: lane1Dur, hasNotes: lane1Has, hot: lane1Hot, held: lane1Held },
-    { active: lane2Active, timeMs: lane2Time, direction: lane2Dir, duration: lane2Dur, hasNotes: lane2Has, hot: lane2Hot, held: lane2Held },
-    { active: lane3Active, timeMs: lane3Time, direction: lane3Dir, duration: lane3Dur, hasNotes: lane3Has, hot: lane3Hot, held: lane3Held },
+    {
+      active: lane0Active,
+      timeMs: lane0Time,
+      direction: lane0Dir,
+      duration: lane0Dur,
+      heldSlot: lane0HeldSlot,
+      hasNotes: lane0Has,
+      hot: lane0Hot,
+      held: lane0Held,
+    },
+    {
+      active: lane1Active,
+      timeMs: lane1Time,
+      direction: lane1Dir,
+      duration: lane1Dur,
+      heldSlot: lane1HeldSlot,
+      hasNotes: lane1Has,
+      hot: lane1Hot,
+      held: lane1Held,
+    },
+    {
+      active: lane2Active,
+      timeMs: lane2Time,
+      direction: lane2Dir,
+      duration: lane2Dur,
+      heldSlot: lane2HeldSlot,
+      hasNotes: lane2Has,
+      hot: lane2Hot,
+      held: lane2Held,
+    },
+    {
+      active: lane3Active,
+      timeMs: lane3Time,
+      direction: lane3Dir,
+      duration: lane3Dur,
+      heldSlot: lane3HeldSlot,
+      hasNotes: lane3Has,
+      hot: lane3Hot,
+      held: lane3Held,
+    },
   ]);
 
   const wallClockStartRef = useRef<number>(0);
@@ -232,17 +268,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lastFrameAtRef = useRef<number>(0);
   const laneBuffersRef = useRef<Note[][]>([[], [], [], []]);
 
-  /**
-   * Live hold state. key = noteId.
-   * When a hold is pressed successfully, we add it here. When released,
-   * we check timing and possibly revoke score.
-   */
   const activeHoldsRef = useRef<Map<string, ActiveHold>>(new Map());
-
-  /**
-   * Which button (lane) the player is physically pressing right now.
-   * Indexed by lane. Used to detect early release of holds.
-   */
   const pressedLanesRef = useRef<boolean[]>([false, false, false, false]);
 
   const statsRef = useRef<Stats>({
@@ -305,6 +331,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       lanes[l].timeMs.value = new Array(SLOT_COUNT).fill(0);
       lanes[l].direction.value = new Array(SLOT_COUNT).fill(0);
       lanes[l].duration.value = new Array(SLOT_COUNT).fill(0);
+      lanes[l].heldSlot.value = new Array(SLOT_COUNT).fill(0);
       lanes[l].hasNotes.value = 0;
       lanes[l].hot.value = 0;
       lanes[l].held.value = 0;
@@ -402,17 +429,12 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     [],
   );
 
-  /**
-   * Reverse the effect of a prior judgment — used when a hold is broken
-   * (released too early). The head judgment gets rolled into a miss.
-   */
   const revokeJudgment = useCallback((prior: Judgment, priorScore: number): void => {
     const stats = statsRef.current;
     stats.score -= priorScore;
     if (prior === 'perfect') stats.perfect -= 1;
     else if (prior === 'great') stats.great -= 1;
     else if (prior === 'good') stats.good -= 1;
-    // Combo already counted the head; on break we reset it.
     stats.combo = 0;
     stats.miss += 1;
   }, []);
@@ -431,8 +453,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         const bottom = top + geom.noteHeight;
         if (bottom <= buttonBottom + DROP_GRACE_PX) break;
 
-        // A hold that's currently active should NOT be force-missed by this
-        // loop — its judgment is already applied and it's being tracked.
         const holdActive = activeHoldsRef.current.has(note.id);
         if (holdActive) {
           i += 1;
@@ -464,12 +484,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     [flushScore, noteTopAt, onNoteHit],
   );
 
-  /**
-   * Check active holds each frame:
-   *  - If now >= endTimeMs: hold is complete → remove from tracking.
-   *  - If player released before (endTimeMs - RELEASE_GRACE_MS): break the
-   *    hold → revoke judgment, award miss.
-   */
   const processHolds = useCallback(
     (now: number): void => {
       const holds = activeHoldsRef.current;
@@ -482,7 +496,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         const releaseThreshold = tailTime - RELEASE_GRACE_MS;
 
         if (!isPressed && now < releaseThreshold) {
-          // Broke early — revoke score and mark miss.
           revokeJudgment(hold.headJudgment, hold.headScoreAwarded);
           if (onNoteHit) {
             onNoteHit({
@@ -495,7 +508,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
           released.push(hold.noteId);
           scoreDirtyRef.current = true;
         } else if (now >= tailTime) {
-          // Completed successfully.
           released.push(hold.noteId);
         }
       });
@@ -536,7 +548,10 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     for (let i = startIdx; i < notes.length; i += 1) {
       const note = notes[i];
       if (note.timeMs > hiTime) break;
-      if (judgedRef.current.has(note.id)) continue;
+      // Skip notes that are fully judged AND not currently held (a hold that
+      // has been pressed successfully stays in the buffer so its bar renders).
+      const isActiveHold = activeHoldsRef.current.has(note.id);
+      if (judgedRef.current.has(note.id) && !isActiveHold) continue;
       const laneIdx = LANE_INDEX[note.direction];
       const buf = buffers[laneIdx];
       if (buf.length < SLOT_COUNT) buf.push(note);
@@ -550,8 +565,10 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       const newTime = new Array(SLOT_COUNT).fill(0);
       const newDir = new Array(SLOT_COUNT).fill(0);
       const newDur = new Array(SLOT_COUNT).fill(0);
+      const newHeldSlot = new Array(SLOT_COUNT).fill(0);
 
       let maxOverlap = 0;
+      let laneHeld = 0;
 
       for (let s = 0; s < buf.length; s += 1) {
         const note = buf[s];
@@ -559,6 +576,12 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         newTime[s] = note.timeMs;
         newDir[s] = DIRECTION_INDEX[note.direction];
         newDur[s] = note.durationMs ?? 0;
+
+        // Is this slot's hold currently being held?
+        if (activeHoldsRef.current.has(note.id)) {
+          newHeldSlot[s] = 1;
+          laneHeld = 1;
+        }
 
         const ov = overlapAt(note, now);
         if (ov > maxOverlap) maxOverlap = ov;
@@ -568,14 +591,9 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       lane.timeMs.value = newTime;
       lane.direction.value = newDir;
       lane.duration.value = newDur;
+      lane.heldSlot.value = newHeldSlot;
       lane.hasNotes.value = buf.length > 0 ? 1 : 0;
       lane.hot.value = maxOverlap;
-
-      // Held indicator: 1 if any hold is active on this lane.
-      let laneHeld = 0;
-      activeHoldsRef.current.forEach((h) => {
-        if (h.laneIndex === l) laneHeld = 1;
-      });
       lane.held.value = laneHeld;
     }
 
@@ -617,175 +635,4 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     audioPosition.value = 0;
     setStatus('playing');
     statusRef.current = 'playing';
-    stopLoop();
-    rafRef.current = requestAnimationFrame(loop);
-  }, [audioPosition, loop, resetStats, stopLoop]);
-
-  const pause = useCallback((): void => {
-    if (statusRef.current !== 'playing') return;
-    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
-    setStatus('paused');
-    statusRef.current = 'paused';
-    stopLoop();
-  }, [stopLoop]);
-
-  const resume = useCallback((): void => {
-    if (statusRef.current !== 'paused') return;
-    wallClockStartRef.current = Date.now() - wallClockPausedRef.current;
-    setStatus('playing');
-    statusRef.current = 'playing';
-    stopLoop();
-    rafRef.current = requestAnimationFrame(loop);
-  }, [loop, stopLoop]);
-
-  const restart = useCallback((): void => {
-    stopLoop();
-    resetStats();
-    wallClockStartRef.current = Date.now();
-    wallClockPausedRef.current = 0;
-    audioEndedAtRef.current = 0;
-    audioPosition.value = 0;
-    setStatus('playing');
-    statusRef.current = 'playing';
-    rafRef.current = requestAnimationFrame(loop);
-  }, [audioPosition, loop, resetStats, stopLoop]);
-
-  const quit = useCallback((): void => {
-    stopLoop();
-    setStatus('finished');
-    statusRef.current = 'finished';
-    const summary = buildSummary();
-    onFinish(summary);
-  }, [buildSummary, onFinish, stopLoop]);
-
-  const hit = useCallback(
-    (direction: Direction): void => {
-      if (statusRef.current !== 'playing') return;
-
-      const laneIdx = LANE_INDEX[direction];
-      pressedLanesRef.current[laneIdx] = true;
-
-      const hitStart = Date.now();
-      const now = getNow();
-      const notes = sortedNotes.current;
-
-      const searchRadiusMs = fallDurationMs * OVERLAP_WINDOWS.good * 1.5;
-      const loTime = now - searchRadiusMs;
-      const hiTime = now + searchRadiusMs;
-      const startIdx = findFirstNoteAtOrAfter(notes, loTime);
-
-      let bestNote: Note | null = null;
-      let bestOverlap = 0;
-
-      for (let i = startIdx; i < notes.length; i += 1) {
-        const note = notes[i];
-        if (note.timeMs > hiTime) break;
-        if (judgedRef.current.has(note.id)) continue;
-        if (note.direction !== direction) continue;
-        const ov = overlapAt(note, now);
-        if (ov > bestOverlap) {
-          bestOverlap = ov;
-          bestNote = note;
-        }
-      }
-
-      if (!bestNote || bestOverlap < OVERLAP_WINDOWS.good) {
-        perfMonitor.record('hit_ms', Date.now() - hitStart);
-        return;
-      }
-
-      const judgment = overlapToJudgment(bestOverlap);
-      const top = noteTopAt(bestNote, now);
-      const idealTop = noteTopForRatio(1, geometryRef.current);
-      const signedDelta =
-        (top - idealTop) / Math.max(1, geometryRef.current.noteHeight);
-
-      judgedRef.current.add(bestNote.id);
-      const { awarded } = applyJudgmentRef(judgment);
-
-      // If it's a hold, register it for lifecycle tracking.
-      const dur = bestNote.durationMs ?? 0;
-      if (dur > 0) {
-        activeHoldsRef.current.set(bestNote.id, {
-          noteId: bestNote.id,
-          direction: bestNote.direction,
-          laneIndex: laneIdx,
-          endTimeMs: bestNote.timeMs + dur,
-          headJudgment: judgment,
-          headScoreAwarded: awarded,
-        });
-      }
-
-      scoreDirtyRef.current = true;
-      flushScore();
-
-      if (onNoteHit) {
-        const event: JudgmentEvent = {
-          id: genId('evt'),
-          noteId: bestNote.id,
-          direction: bestNote.direction,
-          judgment,
-          deltaPx: signedDelta,
-          timeMs: Date.now(),
-          comboAfter: statsRef.current.combo,
-          scoreAwarded: awarded,
-        };
-        onNoteHit({
-          direction: event.direction,
-          judgment: event.judgment,
-          key: event.id,
-          timeMs: event.timeMs,
-        });
-      }
-
-      perfMonitor.record('hit_ms', Date.now() - hitStart);
-    },
-    [
-      applyJudgmentRef,
-      fallDurationMs,
-      flushScore,
-      getNow,
-      noteTopAt,
-      onNoteHit,
-      overlapAt,
-    ],
-  );
-
-  const releaseInput = useCallback((direction: Direction): void => {
-    const laneIdx = LANE_INDEX[direction];
-    pressedLanesRef.current[laneIdx] = false;
-    // The actual hold-break check happens in processHolds on the next frame,
-    // so we get a small grace between "finger up" and "hold broken".
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      stopLoop();
-      if (scoreRafRef.current !== null) {
-        cancelAnimationFrame(scoreRafRef.current);
-        scoreRafRef.current = null;
-      }
-    };
-  }, [stopLoop]);
-
-  const progress =
-    durationMs > 0 ? Math.max(0, Math.min(1, elapsedMs / durationMs)) : 0;
-
-  return {
-    status,
-    audioPosition,
-    lanes: lanesRef.current,
-    geometry: geometryRef.current,
-    elapsedMs,
-    durationMs,
-    progress,
-    fallDurationMs,
-    start,
-    pause,
-    resume,
-    restart,
-    quit,
-    hit,
-    releaseInput,
-  };
-}
+    stop
