@@ -1,0 +1,5418 @@
+{
+  "formatVersion": 1,
+  "id": "talking-to-the-moon",
+  "title": "talking to the moon",
+  "artist": "Unknown Artist",
+  "bpm": 120,
+  "durationMs": 214645,
+  "difficulty": "hard",
+  "offsetMs": 0,
+  "chart": [
+    {
+      "id": "note_muih35cf_23tbmcx8",
+      "timeMs": 2000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35df_d6lmm9bk",
+      "timeMs": 2000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_humff52d",
+      "timeMs": 2250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_fyq63vfk",
+      "timeMs": 2500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_ruo3no0w",
+      "timeMs": 2750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_otjvp15f",
+      "timeMs": 3000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_ki6vih41",
+      "timeMs": 3250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cf_ug4r2yb9",
+      "timeMs": 3500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cf_adgjko5d",
+      "timeMs": 3750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_1j1poya2",
+      "timeMs": 4000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_n81ty1rt",
+      "timeMs": 4250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_e2uie9wf",
+      "timeMs": 4500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35df_hx62lgj1",
+      "timeMs": 4500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_ljd6it82",
+      "timeMs": 4750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35df_brjurn3e",
+      "timeMs": 5000,
+      "direction": "left",
+      "isChord": true,
+      "durationMs": 880
+    },
+    {
+      "id": "note_muih35cf_882hhn8r",
+      "timeMs": 5000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_62vmav42",
+      "timeMs": 5250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_wg4k10bx",
+      "timeMs": 5500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_44xe0aqm",
+      "timeMs": 5750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_3h0dkxql",
+      "timeMs": 6000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cf_ltvbgvix",
+      "timeMs": 6250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_ordkchx6",
+      "timeMs": 6500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35df_mdm05du9",
+      "timeMs": 6500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_r3k3l8hx",
+      "timeMs": 6750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dg_47ajp0lg",
+      "timeMs": 6750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_tsdqiq9n",
+      "timeMs": 7000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cf_96uq7g9r",
+      "timeMs": 7250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_js1u69pb",
+      "timeMs": 7500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_ykawyqyp",
+      "timeMs": 7750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_d7uhrjnx",
+      "timeMs": 8000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_dh47d3w6",
+      "timeMs": 8250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_o19ssziy",
+      "timeMs": 8500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_yitak2c9",
+      "timeMs": 8750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_iezuzvih",
+      "timeMs": 9000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dg_67ryjalw",
+      "timeMs": 9000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_hwjqsyw1",
+      "timeMs": 9250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dh_o6f8kne3",
+      "timeMs": 9250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_p5m23tgj",
+      "timeMs": 9500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cf_2ooiygfv",
+      "timeMs": 9750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_6kbbh14s",
+      "timeMs": 10000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_l10fjzcz",
+      "timeMs": 10250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cf_5tqeeqne",
+      "timeMs": 10500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35dh_8ijtg4p3",
+      "timeMs": 10750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_cl1ioafb",
+      "timeMs": 10750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_7a2smemo",
+      "timeMs": 11000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dh_1xg2ns9y",
+      "timeMs": 11000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_3t52h3gx",
+      "timeMs": 11250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dh_gvx7pjfn",
+      "timeMs": 11250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_a6j7wdc6",
+      "timeMs": 11500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cf_bq7az8qo",
+      "timeMs": 11750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_al8uccj7",
+      "timeMs": 12000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_ka7nrupq",
+      "timeMs": 12250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_tnlhjn51",
+      "timeMs": 12500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_9l464tcs",
+      "timeMs": 12750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_lc7gob19",
+      "timeMs": 13000,
+      "direction": "left",
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35cf_rtehyt7h",
+      "timeMs": 13250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cf_1ybvf5ms",
+      "timeMs": 13500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_gmfux09y",
+      "timeMs": 13750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cf_rd1uw372",
+      "timeMs": 14000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35di_3u5t0fs5",
+      "timeMs": 14000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cf_zzx58qyx",
+      "timeMs": 14250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cf_3dt7iaz1",
+      "timeMs": 14500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_kofjeqne",
+      "timeMs": 14750,
+      "direction": "left",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35cg_zzmi324t",
+      "timeMs": 15000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_dsuer923",
+      "timeMs": 15250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_h1w50o58",
+      "timeMs": 15500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_u6ow13fy",
+      "timeMs": 15750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_ih5row1l",
+      "timeMs": 16000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_skfsu6n6",
+      "timeMs": 16250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_efq65ndr",
+      "timeMs": 16500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35di_netahfjz",
+      "timeMs": 16500,
+      "direction": "right",
+      "isChord": true,
+      "durationMs": 630
+    },
+    {
+      "id": "note_muih35cg_hsgv3sas",
+      "timeMs": 16750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_idjrzgbi",
+      "timeMs": 17000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_z1m2nekh",
+      "timeMs": 17250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_ih5er72s",
+      "timeMs": 17500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_3g8hdp1b",
+      "timeMs": 17750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35di_hze5ygys",
+      "timeMs": 17750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_7udwmdnt",
+      "timeMs": 18000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_afsmz057",
+      "timeMs": 18250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_f7pye022",
+      "timeMs": 18500,
+      "direction": "right",
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35cg_b1e17kdu",
+      "timeMs": 18750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_iv24yp9f",
+      "timeMs": 19000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35di_tzvmchbs",
+      "timeMs": 19000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_0oa1cg47",
+      "timeMs": 19250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_dmdqquy1",
+      "timeMs": 19500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_hd4j0ydj",
+      "timeMs": 19750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dj_n2zle10n",
+      "timeMs": 19750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_crrfboao",
+      "timeMs": 20000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_qa3nrtwc",
+      "timeMs": 20250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_r291ms2m",
+      "timeMs": 20500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_er3uiw7x",
+      "timeMs": 20750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_lbwwkk2h",
+      "timeMs": 21000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_eneluysa",
+      "timeMs": 21250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_57faoxik",
+      "timeMs": 21500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_twvt2eq2",
+      "timeMs": 21750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_ymwrx107",
+      "timeMs": 22000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dj_hz07pqva",
+      "timeMs": 22000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dj_g1nd1wta",
+      "timeMs": 22250,
+      "direction": "down",
+      "isChord": true,
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35cg_c7qse3ua",
+      "timeMs": 22250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_5bobl2qh",
+      "timeMs": 22500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_t5jdcypb",
+      "timeMs": 22750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_uzlp1gop",
+      "timeMs": 23000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_c50w6zbi",
+      "timeMs": 23250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_go2jvmbf",
+      "timeMs": 23500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_4li7oige",
+      "timeMs": 23750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_o5hguoul",
+      "timeMs": 24000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dk_tpozcbg4",
+      "timeMs": 24000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_s04ajwsi",
+      "timeMs": 24250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_vp4s8iop",
+      "timeMs": 24500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_pvlmyzrp",
+      "timeMs": 24750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_8ke8d4zv",
+      "timeMs": 25000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_v9hme9vi",
+      "timeMs": 25250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_8wfu8pbd",
+      "timeMs": 25500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_arlm4la2",
+      "timeMs": 25750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dk_vgg74uo9",
+      "timeMs": 25750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_atbr9anw",
+      "timeMs": 26000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_fc2f3yxc",
+      "timeMs": 26250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_v2byqvv0",
+      "timeMs": 26500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_sx1kvje6",
+      "timeMs": 26750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_s93m4ev4",
+      "timeMs": 27000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_asffc9e2",
+      "timeMs": 27250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_ri3rv9sj",
+      "timeMs": 27500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dk_1kp82bzl",
+      "timeMs": 27500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_oew1lumi",
+      "timeMs": 27750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35dk_c0wlpfn8",
+      "timeMs": 28000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_ezl7d2za",
+      "timeMs": 28000,
+      "direction": "up",
+      "isChord": true,
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35cg_nk2salli",
+      "timeMs": 28250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35dl_wcls0lsp",
+      "timeMs": 28500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_f4j6expo",
+      "timeMs": 28500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_c2d3hk9c",
+      "timeMs": 28750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_yo2q63v2",
+      "timeMs": 29000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_s0a7ddeh",
+      "timeMs": 29250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_ehvt2tou",
+      "timeMs": 29500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_zmv9dc6j",
+      "timeMs": 29750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_8q5n8czc",
+      "timeMs": 30000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_0fuvdg4x",
+      "timeMs": 30250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_6n6p1c1m",
+      "timeMs": 30500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_f395sifo",
+      "timeMs": 30750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_xm5ha38z",
+      "timeMs": 31000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_1bq3bhvo",
+      "timeMs": 31250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_uqivnsc4",
+      "timeMs": 31500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_e7eaxn73",
+      "timeMs": 31750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_50giirm5",
+      "timeMs": 32000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_7i38bf7c",
+      "timeMs": 32250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_arnr12ee",
+      "timeMs": 32500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_3fv6q43f",
+      "timeMs": 32750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_6nkas3il",
+      "timeMs": 33000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_2ucbq7h0",
+      "timeMs": 33250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_0a6uwecc",
+      "timeMs": 33500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_5fmv7efq",
+      "timeMs": 33750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_mddko3p5",
+      "timeMs": 34000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_cqjflx1a",
+      "timeMs": 34250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_c7o5uoef",
+      "timeMs": 34500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dl_nfwavzdc",
+      "timeMs": 34500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_ppdsx2g7",
+      "timeMs": 34750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_acozdzfe",
+      "timeMs": 35000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dl_myifdqwk",
+      "timeMs": 35000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_w1qtzj64",
+      "timeMs": 35250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_k1dtnjxg",
+      "timeMs": 35500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_rswyb8z8",
+      "timeMs": 35750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_w8blyeh0",
+      "timeMs": 36000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_rhtacusc",
+      "timeMs": 36250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_gx11x7j5",
+      "timeMs": 36500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_zdfhsi18",
+      "timeMs": 36750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_5c71wqfh",
+      "timeMs": 37000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_sci1rtox",
+      "timeMs": 37250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_jtjqobnr",
+      "timeMs": 37500,
+      "direction": "down",
+      "isChord": true,
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35dl_rmapkyft",
+      "timeMs": 37500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_g45nagfx",
+      "timeMs": 37750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35dm_vuo8cl26",
+      "timeMs": 38000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_wjci8zp3",
+      "timeMs": 38000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_fwhkbkvg",
+      "timeMs": 38250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dm_aw8k70c5",
+      "timeMs": 38250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_k737ah03",
+      "timeMs": 38500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_e438u9jz",
+      "timeMs": 38750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_ku72w2ee",
+      "timeMs": 39000,
+      "direction": "right",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35cg_lgtjhrmd",
+      "timeMs": 39250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_68jdb1zr",
+      "timeMs": 39500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_gpz2ies5",
+      "timeMs": 39750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_rft2rgyi",
+      "timeMs": 40000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_8bbm6yex",
+      "timeMs": 40250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_sxakqqn0",
+      "timeMs": 40500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_k39ejsyt",
+      "timeMs": 40750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_alfuytjg",
+      "timeMs": 41000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_oq7qq7zp",
+      "timeMs": 41250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_7uwow3dz",
+      "timeMs": 41500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35dm_ubagsmop",
+      "timeMs": 41750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_xbwlmm2k",
+      "timeMs": 41750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_yidwqwri",
+      "timeMs": 42000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dm_v0mkop5x",
+      "timeMs": 42000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_e1z3ckob",
+      "timeMs": 42250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_cuna5l40",
+      "timeMs": 42500,
+      "direction": "down",
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35cg_spdx0gm4",
+      "timeMs": 42750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_73kpaz26",
+      "timeMs": 43000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_lhdby2hn",
+      "timeMs": 43250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_l2ykiqm8",
+      "timeMs": 43500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_nnyqxuk2",
+      "timeMs": 43750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_q16za0fy",
+      "timeMs": 44000,
+      "direction": "right",
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35cg_ztrqcdzc",
+      "timeMs": 44250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_ng9o34yd",
+      "timeMs": 44500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dn_5eivhpqf",
+      "timeMs": 44500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_qfodlivo",
+      "timeMs": 44750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_kk1pod0h",
+      "timeMs": 45000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_pmqrhwbr",
+      "timeMs": 45250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_3sp51s2e",
+      "timeMs": 45500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_nrc0p2bx",
+      "timeMs": 45750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35dn_o2akga5p",
+      "timeMs": 46000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_kxle5ktk",
+      "timeMs": 46000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_h5x59tvl",
+      "timeMs": 46250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_i1wtajo9",
+      "timeMs": 46500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_vpsqlnhy",
+      "timeMs": 46750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_ps86dlf2",
+      "timeMs": 47000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35dn_w56k87hy",
+      "timeMs": 47250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_tu5xu8qz",
+      "timeMs": 47250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dn_5zv5zjm6",
+      "timeMs": 47500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_xn371j9s",
+      "timeMs": 47500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35do_xc90dv4s",
+      "timeMs": 47750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_g55mohuo",
+      "timeMs": 47750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_vq41cwby",
+      "timeMs": 48000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_j2vd58tm",
+      "timeMs": 48250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35do_k40wotbd",
+      "timeMs": 48500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_1wsrp2my",
+      "timeMs": 48500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35do_jywq3myl",
+      "timeMs": 48750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_jov9u9hl",
+      "timeMs": 48750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_dl9dhogb",
+      "timeMs": 49000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_ms4hcep2",
+      "timeMs": 49250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_fx8vou2h",
+      "timeMs": 49500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_hjt5rksx",
+      "timeMs": 49750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_d77k4z3h",
+      "timeMs": 50000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dp_7v8idnbq",
+      "timeMs": 50000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_n0j9oe17",
+      "timeMs": 50250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_xgp89sn4",
+      "timeMs": 50500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_0ls8las7",
+      "timeMs": 50750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_r9g3bd1y",
+      "timeMs": 51000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_xgmlzydc",
+      "timeMs": 51250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_933cxoxz",
+      "timeMs": 51500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_za6vtik1",
+      "timeMs": 51750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_sv7klsqu",
+      "timeMs": 52000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dp_vviy99tt",
+      "timeMs": 52000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_2v9gxjuo",
+      "timeMs": 52250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_mb4igke5",
+      "timeMs": 52500,
+      "direction": "down",
+      "durationMs": 630
+    },
+    {
+      "id": "note_muih35cg_8yu5id8t",
+      "timeMs": 52750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_ck1i0ptu",
+      "timeMs": 53000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_58625gh1",
+      "timeMs": 53250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dp_k07vpoeu",
+      "timeMs": 53250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_k1n2hdwr",
+      "timeMs": 53500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_wgi5lrkk",
+      "timeMs": 53750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_r7b6qs61",
+      "timeMs": 54000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_vs9p6dl1",
+      "timeMs": 54250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_16bac8qn",
+      "timeMs": 54500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_j0kargym",
+      "timeMs": 54750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_0qwdx4mn",
+      "timeMs": 55000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_oug09mfd",
+      "timeMs": 55250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_xmy2q8oi",
+      "timeMs": 55500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_ye4dbix3",
+      "timeMs": 55750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_2c2avi5t",
+      "timeMs": 56000,
+      "direction": "left",
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35cg_rb20dxm3",
+      "timeMs": 56250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_iuscmtiv",
+      "timeMs": 56500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_5g50p280",
+      "timeMs": 56750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_xb3s8748",
+      "timeMs": 57000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_zziagbxi",
+      "timeMs": 57250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dp_y9x85poa",
+      "timeMs": 57250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_knulp9ux",
+      "timeMs": 57500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_143rh4bk",
+      "timeMs": 57750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_c2uygbpq",
+      "timeMs": 58000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_f2yp46ki",
+      "timeMs": 58250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_dklt9hu0",
+      "timeMs": 58500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_n9bv1b4n",
+      "timeMs": 58750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_o7vbx60u",
+      "timeMs": 59000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_f0tdqzdy",
+      "timeMs": 59250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_rsv42lyh",
+      "timeMs": 59500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35dq_ww87wp3w",
+      "timeMs": 59750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_ny6a11yp",
+      "timeMs": 59750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cg_oqohs7lz",
+      "timeMs": 60000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_o8efz8ql",
+      "timeMs": 60250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_nhfeym1o",
+      "timeMs": 60500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_4onrwyir",
+      "timeMs": 60750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_145sek2e",
+      "timeMs": 61000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cg_ad5lc2w3",
+      "timeMs": 61250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cg_hrtqm96m",
+      "timeMs": 61500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_kv2ej0w5",
+      "timeMs": 61750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_v6mkvzld",
+      "timeMs": 62000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cg_x6c0ul38",
+      "timeMs": 62250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cg_sn6na44g",
+      "timeMs": 62500,
+      "direction": "up",
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35ch_91bxji51",
+      "timeMs": 62750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_a17fwnc9",
+      "timeMs": 63000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_z2671qc4",
+      "timeMs": 63250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_ho6ahmsb",
+      "timeMs": 63500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_yd0hohag",
+      "timeMs": 63750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_8iyt75fl",
+      "timeMs": 64000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_jcxjrq5i",
+      "timeMs": 64250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_es9fepbc",
+      "timeMs": 64500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_4km8j1hm",
+      "timeMs": 64750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_b95dazlp",
+      "timeMs": 65000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35dq_3hcmuerf",
+      "timeMs": 65250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_7bxft3l5",
+      "timeMs": 65250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_mk0239q9",
+      "timeMs": 65500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_sezhwwng",
+      "timeMs": 65750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_pymdqvgq",
+      "timeMs": 66000,
+      "direction": "right",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35ch_p1mxhlwa",
+      "timeMs": 66250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_twpylslk",
+      "timeMs": 66500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_0cg4yadh",
+      "timeMs": 66750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35dq_5eqnl79k",
+      "timeMs": 67000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_245iit1j",
+      "timeMs": 67000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_l6gbr22g",
+      "timeMs": 67250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35dr_li5g5xd5",
+      "timeMs": 67500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_6mg0sqkh",
+      "timeMs": 67500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_ugeyn14x",
+      "timeMs": 67750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_tpislq4r",
+      "timeMs": 68000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_e0hbdjo4",
+      "timeMs": 68250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_6201qkcg",
+      "timeMs": 68500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_rl3jf313",
+      "timeMs": 68750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_31rn60eg",
+      "timeMs": 69000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_995z5wtb",
+      "timeMs": 69250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_1vpjusx6",
+      "timeMs": 69500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_mn7gx206",
+      "timeMs": 69750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_334pphjh",
+      "timeMs": 70000,
+      "direction": "up",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35ch_rrdrwpj5",
+      "timeMs": 70250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_qswqc1yi",
+      "timeMs": 70500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_59tm6nqz",
+      "timeMs": 70750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35dr_cysrvn8g",
+      "timeMs": 71000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_if6amcug",
+      "timeMs": 71000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_5go9pwq6",
+      "timeMs": 71250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_380javow",
+      "timeMs": 71500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35dr_pd82i8e0",
+      "timeMs": 71750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_x0bbl5kw",
+      "timeMs": 71750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_efyj0e85",
+      "timeMs": 72000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_90lowc03",
+      "timeMs": 72250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dr_spw3kar6",
+      "timeMs": 72250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_lwujswgs",
+      "timeMs": 72500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_ew1q21z5",
+      "timeMs": 72750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_d7cqn74z",
+      "timeMs": 73000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_gdqkx7md",
+      "timeMs": 73250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_qducalhv",
+      "timeMs": 73500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_r0yi1600",
+      "timeMs": 73750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_7jrk00s0",
+      "timeMs": 74000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_kvcm7jyc",
+      "timeMs": 74250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ds_k8yvhlpj",
+      "timeMs": 74250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_2x3sj4ae",
+      "timeMs": 74500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_5l2nsyjy",
+      "timeMs": 74750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_vrwrlld4",
+      "timeMs": 75000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_bja7h47t",
+      "timeMs": 75250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_vwokqf2v",
+      "timeMs": 75500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_v8iuc7x5",
+      "timeMs": 75750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_hdsglaup",
+      "timeMs": 76000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_isd4lour",
+      "timeMs": 76250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ds_py7virfd",
+      "timeMs": 76250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_0es3ytj7",
+      "timeMs": 76500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_eluuaxnt",
+      "timeMs": 76750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_6ww9rdol",
+      "timeMs": 77000,
+      "direction": "up",
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35ch_jviwcw82",
+      "timeMs": 77250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_50gnwi94",
+      "timeMs": 77500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_55aj614n",
+      "timeMs": 77750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ds_vkj5qt3e",
+      "timeMs": 77750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_vnjgpp09",
+      "timeMs": 78000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_ryok3uec",
+      "timeMs": 78250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_o4c728pk",
+      "timeMs": 78500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ds_2xexl7h8",
+      "timeMs": 78750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_u1mcmxjp",
+      "timeMs": 78750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_nl0el75j",
+      "timeMs": 79000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_tu33uchg",
+      "timeMs": 79250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_8qubd9dx",
+      "timeMs": 79500,
+      "direction": "down",
+      "durationMs": 440
+    },
+    {
+      "id": "note_muih35ch_o40javp1",
+      "timeMs": 79750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_qop3bq2p",
+      "timeMs": 80000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dt_eqg1g98h",
+      "timeMs": 80000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_mgm0289x",
+      "timeMs": 80250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_5ddnhwcl",
+      "timeMs": 80500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_5txwcuqq",
+      "timeMs": 80750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_cdmc1hav",
+      "timeMs": 81000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_hcvjovnh",
+      "timeMs": 81250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_7y56ds04",
+      "timeMs": 81500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35dt_llu2yk07",
+      "timeMs": 81750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_oj29y3m0",
+      "timeMs": 81750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_n20mdtz1",
+      "timeMs": 82000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_xmafz5wb",
+      "timeMs": 82250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_8vevr5fw",
+      "timeMs": 82500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_3ef1xcdl",
+      "timeMs": 82750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dt_6xbeew5k",
+      "timeMs": 82750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_qtk981bp",
+      "timeMs": 83000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_ri5otild",
+      "timeMs": 83250,
+      "direction": "up",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35ch_o95p0hfy",
+      "timeMs": 83500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_u7ora098",
+      "timeMs": 83750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35du_sktz2o1b",
+      "timeMs": 83750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_lzic0mzp",
+      "timeMs": 84000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_qlsfgvf7",
+      "timeMs": 84250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_ji0vct36",
+      "timeMs": 84500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_zd7ec41u",
+      "timeMs": 84750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_dmdbeld4",
+      "timeMs": 85000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35du_heci09qq",
+      "timeMs": 85250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_nxgzqp3a",
+      "timeMs": 85250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_68lfsqk5",
+      "timeMs": 85500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_7wyc492b",
+      "timeMs": 85750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_0zm1xqlp",
+      "timeMs": 86000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_1rw5wuj7",
+      "timeMs": 86250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_t7uwnjko",
+      "timeMs": 86500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35du_uaf3d9gb",
+      "timeMs": 86500,
+      "direction": "right",
+      "isChord": true,
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35ch_eummlo3o",
+      "timeMs": 86750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_iy9de9eg",
+      "timeMs": 87000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35du_nqjxghc5",
+      "timeMs": 87250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_iycha5vd",
+      "timeMs": 87250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_c4c7osj7",
+      "timeMs": 87500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_1c57wvyw",
+      "timeMs": 87750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_45ebcniv",
+      "timeMs": 88000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dv_999t9p41",
+      "timeMs": 88000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_0syz4mw3",
+      "timeMs": 88250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_sc5fjxhs",
+      "timeMs": 88500,
+      "direction": "left",
+      "durationMs": 440
+    },
+    {
+      "id": "note_muih35ch_r3agzs37",
+      "timeMs": 88750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35dv_lakl34lm",
+      "timeMs": 89000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_9d5s6dfs",
+      "timeMs": 89000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_21o46axv",
+      "timeMs": 89250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_ypakmvwe",
+      "timeMs": 89500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_cgoujqj5",
+      "timeMs": 89750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_t15zxxks",
+      "timeMs": 90000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_plpm584m",
+      "timeMs": 90250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_4gsyme1r",
+      "timeMs": 90500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_uhd3j46x",
+      "timeMs": 90750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_npbamuvy",
+      "timeMs": 91000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35dv_yslcpi8t",
+      "timeMs": 91250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_mkzajywe",
+      "timeMs": 91250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_74thn60i",
+      "timeMs": 91500,
+      "direction": "right",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35ch_7m7ks8sc",
+      "timeMs": 91750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_85b22w99",
+      "timeMs": 92000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_7xspp48l",
+      "timeMs": 92250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_qm0rk45k",
+      "timeMs": 92500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_pyzxlyq1",
+      "timeMs": 92750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_n6q92uy5",
+      "timeMs": 93000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_khcr2ral",
+      "timeMs": 93250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dv_36xagghk",
+      "timeMs": 93250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_i32w3wfs",
+      "timeMs": 93500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_woo4s2yp",
+      "timeMs": 93750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_jritlccp",
+      "timeMs": 94000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_roxp7mw6",
+      "timeMs": 94250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_s2apwkf9",
+      "timeMs": 94500,
+      "direction": "right",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35ch_f8x0qyp9",
+      "timeMs": 94750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_nqgon152",
+      "timeMs": 95000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35dw_wm5pip7b",
+      "timeMs": 95250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_t872xafp",
+      "timeMs": 95250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dw_xbko3mxe",
+      "timeMs": 95500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_2azikpzl",
+      "timeMs": 95500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_wsq1exhf",
+      "timeMs": 95750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dw_d13j4tj2",
+      "timeMs": 95750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_20rld5tv",
+      "timeMs": 96000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_cwfyrvdz",
+      "timeMs": 96250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_igapxk7k",
+      "timeMs": 96500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dx_wy2jusji",
+      "timeMs": 96500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_ra9agq9s",
+      "timeMs": 96750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_qg9khipb",
+      "timeMs": 97000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_lo9olz3z",
+      "timeMs": 97250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_5al718q8",
+      "timeMs": 97500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_ucgxqpkg",
+      "timeMs": 97750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dx_rihmjf8j",
+      "timeMs": 97750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_mwphrjz2",
+      "timeMs": 98000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_ucxrrivp",
+      "timeMs": 98250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_81of67o5",
+      "timeMs": 98500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_d5cy1zdr",
+      "timeMs": 98750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_6oxb86td",
+      "timeMs": 99000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_bye63p66",
+      "timeMs": 99250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_qin9946s",
+      "timeMs": 99500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_kpq2y0l3",
+      "timeMs": 99750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_df6bz67u",
+      "timeMs": 100000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_4bo8zb8c",
+      "timeMs": 100250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dx_qv0db7fm",
+      "timeMs": 100250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_0nep8oxz",
+      "timeMs": 100500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_r1xd876s",
+      "timeMs": 100750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_3apjoizd",
+      "timeMs": 101000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_p55ms6mr",
+      "timeMs": 101250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dx_709dbpuo",
+      "timeMs": 101250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_38wz7pm7",
+      "timeMs": 101500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_59qs2hn5",
+      "timeMs": 101750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_w45mk5tf",
+      "timeMs": 102000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_bwtajv8v",
+      "timeMs": 102250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_6fdowoui",
+      "timeMs": 102500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35dy_ku8q6frd",
+      "timeMs": 102750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_cbluldo9",
+      "timeMs": 102750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_q04855sz",
+      "timeMs": 103000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_67c2qc6r",
+      "timeMs": 103250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_07v6f592",
+      "timeMs": 103500,
+      "direction": "left",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35ch_hn7sopug",
+      "timeMs": 103750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_jqxtbof6",
+      "timeMs": 104000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_rezt6lr2",
+      "timeMs": 104250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_mua1g34k",
+      "timeMs": 104500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_fa4vjpvk",
+      "timeMs": 104750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35dy_ghq2tyry",
+      "timeMs": 105000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_6zygugla",
+      "timeMs": 105000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_kh2vqxg8",
+      "timeMs": 105250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_q13mj3kr",
+      "timeMs": 105500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_rflfbaa8",
+      "timeMs": 105750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_qn6b7x1s",
+      "timeMs": 106000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dy_ud7hqmc4",
+      "timeMs": 106000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_1bcuyshi",
+      "timeMs": 106250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_ok9jnhyv",
+      "timeMs": 106500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dz_4cr65qxb",
+      "timeMs": 106500,
+      "direction": "right",
+      "isChord": true,
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35ch_vnwcrzwj",
+      "timeMs": 106750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_v6mrwx8x",
+      "timeMs": 107000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_rxmgfv0j",
+      "timeMs": 107250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35dz_1d35924k",
+      "timeMs": 107500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_zybdj40e",
+      "timeMs": 107500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35dz_cb0he8bb",
+      "timeMs": 107750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_3owrbbzs",
+      "timeMs": 107750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_fl0sqny2",
+      "timeMs": 108000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_9k0miydq",
+      "timeMs": 108250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35dz_1dvqglbn",
+      "timeMs": 108500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_vhyzg6md",
+      "timeMs": 108500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_gjafwe1r",
+      "timeMs": 108750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_objai46y",
+      "timeMs": 109000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_bvetqtay",
+      "timeMs": 109250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_mdhb8ijk",
+      "timeMs": 109500,
+      "direction": "left",
+      "durationMs": 630
+    },
+    {
+      "id": "note_muih35ch_i9toalmm",
+      "timeMs": 109750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_7ufm75hi",
+      "timeMs": 110000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_s81392q0",
+      "timeMs": 110250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_8y8ab7ms",
+      "timeMs": 110500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_eufu2c8z",
+      "timeMs": 110750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35e0_3s1cq3td",
+      "timeMs": 111000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_drouq8gx",
+      "timeMs": 111000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_f4iwua51",
+      "timeMs": 111250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_j85ahaa2",
+      "timeMs": 111500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e0_oycapt7n",
+      "timeMs": 111500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e0_ip9rj0om",
+      "timeMs": 111750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_jw4k99ou",
+      "timeMs": 111750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_18n3uk9q",
+      "timeMs": 112000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ch_50hq6jzf",
+      "timeMs": 112250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ch_8yj8q699",
+      "timeMs": 112500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ch_i60p2i71",
+      "timeMs": 112750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35e0_vvrnlm30",
+      "timeMs": 113000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_6jf4fp0a",
+      "timeMs": 113000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ch_0m0oiigk",
+      "timeMs": 113250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ch_2bxtbz3z",
+      "timeMs": 113500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_rj181mii",
+      "timeMs": 113750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_43yq1zmd",
+      "timeMs": 114000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_ge2re4ik",
+      "timeMs": 114250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_zq8qnjh8",
+      "timeMs": 114500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35e1_71u0nxs3",
+      "timeMs": 114750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_vld4ayhn",
+      "timeMs": 114750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_9384y2h0",
+      "timeMs": 115000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_khs1quik",
+      "timeMs": 115250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_f6c2db4j",
+      "timeMs": 115500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_9syeg6lv",
+      "timeMs": 115750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_x2k2ftaf",
+      "timeMs": 116000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_pmodx3ek",
+      "timeMs": 116250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_mnx4q6u5",
+      "timeMs": 116500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_jex1gxcs",
+      "timeMs": 116750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_dauys86l",
+      "timeMs": 117000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35e1_5f1hhlxi",
+      "timeMs": 117250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_e7jgo6k0",
+      "timeMs": 117250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_90nrb7ti",
+      "timeMs": 117500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e1_vi1hyjav",
+      "timeMs": 117500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_ijqnbloq",
+      "timeMs": 117750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e2_3tg8znys",
+      "timeMs": 117750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_sgtz191p",
+      "timeMs": 118000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_23ca4hm2",
+      "timeMs": 118250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_pqfyphbq",
+      "timeMs": 118500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_dmafdssd",
+      "timeMs": 118750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_c4o2rkod",
+      "timeMs": 119000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_16ahp1gl",
+      "timeMs": 119250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_7jvzph0r",
+      "timeMs": 119500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_hrnv1va4",
+      "timeMs": 119750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_3h1t8yrf",
+      "timeMs": 120000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e2_uympga4d",
+      "timeMs": 120000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e2_11fdebsf",
+      "timeMs": 120250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_71o8623x",
+      "timeMs": 120250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_houyztqu",
+      "timeMs": 120500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_y52b8ejq",
+      "timeMs": 120750,
+      "direction": "left",
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35ci_ngpbh7hs",
+      "timeMs": 121000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_xag2kjri",
+      "timeMs": 121250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_x16ocoxo",
+      "timeMs": 121500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_vk4xexw1",
+      "timeMs": 121750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_2mdqtbs1",
+      "timeMs": 122000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_uus5uetr",
+      "timeMs": 122250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35e2_mispfm6n",
+      "timeMs": 122500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_mkdtwyxj",
+      "timeMs": 122500,
+      "direction": "up",
+      "isChord": true,
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35ci_z4tdoh75",
+      "timeMs": 122750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_opk19ulg",
+      "timeMs": 123000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_m3qaz0vo",
+      "timeMs": 123250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35e3_n46nlqap",
+      "timeMs": 123500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_8ev82l6s",
+      "timeMs": 123500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_fpcshgfv",
+      "timeMs": 123750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_yxb6otug",
+      "timeMs": 124000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_d8thzpnn",
+      "timeMs": 124250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_0015lhep",
+      "timeMs": 124500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_3v1wbstu",
+      "timeMs": 124750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e3_6j435lfj",
+      "timeMs": 124750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_9hcjb60o",
+      "timeMs": 125000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_n1kdo13s",
+      "timeMs": 125250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_pi0ca6al",
+      "timeMs": 125500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_7my55srr",
+      "timeMs": 125750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_kecq9qdh",
+      "timeMs": 126000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_02mac1co",
+      "timeMs": 126250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_ttwpt3sk",
+      "timeMs": 126500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_ok8eaa51",
+      "timeMs": 126750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_6zzvszs9",
+      "timeMs": 127000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_rmwv4qdx",
+      "timeMs": 127250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_k3qn32lk",
+      "timeMs": 127500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35e3_x7x3szfr",
+      "timeMs": 127750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_swzc6tps",
+      "timeMs": 127750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_iom6gsvm",
+      "timeMs": 128000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_rm9kpl4l",
+      "timeMs": 128250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_npbbyo8l",
+      "timeMs": 128500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_39ixbnu5",
+      "timeMs": 128750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_gmkdr4q6",
+      "timeMs": 129000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e3_bv9c62iy",
+      "timeMs": 129000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_v0jcl5qe",
+      "timeMs": 129250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_13hq55mx",
+      "timeMs": 129500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_8rxdnipx",
+      "timeMs": 129750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_0zzhyswm",
+      "timeMs": 130000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_spkmu29i",
+      "timeMs": 130250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_vyqmkfyf",
+      "timeMs": 130500,
+      "direction": "right",
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35ci_hz46dxsf",
+      "timeMs": 130750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_bhi52431",
+      "timeMs": 131000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_yqwofsjn",
+      "timeMs": 131250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_xk3vnmcw",
+      "timeMs": 131500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_me5zl2q6",
+      "timeMs": 131750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_yd9ao4t6",
+      "timeMs": 132000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e4_s0bqsf83",
+      "timeMs": 132000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_phncoxtn",
+      "timeMs": 132250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e4_tss5hqq6",
+      "timeMs": 132250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_4kwugowh",
+      "timeMs": 132500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_x5sz6jk7",
+      "timeMs": 132750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_nmhpwa4v",
+      "timeMs": 133000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_8ffpd7ur",
+      "timeMs": 133250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_b4xj2b76",
+      "timeMs": 133500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_23ezfe89",
+      "timeMs": 133750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_q5dzez6x",
+      "timeMs": 134000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_0641j7ic",
+      "timeMs": 134250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_lueyrtxl",
+      "timeMs": 134500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_sb6fi658",
+      "timeMs": 134750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_wbz2nt0s",
+      "timeMs": 135000,
+      "direction": "left",
+      "isChord": true,
+      "durationMs": 630
+    },
+    {
+      "id": "note_muih35e4_o86acrox",
+      "timeMs": 135000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_abqe8i9f",
+      "timeMs": 135250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_3cyhfaxi",
+      "timeMs": 135500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_p2zrci3q",
+      "timeMs": 135750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_dh1rk7vf",
+      "timeMs": 136000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e5_yexv9qge",
+      "timeMs": 136000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_wfz5u7g1",
+      "timeMs": 136250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_2mm5c54r",
+      "timeMs": 136500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e5_385ovsef",
+      "timeMs": 136500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_iie3xh87",
+      "timeMs": 136750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_vzutqh1p",
+      "timeMs": 137000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_hvu8mp78",
+      "timeMs": 137250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35e5_3hrdq0oq",
+      "timeMs": 137500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_g1ibb1ee",
+      "timeMs": 137500,
+      "direction": "right",
+      "isChord": true,
+      "durationMs": 630
+    },
+    {
+      "id": "note_muih35ci_m5o76efl",
+      "timeMs": 137750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_7e9wb23p",
+      "timeMs": 138000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_bckxhv5r",
+      "timeMs": 138250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35e5_kyy6dry0",
+      "timeMs": 138500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_2etm169a",
+      "timeMs": 138500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e6_os9kkgzc",
+      "timeMs": 138750,
+      "direction": "left",
+      "isChord": true,
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35ci_8hn2hk1x",
+      "timeMs": 138750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_3mx3kcs2",
+      "timeMs": 139000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_wr6gwavs",
+      "timeMs": 139250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_okv2cqqg",
+      "timeMs": 139500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_r6b5f4c6",
+      "timeMs": 139750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_8p2kg8j0",
+      "timeMs": 140000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_6094tthp",
+      "timeMs": 140250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e6_4mzde0ej",
+      "timeMs": 140250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_6p25okow",
+      "timeMs": 140500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_unehed40",
+      "timeMs": 140750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e6_nfk4y8u5",
+      "timeMs": 140750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_rbvqrw1x",
+      "timeMs": 141000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_txtpwwlz",
+      "timeMs": 141250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_fmo2i8xs",
+      "timeMs": 141500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_vu1i0qop",
+      "timeMs": 141750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_4eyja1py",
+      "timeMs": 142000,
+      "direction": "down",
+      "durationMs": 630
+    },
+    {
+      "id": "note_muih35ci_2e24651k",
+      "timeMs": 142250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_fym4k5x3",
+      "timeMs": 142500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_gf48kufp",
+      "timeMs": 142750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e7_sxe2rkk6",
+      "timeMs": 142750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_xza0en60",
+      "timeMs": 143000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_3ct31y5y",
+      "timeMs": 143250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_1o3wltwf",
+      "timeMs": 143500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_ydd96uif",
+      "timeMs": 143750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_0he5cu89",
+      "timeMs": 144000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_jh2b7xfj",
+      "timeMs": 144250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35e7_ed4c1sa8",
+      "timeMs": 144500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_n1cu5cko",
+      "timeMs": 144500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_kose97jf",
+      "timeMs": 144750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_vkgapmfl",
+      "timeMs": 145000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_rf2eq0s2",
+      "timeMs": 145250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_lsywd7p9",
+      "timeMs": 145500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_lqbnrzk7",
+      "timeMs": 145750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_qv4um9st",
+      "timeMs": 146000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_swrwvnfy",
+      "timeMs": 146250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_eqmcy7gv",
+      "timeMs": 146500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e7_rbv41idb",
+      "timeMs": 146500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_ha0pblba",
+      "timeMs": 146750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_1dt5wo3x",
+      "timeMs": 147000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35e7_4d8wjibr",
+      "timeMs": 147250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_scxzx8bz",
+      "timeMs": 147250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_aueanppu",
+      "timeMs": 147500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_hne0unhf",
+      "timeMs": 147750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_h72u1v6y",
+      "timeMs": 148000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35e8_w69xm5rl",
+      "timeMs": 148250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_bdi85oln",
+      "timeMs": 148250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_3mzrs9m3",
+      "timeMs": 148500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_yc36ymot",
+      "timeMs": 148750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_5nbpsrki",
+      "timeMs": 149000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_uxrj0q0x",
+      "timeMs": 149250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_lumpuvo7",
+      "timeMs": 149500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e8_8oi6wdr5",
+      "timeMs": 149500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_1abqlmox",
+      "timeMs": 149750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_c304xv4u",
+      "timeMs": 150000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_5antq47r",
+      "timeMs": 150250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_9u90gnaz",
+      "timeMs": 150500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_an93uan8",
+      "timeMs": 150750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_dk7klks1",
+      "timeMs": 151000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_ko9jqgac",
+      "timeMs": 151250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_bnv4il37",
+      "timeMs": 151500,
+      "direction": "right",
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35ci_ds9y03me",
+      "timeMs": 151750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_q37kn2uk",
+      "timeMs": 152000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_vsijp9n9",
+      "timeMs": 152250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e8_27kdozhc",
+      "timeMs": 152250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_u48ba5f2",
+      "timeMs": 152500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e9_0sjbvkgt",
+      "timeMs": 152500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_ccln148l",
+      "timeMs": 152750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_pbf63iar",
+      "timeMs": 153000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_hhy1cq4r",
+      "timeMs": 153250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_kytm7fv7",
+      "timeMs": 153500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35e9_vzt97jo6",
+      "timeMs": 153750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_xeaksp3f",
+      "timeMs": 153750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_hntiwbeh",
+      "timeMs": 154000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35e9_klfzoctj",
+      "timeMs": 154000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_z7ysrblk",
+      "timeMs": 154250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_ui2hb3y9",
+      "timeMs": 154500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_kxn0zqsj",
+      "timeMs": 154750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_lijuo36k",
+      "timeMs": 155000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_yrd86c06",
+      "timeMs": 155250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_tqy1gnn3",
+      "timeMs": 155500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_qpwhzgj7",
+      "timeMs": 155750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_3eg9wje4",
+      "timeMs": 156000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ea_tobgic02",
+      "timeMs": 156000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_i54ot9up",
+      "timeMs": 156250,
+      "direction": "right",
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35ci_46nq423u",
+      "timeMs": 156500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_vphjxqu5",
+      "timeMs": 156750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ea_8up3wndk",
+      "timeMs": 156750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_j1w5q0sd",
+      "timeMs": 157000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_b1xxpizv",
+      "timeMs": 157250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_rp1za5a7",
+      "timeMs": 157500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_r4q0ht2w",
+      "timeMs": 157750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_bhma1ole",
+      "timeMs": 158000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ea_5qpi0evn",
+      "timeMs": 158000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ea_0q9lvqeq",
+      "timeMs": 158250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_xocb8zmr",
+      "timeMs": 158250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_nqmnuvvr",
+      "timeMs": 158500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_uqghq62t",
+      "timeMs": 158750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35eb_tw1cnnut",
+      "timeMs": 159000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_8fgoim35",
+      "timeMs": 159000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_kmv12ogw",
+      "timeMs": 159250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_vhf1rirs",
+      "timeMs": 159500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_9i0xs7lg",
+      "timeMs": 159750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_9s4ic83o",
+      "timeMs": 160000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_c0v1e1qf",
+      "timeMs": 160250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_5o95hqcj",
+      "timeMs": 160500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_am39pfmf",
+      "timeMs": 160750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_xa7vsmcz",
+      "timeMs": 161000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_sav1fp1m",
+      "timeMs": 161250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_3em0x070",
+      "timeMs": 161500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_33ja4172",
+      "timeMs": 161750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ci_tyjmz5es",
+      "timeMs": 162000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ci_d74vf0aa",
+      "timeMs": 162250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35eb_42nl7kkr",
+      "timeMs": 162500,
+      "direction": "down",
+      "isChord": true,
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35ci_90k8vf3r",
+      "timeMs": 162500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_4z28h2oi",
+      "timeMs": 162750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_scwo5jw4",
+      "timeMs": 163000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35eb_cm31xoqt",
+      "timeMs": 163000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ci_umxs0vv1",
+      "timeMs": 163250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35ci_p2yss7dv",
+      "timeMs": 163500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ci_0dg2a5of",
+      "timeMs": 163750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_r5bop3qs",
+      "timeMs": 164000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_jpty4crv",
+      "timeMs": 164250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_ms5f0nh4",
+      "timeMs": 164500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_ikzecwbo",
+      "timeMs": 164750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_43imjq94",
+      "timeMs": 165000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_jo0mphvn",
+      "timeMs": 165250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_xugn8a1l",
+      "timeMs": 165500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_lps2rme1",
+      "timeMs": 165750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_24ny2irn",
+      "timeMs": 166000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_16u07acl",
+      "timeMs": 166250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_hijiskpf",
+      "timeMs": 166500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ec_f0t31ht6",
+      "timeMs": 166500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ec_ytds8bvr",
+      "timeMs": 166750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_h7vwdfcn",
+      "timeMs": 166750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_v83vgjzy",
+      "timeMs": 167000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_v8pq5t9n",
+      "timeMs": 167250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_siru6xbw",
+      "timeMs": 167500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_4i6rynjc",
+      "timeMs": 167750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_bwxubsaq",
+      "timeMs": 168000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_9q4899s9",
+      "timeMs": 168250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ec_dxn7e974",
+      "timeMs": 168500,
+      "direction": "left",
+      "isChord": true,
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35cj_38bbmiuk",
+      "timeMs": 168500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_zh3h3936",
+      "timeMs": 168750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_do6liw4f",
+      "timeMs": 169000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_2qar26sn",
+      "timeMs": 169250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_b0yr8pks",
+      "timeMs": 169500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ec_niupyhc5",
+      "timeMs": 169500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_359gm6ds",
+      "timeMs": 169750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_36d4mr51",
+      "timeMs": 170000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_pemrpwvx",
+      "timeMs": 170250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ed_lg2cbxvy",
+      "timeMs": 170500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_e0dacib8",
+      "timeMs": 170500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_1t6t80u5",
+      "timeMs": 170750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_8th8847i",
+      "timeMs": 171000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_gfdqlb9b",
+      "timeMs": 171250,
+      "direction": "up",
+      "durationMs": 500
+    },
+    {
+      "id": "note_muih35cj_0d9haupz",
+      "timeMs": 171500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_owkivqwr",
+      "timeMs": 171750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ed_8rrkrciu",
+      "timeMs": 171750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_v09u4esy",
+      "timeMs": 172000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_96r01iqp",
+      "timeMs": 172250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_q0m6qdmc",
+      "timeMs": 172500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_2b17p142",
+      "timeMs": 172750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_rqmnhw83",
+      "timeMs": 173000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_dk7iv3dc",
+      "timeMs": 173250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_v918xbqt",
+      "timeMs": 173500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_sby63h4f",
+      "timeMs": 173750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_azg9d3zk",
+      "timeMs": 174000,
+      "direction": "down",
+      "durationMs": 750
+    },
+    {
+      "id": "note_muih35cj_dr3eye2y",
+      "timeMs": 174250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_rkzqzgxb",
+      "timeMs": 174500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_28duh7m9",
+      "timeMs": 174750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_24dncm8z",
+      "timeMs": 175000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ed_xf2ijt7y",
+      "timeMs": 175000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_7elpn2id",
+      "timeMs": 175250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_vsp37tdn",
+      "timeMs": 175500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_3ivezol4",
+      "timeMs": 175750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_w3sjagna",
+      "timeMs": 176000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_xkq72rh8",
+      "timeMs": 176250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_0vodqgmu",
+      "timeMs": 176500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_yqmg0on9",
+      "timeMs": 176750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_ltcr6j0j",
+      "timeMs": 177000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ee_ek474yi7",
+      "timeMs": 177000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_48oczgk0",
+      "timeMs": 177250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_gkg2sse9",
+      "timeMs": 177500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_e47eo1sq",
+      "timeMs": 177750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_rlcukq5y",
+      "timeMs": 178000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_abfy10gp",
+      "timeMs": 178250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_1xqkt0wz",
+      "timeMs": 178500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_l696oib8",
+      "timeMs": 178750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_rqc04bxo",
+      "timeMs": 179000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_f4z8ub24",
+      "timeMs": 179250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ee_lrkgtbvf",
+      "timeMs": 179250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_8lt4xi0b",
+      "timeMs": 179500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_uzjyi3ks",
+      "timeMs": 179750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ee_3m57cc1i",
+      "timeMs": 180000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_3ji1d32b",
+      "timeMs": 180000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_0wnix27t",
+      "timeMs": 180250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_plqhds9n",
+      "timeMs": 180500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_oigszd6t",
+      "timeMs": 180750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_ylcseiyk",
+      "timeMs": 181000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ee_93i4t5sn",
+      "timeMs": 181000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_hkxm2l0u",
+      "timeMs": 181250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_fqb1ppzi",
+      "timeMs": 181500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_ae6c0h4z",
+      "timeMs": 181750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ef_9odwrqh2",
+      "timeMs": 181750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_raf7l18a",
+      "timeMs": 182000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ef_j6uu8756",
+      "timeMs": 182000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_3r2jb2cb",
+      "timeMs": 182250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ef_t3jncsjh",
+      "timeMs": 182500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_l5saseau",
+      "timeMs": 182500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_g8n230vj",
+      "timeMs": 182750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_kue371fo",
+      "timeMs": 183000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35eg_7eyg76k7",
+      "timeMs": 183250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_97etwwj9",
+      "timeMs": 183250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_9slmbyzn",
+      "timeMs": 183500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_a2tz0l8o",
+      "timeMs": 183750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_vi7xe81n",
+      "timeMs": 184000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_jog5dd5e",
+      "timeMs": 184250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35eg_ky8y6bwg",
+      "timeMs": 184250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35eg_2lii21o2",
+      "timeMs": 184500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_286rlj75",
+      "timeMs": 184500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35eg_jp17fzx2",
+      "timeMs": 184750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_rnt4wkbw",
+      "timeMs": 184750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_6lw797vl",
+      "timeMs": 185000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_6rdngr2r",
+      "timeMs": 185250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35eh_vn5uw26n",
+      "timeMs": 185250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_4ibwvqpn",
+      "timeMs": 185500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_30x3kd8i",
+      "timeMs": 185750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_ho6pklfz",
+      "timeMs": 186000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_62pr6157",
+      "timeMs": 186250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_me9j2au5",
+      "timeMs": 186500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_ufmgn78y",
+      "timeMs": 186750,
+      "direction": "down",
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35cj_59vyouo7",
+      "timeMs": 187000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_8mi43ycg",
+      "timeMs": 187250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35eh_hh6qpmit",
+      "timeMs": 187250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_1qh139qe",
+      "timeMs": 187500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_gmsju5my",
+      "timeMs": 187750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_y09mxp75",
+      "timeMs": 188000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_3hb08eo4",
+      "timeMs": 188250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_w3rqpmht",
+      "timeMs": 188500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_tknc2n0v",
+      "timeMs": 188750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_lg3fs2ip",
+      "timeMs": 189000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_ybjlmfpz",
+      "timeMs": 189250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_8nuryqm7",
+      "timeMs": 189500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_29kxbxee",
+      "timeMs": 189750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_mb4c2xlm",
+      "timeMs": 190000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_xrx7eoxu",
+      "timeMs": 190250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_urzmtmzw",
+      "timeMs": 190500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_vj63tta6",
+      "timeMs": 190750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_g6987i9m",
+      "timeMs": 191000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_gipuvhxa",
+      "timeMs": 191250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_fc8z1chq",
+      "timeMs": 191500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_8aogugsm",
+      "timeMs": 191750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_i9t65ebd",
+      "timeMs": 192000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35eh_y6dpzvaw",
+      "timeMs": 192000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_klb4sunc",
+      "timeMs": 192250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_yisir0cc",
+      "timeMs": 192500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_h3nph0a9",
+      "timeMs": 192750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_mumg2xz9",
+      "timeMs": 193000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_q87bgkki",
+      "timeMs": 193250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_s0gdvwmk",
+      "timeMs": 193500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ei_tp6woh7t",
+      "timeMs": 193750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_9hr2uvdm",
+      "timeMs": 193750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ei_wxvpmn61",
+      "timeMs": 194000,
+      "direction": "down",
+      "isChord": true,
+      "durationMs": 1000
+    },
+    {
+      "id": "note_muih35cj_ishn08so",
+      "timeMs": 194000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_2rpnsewa",
+      "timeMs": 194250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_cgz18z2p",
+      "timeMs": 194500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_4914eg59",
+      "timeMs": 194750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_t0dtenib",
+      "timeMs": 195000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_3yx476lb",
+      "timeMs": 195250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_0nzk24oo",
+      "timeMs": 195500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_4o9od717",
+      "timeMs": 195750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_klmspyt7",
+      "timeMs": 196000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ei_98y0q0cs",
+      "timeMs": 196000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_zcg8gshg",
+      "timeMs": 196250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35ej_wxl9fgtd",
+      "timeMs": 196500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_7bcytjhd",
+      "timeMs": 196500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ej_4hjpv72z",
+      "timeMs": 196750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_rh137w0i",
+      "timeMs": 196750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_lzm9mt1c",
+      "timeMs": 197000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_rb50jvy4",
+      "timeMs": 197250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_86cg4ty8",
+      "timeMs": 197500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ej_hod2le1b",
+      "timeMs": 197500,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_73k5ew4j",
+      "timeMs": 197750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ej_e0lnqzss",
+      "timeMs": 197750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_z0wgdbtw",
+      "timeMs": 198000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_j8rluf7q",
+      "timeMs": 198250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_epjhgvqb",
+      "timeMs": 198500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_hfehjq2v",
+      "timeMs": 198750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_k4ycr9pl",
+      "timeMs": 199000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_u8rwl2ko",
+      "timeMs": 199250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_x6xll2fh",
+      "timeMs": 199500,
+      "direction": "left",
+      "durationMs": 380
+    },
+    {
+      "id": "note_muih35cj_pspdlk94",
+      "timeMs": 199750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35ek_1ch0p0zu",
+      "timeMs": 200000,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_o5jcmebd",
+      "timeMs": 200000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_i2szru8a",
+      "timeMs": 200250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_xosk4o66",
+      "timeMs": 200500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_4irl02y2",
+      "timeMs": 200750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_t8t5is28",
+      "timeMs": 201000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_7tkvpgj1",
+      "timeMs": 201250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_l2x6lsgf",
+      "timeMs": 201500,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35ek_66pc1ppx",
+      "timeMs": 201500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_i1ttyfyk",
+      "timeMs": 201750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_p50ia7ua",
+      "timeMs": 202000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_jxtphr9v",
+      "timeMs": 202250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_x0jaiu5u",
+      "timeMs": 202500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35ek_10uvl3ov",
+      "timeMs": 202750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_7rpp28u4",
+      "timeMs": 202750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_t3o4l0zl",
+      "timeMs": 203000,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_0f65y96e",
+      "timeMs": 203250,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_exvfxpjs",
+      "timeMs": 203500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35el_0kbl44ui",
+      "timeMs": 203500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_gic2dpyu",
+      "timeMs": 203750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_5pi3uyla",
+      "timeMs": 204000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35el_5tzrit42",
+      "timeMs": 204000,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35el_885b98r5",
+      "timeMs": 204250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_1qmuvw3u",
+      "timeMs": 204250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_2mhcyb7i",
+      "timeMs": 204500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_2d4gmd0e",
+      "timeMs": 204750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_47tt21cz",
+      "timeMs": 205000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_rbmrlop2",
+      "timeMs": 205250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_oz9krhts",
+      "timeMs": 205500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35em_e906qtl1",
+      "timeMs": 205750,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_w3ft79d5",
+      "timeMs": 205750,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_we0rh0gd",
+      "timeMs": 206000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_dp8otqoa",
+      "timeMs": 206250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_w2v38i6a",
+      "timeMs": 206500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_09jve5nu",
+      "timeMs": 206750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35em_tv381x1h",
+      "timeMs": 207000,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_iwxn1ty4",
+      "timeMs": 207000,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_hcudkugp",
+      "timeMs": 207250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_761pqcux",
+      "timeMs": 207500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_lylwru2s",
+      "timeMs": 207750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_gekwiv67",
+      "timeMs": 208000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_ii5xr4b4",
+      "timeMs": 208250,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_9b4wlxr8",
+      "timeMs": 208500,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_r909wgwx",
+      "timeMs": 208750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_614gprmm",
+      "timeMs": 209000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_0ltguxcp",
+      "timeMs": 209250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35em_ersyzbs7",
+      "timeMs": 209500,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_ex22cz83",
+      "timeMs": 209500,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_cxww3zxe",
+      "timeMs": 209750,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_3jgfi2o2",
+      "timeMs": 210000,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35en_agny68mh",
+      "timeMs": 210250,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_a84thog9",
+      "timeMs": 210250,
+      "direction": "right",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_cv4efkwe",
+      "timeMs": 210500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35en_hcpn5vi8",
+      "timeMs": 210750,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_2ag5h7sy",
+      "timeMs": 210750,
+      "direction": "down",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_6d7sv6og",
+      "timeMs": 211000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_07d8hw0k",
+      "timeMs": 211250,
+      "direction": "left",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35en_ozzbmw8m",
+      "timeMs": 211250,
+      "direction": "up",
+      "isChord": true
+    },
+    {
+      "id": "note_muih35cj_o4cu1y78",
+      "timeMs": 211500,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_098g09wo",
+      "timeMs": 211750,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_zzc79bff",
+      "timeMs": 212000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_nf4rmp6y",
+      "timeMs": 212250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_fao7jihs",
+      "timeMs": 212500,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_nl2o3yz2",
+      "timeMs": 212750,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_3haifc9z",
+      "timeMs": 213000,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_jeuuz230",
+      "timeMs": 213250,
+      "direction": "right"
+    },
+    {
+      "id": "note_muih35cj_2bnc5rta",
+      "timeMs": 213500,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_9w1lg7d1",
+      "timeMs": 213750,
+      "direction": "down"
+    },
+    {
+      "id": "note_muih35cj_7n48hxnm",
+      "timeMs": 214000,
+      "direction": "left"
+    },
+    {
+      "id": "note_muih35cj_1zxleyt0",
+      "timeMs": 214250,
+      "direction": "up"
+    },
+    {
+      "id": "note_muih35cj_gz7igk3t",
+      "timeMs": 214500,
+      "direction": "up"
+    }
+  ],
+  "version": 1,
+  "license": "CC0",
+  "generatedBy": "StepByStep Builder 1.0"
+}
