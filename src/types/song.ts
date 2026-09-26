@@ -1,3 +1,4 @@
+// src/types/song.ts
 export type Direction = 'left' | 'right' | 'up' | 'down';
 
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'expert';
@@ -6,7 +7,17 @@ export type Note = {
   id: string;
   timeMs: number;
   direction: Direction;
+  /**
+   * For hold notes (Batch 1c-2). Undefined / 0 means a tap note.
+   * Reserved for the next sub-batch; not currently used by the engine.
+   */
   durationMs?: number;
+  /**
+   * True when this note is part of a chord — another note exists in a
+   * different lane with the exact same `timeMs`. Purely informational;
+   * the engine judges each note independently.
+   */
+  isChord?: boolean;
 };
 
 export type SongSource = 'builtin' | 'pack';
