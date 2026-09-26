@@ -95,8 +95,8 @@ export const JUDGMENT_SCORE: Record<Judgment, number> = {
 
 export const JUDGMENT_ACCURACY_WEIGHT: Record<Judgment, number> = {
   perfect: 1,
-  great: 0.75,
-  good: 0.5,
+  great: 0.85,
+  good: 0.6,
   miss: 0,
 };
 
