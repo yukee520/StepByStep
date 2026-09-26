@@ -1,11 +1,19 @@
+// src/hooks/useGameEngine.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 import {
+  BURNING_OVERLAP,
   DIFFICULTY_FALL_MULTIPLIER,
+  DROP_GRACE_PX,
   FALL_DURATION_MS,
+  HOT_OVERLAP,
   JUDGMENT_ACCURACY_WEIGHT,
   JUDGMENT_SCORE,
-  PIXEL_WINDOW,
+  OVERLAP_WINDOWS,
+  computeOverlap,
+  noteTopForRatio,
+  overlapToJudgment,
+  type LaneGeometry,
 } from '@/types/game';
 import type {
   GameRunSummary,
@@ -49,12 +57,20 @@ export type LaneSharedValues = {
   timeMs: SharedValue<number[]>;
   direction: SharedValue<number[]>;
   hasNotes: SharedValue<number>;
+  /** 0..1 overlap of the best note in this lane with the button. */
+  hot: SharedValue<number>;
 };
 
 export type UseGameEngineOptions = {
   song: Song;
   inputOffsetMs: number;
   useAudioClock: boolean;
+  /** Full lane-area height (px). */
+  laneHeight: number;
+  /** Height of the button rectangle (px). */
+  buttonHeight: number;
+  /** Height of a falling note sprite (px). */
+  noteHeight: number;
   onFinish: (summary: GameRunSummary) => void;
   onNoteHit?: (feedback: HitFeedback) => void;
 };
@@ -63,6 +79,7 @@ export type UseGameEngineResult = {
   status: GameStatus;
   audioPosition: SharedValue<number>;
   lanes: [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues];
+  geometry: LaneGeometry;
   elapsedMs: number;
   durationMs: number;
   progress: number;
@@ -105,12 +122,39 @@ function findFirstNoteAtOrAfter(notes: Note[], target: number): number {
 }
 
 export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResult {
-  const { song, inputOffsetMs, useAudioClock, onFinish, onNoteHit } = options;
+  const {
+    song,
+    inputOffsetMs,
+    useAudioClock,
+    laneHeight,
+    buttonHeight,
+    noteHeight,
+    onFinish,
+    onNoteHit,
+  } = options;
 
   const fallDurationMs =
     FALL_DURATION_MS * DIFFICULTY_FALL_MULTIPLIER[song.difficulty];
   const leadInMs = fallDurationMs + 100;
   const durationMs = song.durationMs;
+
+  // Button row is at the BOTTOM of the lane area.
+  const buttonTop = laneHeight - buttonHeight;
+  const buttonCenterY = buttonTop + buttonHeight / 2;
+
+  const geometryRef = useRef<LaneGeometry>({
+    laneHeight,
+    buttonHeight,
+    buttonTop,
+    buttonCenterY,
+    noteHeight,
+  });
+  // Keep geometry in sync with props (screen rotation etc.).
+  geometryRef.current.laneHeight = laneHeight;
+  geometryRef.current.buttonHeight = buttonHeight;
+  geometryRef.current.buttonTop = laneHeight - buttonHeight;
+  geometryRef.current.buttonCenterY = laneHeight - buttonHeight / 2;
+  geometryRef.current.noteHeight = noteHeight;
 
   const sortedNotes = useRef<Note[]>(
     [...song.chart.notes]
@@ -127,29 +171,57 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lane0Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane0Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane0Has = useSharedValue<number>(0);
+  const lane0Hot = useSharedValue<number>(0);
 
   const lane1Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane1Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane1Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane1Has = useSharedValue<number>(0);
+  const lane1Hot = useSharedValue<number>(0);
 
   const lane2Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane2Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane2Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane2Has = useSharedValue<number>(0);
+  const lane2Hot = useSharedValue<number>(0);
 
   const lane3Active = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane3Time = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane3Dir = useSharedValue<number[]>(new Array(SLOT_COUNT).fill(0));
   const lane3Has = useSharedValue<number>(0);
+  const lane3Hot = useSharedValue<number>(0);
 
   const lanesRef = useRef<
     [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues]
   >([
-    { active: lane0Active, timeMs: lane0Time, direction: lane0Dir, hasNotes: lane0Has },
-    { active: lane1Active, timeMs: lane1Time, direction: lane1Dir, hasNotes: lane1Has },
-    { active: lane2Active, timeMs: lane2Time, direction: lane2Dir, hasNotes: lane2Has },
-    { active: lane3Active, timeMs: lane3Time, direction: lane3Dir, hasNotes: lane3Has },
+    {
+      active: lane0Active,
+      timeMs: lane0Time,
+      direction: lane0Dir,
+      hasNotes: lane0Has,
+      hot: lane0Hot,
+    },
+    {
+      active: lane1Active,
+      timeMs: lane1Time,
+      direction: lane1Dir,
+      hasNotes: lane1Has,
+      hot: lane1Hot,
+    },
+    {
+      active: lane2Active,
+      timeMs: lane2Time,
+      direction: lane2Dir,
+      hasNotes: lane2Has,
+      hot: lane2Hot,
+    },
+    {
+      active: lane3Active,
+      timeMs: lane3Time,
+      direction: lane3Dir,
+      hasNotes: lane3Has,
+      hot: lane3Hot,
+    },
   ]);
 
   const wallClockStartRef = useRef<number>(0);
@@ -173,7 +245,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     miss: 0,
   });
 
-  // Score flush scheduling — coalesces multiple hits per frame into one store update
   const scoreDirtyRef = useRef<boolean>(false);
   const scoreRafRef = useRef<number | null>(null);
 
@@ -232,6 +303,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       lanes[l].timeMs.value = new Array(SLOT_COUNT).fill(0);
       lanes[l].direction.value = new Array(SLOT_COUNT).fill(0);
       lanes[l].hasNotes.value = 0;
+      lanes[l].hot.value = 0;
     }
   }, []);
 
@@ -284,22 +356,46 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     return Date.now() - wallClockStartRef.current - inputOffsetMs;
   }, [inputOffsetMs, useAudioClock]);
 
-  const computeYRatio = useCallback(
+  /**
+   * Compute the note's current top-Y in lane coordinates for a given `now`.
+   * Uses the same formula as FallingNote, so judgment and visuals agree.
+   */
+  const noteTopAt = useCallback(
     (note: Note, now: number): number => {
       const delta = note.timeMs - now;
-      return 1 - delta / fallDurationMs;
+      const ratio = 1 - delta / fallDurationMs;
+      return noteTopForRatio(ratio, geometryRef.current);
     },
     [fallDurationMs],
+  );
+
+  /**
+   * Overlap of a note with the button for a given `now`.
+   */
+  const overlapAt = useCallback(
+    (note: Note, now: number): number => {
+      const top = noteTopAt(note, now);
+      return computeOverlap(top, geometryRef.current.noteHeight, geometryRef.current);
+    },
+    [noteTopAt],
   );
 
   const processMisses = useCallback(
     (now: number): void => {
       const notes = sortedNotes.current;
-      const missThresholdMs = now - fallDurationMs * PIXEL_WINDOW.good;
+      const geom = geometryRef.current;
+      const buttonBottom = geom.buttonTop + geom.buttonHeight;
       let i = missPointerRef.current;
       let missedThisFrame = 0;
-      while (i < notes.length && notes[i].timeMs < missThresholdMs) {
+
+      while (i < notes.length) {
         const note = notes[i];
+        // Early exit — this note can't be missed yet.
+        const top = noteTopAt(note, now);
+        const bottom = top + geom.noteHeight;
+        if (bottom <= buttonBottom + DROP_GRACE_PX) {
+          break;
+        }
         if (!judgedRef.current.has(note.id)) {
           judgedRef.current.add(note.id);
           statsRef.current.combo = 0;
@@ -322,7 +418,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         flushScore();
       }
     },
-    [fallDurationMs, flushScore, onNoteHit],
+    [flushScore, noteTopAt, onNoteHit],
   );
 
   const loop = useCallback((): void => {
@@ -369,6 +465,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       }
     }
 
+    const geom = geometryRef.current;
     const lanes = lanesRef.current;
     for (let l = 0; l < LANE_COUNT; l += 1) {
       const buf = buffers[l];
@@ -376,16 +473,28 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       const newActive = new Array(SLOT_COUNT).fill(0);
       const newTime = new Array(SLOT_COUNT).fill(0);
       const newDir = new Array(SLOT_COUNT).fill(0);
+
+      // Track the strongest overlap across all visible notes in this lane.
+      let maxOverlap = 0;
+
       for (let s = 0; s < buf.length; s += 1) {
         const note = buf[s];
         newActive[s] = 1;
         newTime[s] = note.timeMs;
         newDir[s] = DIRECTION_INDEX[note.direction];
+
+        const ov = overlapAt(note, now);
+        if (ov > maxOverlap) {
+          maxOverlap = ov;
+        }
       }
+
       lane.active.value = newActive;
       lane.timeMs.value = newTime;
       lane.direction.value = newDir;
       lane.hasNotes.value = buf.length > 0 ? 1 : 0;
+      // hot: 0..1, represents how "on" the button should look right now.
+      lane.hot.value = maxOverlap;
     }
 
     processMisses(now);
@@ -413,6 +522,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     fallDurationMs,
     finish,
     getNow,
+    overlapAt,
     processMisses,
     useAudioClock,
   ]);
@@ -508,12 +618,18 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       const hitStart = Date.now();
       const now = getNow();
       const notes = sortedNotes.current;
-      const loTime = now - fallDurationMs * PIXEL_WINDOW.good;
-      const hiTime = now + fallDurationMs * PIXEL_WINDOW.good;
+
+      // Search window: any note whose time is within ±good-window of now.
+      // We expand slightly beyond the Good window so a press just outside
+      // still *finds* the note (and gets ignored cleanly rather than
+      // mysteriously passing through to a later note).
+      const searchRadiusMs = fallDurationMs * OVERLAP_WINDOWS.good * 1.5;
+      const loTime = now - searchRadiusMs;
+      const hiTime = now + searchRadiusMs;
       const startIdx = findFirstNoteAtOrAfter(notes, loTime);
 
       let bestNote: Note | null = null;
-      let bestDelta = Number.POSITIVE_INFINITY;
+      let bestOverlap = 0;
 
       for (let i = startIdx; i < notes.length; i += 1) {
         const note = notes[i];
@@ -526,28 +642,27 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         if (note.direction !== direction) {
           continue;
         }
-        const ratio = computeYRatio(note, now);
-        const delta = Math.abs(ratio - 1);
-        if (delta < bestDelta) {
-          bestDelta = delta;
+        const ov = overlapAt(note, now);
+        if (ov > bestOverlap) {
+          bestOverlap = ov;
           bestNote = note;
         }
       }
 
-      if (!bestNote || bestDelta > PIXEL_WINDOW.good) {
+      // No note in overlap range — ghost tap, ignored (forgiving).
+      if (!bestNote || bestOverlap < OVERLAP_WINDOWS.good) {
         perfMonitor.record('hit_ms', Date.now() - hitStart);
         return;
       }
 
-      const signedDelta = computeYRatio(bestNote, now) - 1;
-      let judgment: Judgment;
-      if (bestDelta <= PIXEL_WINDOW.perfect) {
-        judgment = 'perfect';
-      } else if (bestDelta <= PIXEL_WINDOW.great) {
-        judgment = 'great';
-      } else {
-        judgment = 'good';
-      }
+      const judgment = overlapToJudgment(bestOverlap);
+
+      // Signed delta for feedback: negative = early, positive = late.
+      // We use (noteTop - idealTop) / noteHeight so 0 = bullseye.
+      const top = noteTopAt(bestNote, now);
+      const idealTop = noteTopForRatio(1, geometryRef.current);
+      const signedDelta =
+        (top - idealTop) / Math.max(1, geometryRef.current.noteHeight);
 
       judgedRef.current.add(bestNote.id);
       applyJudgmentRef(judgment, bestNote, signedDelta);
@@ -578,11 +693,12 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     },
     [
       applyJudgmentRef,
-      computeYRatio,
       fallDurationMs,
       flushScore,
       getNow,
+      noteTopAt,
       onNoteHit,
+      overlapAt,
     ],
   );
 
@@ -607,6 +723,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     status,
     audioPosition,
     lanes: lanesRef.current,
+    geometry: geometryRef.current,
     elapsedMs,
     durationMs,
     progress,
@@ -620,3 +737,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     releaseInput,
   };
 }
+
+// Silence unused-import warnings for constants referenced only in docs.
+void BURNING_OVERLAP;
+void HOT_OVERLAP;
