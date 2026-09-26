@@ -8,15 +8,13 @@ export type Note = {
   timeMs: number;
   direction: Direction;
   /**
-   * For hold notes (Batch 1c-2). Undefined / 0 means a tap note.
-   * Reserved for the next sub-batch; not currently used by the engine.
+   * For hold notes. Undefined or 0 means a tap note.
+   * When > 0, the player must press at `timeMs` and hold until
+   * `timeMs + durationMs` (with RELEASE_GRACE_MS forgiveness).
    */
   durationMs?: number;
-  /**
-   * True when this note is part of a chord — another note exists in a
-   * different lane with the exact same `timeMs`. Purely informational;
-   * the engine judges each note independently.
-   */
+  /** True when this note is part of a chord (a note in another lane at the
+   *  exact same `timeMs`). Informational; the engine judges independently. */
   isChord?: boolean;
 };
 
