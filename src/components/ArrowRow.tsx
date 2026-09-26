@@ -1,3 +1,4 @@
+// src/components/ArrowRow.tsx
 import React, { useCallback, useEffect, useRef } from 'react';
 import { View, type LayoutChangeEvent } from 'react-native';
 import {
@@ -6,7 +7,7 @@ import {
   type GestureTouchEvent,
   type TouchData,
 } from 'react-native-gesture-handler';
-import { useSharedValue, withTiming } from 'react-native-reanimated';
+import { useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import ArrowButton from '@/components/ArrowButton';
 import type { Direction } from '@/types/song';
 
@@ -17,7 +18,11 @@ export type ArrowRowProps = {
   onRelease: (direction: Direction) => void;
   buttonSize: number;
   gap: number;
-  hotLevels: Record<Direction, number>;
+  /**
+   * Per-direction hot-overlap shared values (0..1).
+   * Driven directly by the game engine's RAF loop — NOT copied.
+   */
+  hotValues: Record<Direction, SharedValue<number>>;
   horizontalPadding: number;
 };
 
@@ -36,7 +41,7 @@ function ArrowRowBase({
   onRelease,
   buttonSize,
   gap: _gap,
-  hotLevels,
+  hotValues,
   horizontalPadding,
 }: ArrowRowProps): React.ReactElement {
   const rowRef = useRef<View>(null);
@@ -47,13 +52,7 @@ function ArrowRowBase({
   const pressed2 = useSharedValue(0);
   const pressed3 = useSharedValue(0);
 
-  const hot0 = useSharedValue(0);
-  const hot1 = useSharedValue(0);
-  const hot2 = useSharedValue(0);
-  const hot3 = useSharedValue(0);
-
   const pressedValuesRef = useRef([pressed0, pressed1, pressed2, pressed3]);
-  const hotValuesRef = useRef([hot0, hot1, hot2, hot3]);
   const activeTouchesRef = useRef<Map<number, number>>(new Map());
 
   // Keep refs for the callbacks so we don't need to rebuild the gesture
@@ -64,14 +63,6 @@ function ArrowRowBase({
     onPressRef.current = onPress;
     onReleaseRef.current = onRelease;
   }, [onPress, onRelease]);
-
-  useEffect(() => {
-    const map: Direction[] = ['left', 'down', 'up', 'right'];
-    for (let i = 0; i < 4; i += 1) {
-      const level = hotLevels[map[i]] ?? 0;
-      hotValuesRef.current[i].value = withTiming(level, { duration: 80 });
-    }
-  }, [hotLevels]);
 
   const measureRow = useCallback((): void => {
     const node = rowRef.current;
@@ -239,25 +230,25 @@ function ArrowRowBase({
           direction="left"
           size={buttonSize}
           pressedValue={pressed0}
-          hotValue={hot0}
+          hotValue={hotValues.left}
         />
         <ArrowButton
           direction="down"
           size={buttonSize}
           pressedValue={pressed1}
-          hotValue={hot1}
+          hotValue={hotValues.down}
         />
         <ArrowButton
           direction="up"
           size={buttonSize}
           pressedValue={pressed2}
-          hotValue={hot2}
+          hotValue={hotValues.up}
         />
         <ArrowButton
           direction="right"
           size={buttonSize}
           pressedValue={pressed3}
-          hotValue={hot3}
+          hotValue={hotValues.right}
         />
       </View>
     </GestureDetector>
