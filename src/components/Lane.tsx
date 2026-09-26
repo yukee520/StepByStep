@@ -22,8 +22,8 @@ export type LaneProps = {
   laneActive: SharedValue<number[]>;
   laneTimeMs: SharedValue<number[]>;
   laneDirection: SharedValue<number[]>;
+  laneDuration: SharedValue<number[]>;
   laneHasNotes: SharedValue<number>;
-  /** Geometry used to place notes correctly relative to the button row. */
   geometry: LaneGeometry;
 };
 
@@ -38,6 +38,7 @@ function LaneBase({
   laneActive,
   laneTimeMs,
   laneDirection,
+  laneDuration,
   laneHasNotes,
   geometry,
 }: LaneProps): React.ReactElement {
@@ -73,6 +74,7 @@ function LaneBase({
           laneActive={laneActive}
           laneTimeMs={laneTimeMs}
           laneDirection={laneDirection}
+          laneDuration={laneDuration}
           audioPosition={audioPosition}
           fallDurationMs={fallDurationMs}
           geometry={geometry}
