@@ -1,3 +1,4 @@
+// src/screens/LibraryScreen.tsx
 import React, { useCallback } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -119,6 +120,9 @@ export default function LibraryScreen(): React.ReactElement {
   const goSettings = useCallback((): void => {
     navigation.navigate('Settings');
   }, [navigation]);
+  const goOverlapSimulator = useCallback((): void => {
+    navigation.navigate('OverlapSimulator');
+  }, [navigation]);
 
   return (
     <NeonBackground showGrid>
@@ -161,6 +165,13 @@ export default function LibraryScreen(): React.ReactElement {
                   title="Chart Builder"
                   subtitle="Create a chart from your own music"
                   onPress={goBuilder}
+                />
+                <Divider />
+                <MenuItem
+                  icon="analytics-outline"
+                  title="Overlap Simulator"
+                  subtitle="Tune judgment windows by pixel overlap"
+                  onPress={goOverlapSimulator}
                 />
               </>
             ) : null}
