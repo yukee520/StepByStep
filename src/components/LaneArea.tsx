@@ -62,6 +62,7 @@ function LaneAreaBase({
           laneTimeMs={lane.timeMs}
           laneDirection={lane.direction}
           laneDuration={lane.duration}
+          laneHeldSlot={lane.heldSlot}
           laneHasNotes={lane.hasNotes}
           geometry={geometry}
         />
