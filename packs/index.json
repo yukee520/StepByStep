@@ -1,6 +1,17 @@
 {
-  "version": 4,
+  "version": 5,
   "packs": [
+    {
+      "id": "song-dfcyy",
+      "title": "复乐园",
+      "artist": "Unknown Artist",
+      "bpm": 120,
+      "difficulty": "hard",
+      "sizeBytes": 4012670,
+      "manifestUrl": "https://raw.githubusercontent.com/yukee520/StepByStep/main/packs/song-dfcyy/manifest.json",
+      "audioUrl": "https://raw.githubusercontent.com/yukee520/StepByStep/main/packs/song-dfcyy/audio.m4a",
+      "version": 1
+    },
     {
       "id": "song-f4yd",
       "title": "嘉宾",
