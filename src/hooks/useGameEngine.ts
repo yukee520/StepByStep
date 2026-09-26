@@ -311,4 +311,407 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       s.great * JUDGMENT_ACCURACY_WEIGHT.great +
       s.good * JUDGMENT_ACCURACY_WEIGHT.good;
     const accuracy = totalJudged > 0 ? weighted / totalJudged : 0;
-    const grade = accuracyTo
+    const grade = accuracyToGrade(accuracy);
+    return {
+      songId: song.id,
+      songTitle: song.title,
+      difficulty: song.difficulty,
+      score: s.score,
+      maxCombo: s.maxCombo,
+      perfectCount: s.perfect,
+      greatCount: s.great,
+      goodCount: s.good,
+      missCount: s.miss,
+      totalNotes: sortedNotes.current.length,
+      accuracy,
+      grade,
+      completedAt: Date.now(),
+      isHighScore: false,
+    };
+  }, [song.difficulty, song.id, song.title]);
+
+  const stopLoop = useCallback((): void => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
+
+  const finish = useCallback((): void => {
+    stopLoop();
+    setStatus('finished');
+    statusRef.current = 'finished';
+    const summary = buildSummary();
+    onFinish(summary);
+  }, [buildSummary, onFinish, stopLoop]);
+
+  const getNow = useCallback((): number => {
+    if (useAudioClock && audioPlayer.getDurationMs() > 0) {
+      return audioPlayer.getPositionMs() - inputOffsetMs;
+    }
+    return Date.now() - wallClockStartRef.current - inputOffsetMs;
+  }, [inputOffsetMs, useAudioClock]);
+
+  const noteTopAt = useCallback(
+    (note: Note, now: number): number => {
+      const delta = note.timeMs - now;
+      const ratio = 1 - delta / fallDurationMs;
+      return noteTopForRatio(ratio, geometryRef.current);
+    },
+    [fallDurationMs],
+  );
+
+  const overlapAt = useCallback(
+    (note: Note, now: number): number => {
+      const top = noteTopAt(note, now);
+      return computeOverlap(top, geometryRef.current.noteHeight, geometryRef.current);
+    },
+    [noteTopAt],
+  );
+
+  const processMisses = useCallback(
+    (now: number): void => {
+      const notes = sortedNotes.current;
+      const geom = geometryRef.current;
+      const buttonBottom = geom.buttonTop + geom.buttonHeight;
+      let i = missPointerRef.current;
+      let missedThisFrame = 0;
+
+      while (i < notes.length) {
+        const note = notes[i];
+        const top = noteTopAt(note, now);
+        const bottom = top + geom.noteHeight;
+        if (bottom <= buttonBottom + DROP_GRACE_PX) {
+          break;
+        }
+        if (!judgedRef.current.has(note.id)) {
+          judgedRef.current.add(note.id);
+          statsRef.current.combo = 0;
+          statsRef.current.miss += 1;
+          missedThisFrame += 1;
+          if (onNoteHit) {
+            onNoteHit({
+              direction: note.direction,
+              judgment: 'miss',
+              key: genId('fb'),
+              timeMs: Date.now(),
+            });
+          }
+        }
+        i += 1;
+      }
+      missPointerRef.current = i;
+      if (missedThisFrame > 0) {
+        scoreDirtyRef.current = true;
+        flushScore();
+      }
+    },
+    [flushScore, noteTopAt, onNoteHit],
+  );
+
+  const loop = useCallback((): void => {
+    if (statusRef.current !== 'playing') {
+      return;
+    }
+
+    const frameStart = Date.now();
+    if (lastFrameAtRef.current > 0) {
+      perfMonitor.record('frame_ms', frameStart - lastFrameAtRef.current);
+    }
+    lastFrameAtRef.current = frameStart;
+
+    const now = getNow();
+    audioPosition.value = now;
+
+    if (now - lastElapsedUpdateRef.current >= 100) {
+      lastElapsedUpdateRef.current = now;
+      setElapsedMs(now);
+    }
+
+    const buffers = laneBuffersRef.current;
+    for (let l = 0; l < LANE_COUNT; l += 1) {
+      buffers[l].length = 0;
+    }
+
+    const notes = sortedNotes.current;
+    const loTime = now - fallDurationMs * VISIBLE_BEHIND;
+    const hiTime = now + fallDurationMs * VISIBLE_AHEAD;
+    const startIdx = findFirstNoteAtOrAfter(notes, loTime);
+
+    for (let i = startIdx; i < notes.length; i += 1) {
+      const note = notes[i];
+      if (note.timeMs > hiTime) {
+        break;
+      }
+      if (judgedRef.current.has(note.id)) {
+        continue;
+      }
+      const laneIdx = LANE_INDEX[note.direction];
+      const buf = buffers[laneIdx];
+      if (buf.length < SLOT_COUNT) {
+        buf.push(note);
+      }
+    }
+
+    const lanes = lanesRef.current;
+    for (let l = 0; l < LANE_COUNT; l += 1) {
+      const buf = buffers[l];
+      const lane = lanes[l];
+      const newActive = new Array(SLOT_COUNT).fill(0);
+      const newTime = new Array(SLOT_COUNT).fill(0);
+      const newDir = new Array(SLOT_COUNT).fill(0);
+
+      let maxOverlap = 0;
+
+      for (let s = 0; s < buf.length; s += 1) {
+        const note = buf[s];
+        newActive[s] = 1;
+        newTime[s] = note.timeMs;
+        newDir[s] = DIRECTION_INDEX[note.direction];
+
+        const ov = overlapAt(note, now);
+        if (ov > maxOverlap) {
+          maxOverlap = ov;
+        }
+      }
+
+      lane.active.value = newActive;
+      lane.timeMs.value = newTime;
+      lane.direction.value = newDir;
+      lane.hasNotes.value = buf.length > 0 ? 1 : 0;
+      lane.hot.value = maxOverlap;
+    }
+
+    processMisses(now);
+
+    if (useAudioClock && audioPlayer.hasEnded()) {
+      if (audioEndedAtRef.current === 0) {
+        audioEndedAtRef.current = Date.now();
+      }
+      const grace = Date.now() - audioEndedAtRef.current;
+      if (grace >= FINISH_GRACE_MS) {
+        finish();
+        return;
+      }
+    }
+
+    if (now >= durationMs + FINISH_GRACE_MS) {
+      finish();
+      return;
+    }
+
+    rafRef.current = requestAnimationFrame(loop);
+  }, [
+    audioPosition,
+    durationMs,
+    fallDurationMs,
+    finish,
+    getNow,
+    overlapAt,
+    processMisses,
+    useAudioClock,
+  ]);
+
+  const start = useCallback((): void => {
+    resetStats();
+    wallClockStartRef.current = Date.now();
+    wallClockPausedRef.current = 0;
+    audioEndedAtRef.current = 0;
+    audioPosition.value = 0;
+    setStatus('playing');
+    statusRef.current = 'playing';
+    stopLoop();
+    rafRef.current = requestAnimationFrame(loop);
+  }, [audioPosition, loop, resetStats, stopLoop]);
+
+  const pause = useCallback((): void => {
+    if (statusRef.current !== 'playing') {
+      return;
+    }
+    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
+    setStatus('paused');
+    statusRef.current = 'paused';
+    stopLoop();
+  }, [stopLoop]);
+
+  const resume = useCallback((): void => {
+    if (statusRef.current !== 'paused') {
+      return;
+    }
+    wallClockStartRef.current = Date.now() - wallClockPausedRef.current;
+    setStatus('playing');
+    statusRef.current = 'playing';
+    stopLoop();
+    rafRef.current = requestAnimationFrame(loop);
+  }, [loop, stopLoop]);
+
+  const restart = useCallback((): void => {
+    stopLoop();
+    resetStats();
+    wallClockStartRef.current = Date.now();
+    wallClockPausedRef.current = 0;
+    audioEndedAtRef.current = 0;
+    audioPosition.value = 0;
+    setStatus('playing');
+    statusRef.current = 'playing';
+    rafRef.current = requestAnimationFrame(loop);
+  }, [audioPosition, loop, resetStats, stopLoop]);
+
+  const quit = useCallback((): void => {
+    stopLoop();
+    setStatus('finished');
+    statusRef.current = 'finished';
+    const summary = buildSummary();
+    onFinish(summary);
+  }, [buildSummary, onFinish, stopLoop]);
+
+  const applyJudgmentRef = useCallback(
+    (judgment: Judgment, _note: Note, _signedDelta: number): void => {
+      const stats = statsRef.current;
+      const base = JUDGMENT_SCORE[judgment];
+      const tier = Math.floor(stats.combo / 10);
+      const multiplier = Math.min(1.0 + tier * 0.1, 2.0);
+      const awarded = judgment === 'miss' ? 0 : Math.round(base * multiplier);
+
+      stats.score += awarded;
+
+      if (judgment === 'miss') {
+        stats.combo = 0;
+        stats.miss += 1;
+      } else {
+        stats.combo += 1;
+        if (stats.combo > stats.maxCombo) {
+          stats.maxCombo = stats.combo;
+        }
+        if (judgment === 'perfect') {
+          stats.perfect += 1;
+        } else if (judgment === 'great') {
+          stats.great += 1;
+        } else {
+          stats.good += 1;
+        }
+      }
+    },
+    [],
+  );
+
+  const hit = useCallback(
+    (direction: Direction): void => {
+      if (statusRef.current !== 'playing') {
+        return;
+      }
+      const hitStart = Date.now();
+      const now = getNow();
+      const notes = sortedNotes.current;
+
+      const searchRadiusMs = fallDurationMs * OVERLAP_WINDOWS.good * 1.5;
+      const loTime = now - searchRadiusMs;
+      const hiTime = now + searchRadiusMs;
+      const startIdx = findFirstNoteAtOrAfter(notes, loTime);
+
+      let bestNote: Note | null = null;
+      let bestOverlap = 0;
+
+      for (let i = startIdx; i < notes.length; i += 1) {
+        const note = notes[i];
+        if (note.timeMs > hiTime) {
+          break;
+        }
+        if (judgedRef.current.has(note.id)) {
+          continue;
+        }
+        if (note.direction !== direction) {
+          continue;
+        }
+        const ov = overlapAt(note, now);
+        if (ov > bestOverlap) {
+          bestOverlap = ov;
+          bestNote = note;
+        }
+      }
+
+      if (!bestNote || bestOverlap < OVERLAP_WINDOWS.good) {
+        perfMonitor.record('hit_ms', Date.now() - hitStart);
+        return;
+      }
+
+      const judgment = overlapToJudgment(bestOverlap);
+
+      const top = noteTopAt(bestNote, now);
+      const idealTop = noteTopForRatio(1, geometryRef.current);
+      const signedDelta =
+        (top - idealTop) / Math.max(1, geometryRef.current.noteHeight);
+
+      judgedRef.current.add(bestNote.id);
+      applyJudgmentRef(judgment, bestNote, signedDelta);
+
+      scoreDirtyRef.current = true;
+      flushScore();
+
+      if (onNoteHit) {
+        const event: JudgmentEvent = {
+          id: genId('evt'),
+          noteId: bestNote.id,
+          direction: bestNote.direction,
+          judgment,
+          deltaPx: signedDelta,
+          timeMs: Date.now(),
+          comboAfter: statsRef.current.combo,
+          scoreAwarded: 0,
+        };
+        onNoteHit({
+          direction: event.direction,
+          judgment: event.judgment,
+          key: event.id,
+          timeMs: event.timeMs,
+        });
+      }
+
+      perfMonitor.record('hit_ms', Date.now() - hitStart);
+    },
+    [
+      applyJudgmentRef,
+      fallDurationMs,
+      flushScore,
+      getNow,
+      noteTopAt,
+      onNoteHit,
+      overlapAt,
+    ],
+  );
+
+  const releaseInput = useCallback((_direction: Direction): void => {
+    // Reserved for hold notes in a future version.
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopLoop();
+      if (scoreRafRef.current !== null) {
+        cancelAnimationFrame(scoreRafRef.current);
+        scoreRafRef.current = null;
+      }
+    };
+  }, [stopLoop]);
+
+  const progress =
+    durationMs > 0 ? Math.max(0, Math.min(1, elapsedMs / durationMs)) : 0;
+
+  return {
+    status,
+    audioPosition,
+    lanes: lanesRef.current,
+    geometry: geometryRef.current,
+    elapsedMs,
+    durationMs,
+    progress,
+    fallDurationMs,
+    start,
+    pause,
+    resume,
+    restart,
+    quit,
+    hit,
+    releaseInput,
+  };
+}
