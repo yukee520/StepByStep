@@ -15,6 +15,7 @@ import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import PerfectPop from '@/components/PerfectPop';
 import PerfOverlay from '@/components/PerfOverlay';
+import DevLogOverlay from '@/components/DevLogOverlay';
 import { useSongs } from '@/hooks/useSongs';
 import { useGameEngine, type HitFeedback } from '@/hooks/useGameEngine';
 import { useAudio } from '@/hooks/useAudio';
@@ -24,6 +25,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useScoresStore } from '@/store/useScoresStore';
 import { useGameStore } from '@/store/useGameStore';
+import { useDevModeStore } from '@/store/useDevModeStore';
 import { type Direction, type Song } from '@/types/song';
 import type { GameRunSummary } from '@/types/game';
 import type { RootStackParamList } from '@/types/navigation';
@@ -50,6 +52,7 @@ export default function GameScreen(): React.ReactElement {
   const inputOffsetMs = useSettingsStore((s) => s.settings.inputOffsetMs);
   const submitScore = useScoresStore((s) => s.submitScore);
   const setLastSummary = useGameStore((s) => s.setLastSummary);
+  const devModeEnabled = useDevModeStore((s) => s.enabled);
   const { vibrate } = useHaptics();
 
   const song = useMemo<Song | undefined>(
@@ -71,9 +74,7 @@ export default function GameScreen(): React.ReactElement {
 
   const onFinish = useCallback(
     (summary: GameRunSummary): void => {
-      if (!song) {
-        return;
-      }
+      if (!song) return;
       const isHigh = submitScore({
         songId: song.id,
         score: summary.score,
@@ -102,13 +103,9 @@ export default function GameScreen(): React.ReactElement {
 
   const hasAudio = Boolean(song?.audioPath);
 
-  // ---- Layout-derived geometry, computed before the engine is created ----
-
   const laneAreaTop =
     hudHeight > 0 ? hudHeight : SCREEN_H * HUD_FALLBACK_RATIO;
   const buttonRowTopScreen = SCREEN_H * BUTTON_ROW_TOP_RATIO;
-  // Extend the lane area DOWN so it covers the button row region.
-  // This is the space notes fall through; the button row overlays the bottom.
   const buttonRowHeight = SCREEN_H - buttonRowTopScreen - BUTTON_BOTTOM_PADDING;
   const laneAreaHeight = SCREEN_H - laneAreaTop;
   const buttonTopInLane = buttonRowTopScreen - laneAreaTop;
@@ -121,14 +118,11 @@ export default function GameScreen(): React.ReactElement {
     return Math.min(84, available / LANE_COUNT);
   }, [SCREEN_W]);
 
-  // Note sprite size: fits in lane, smaller than the button.
   const noteSize = useMemo(
     () => Math.min(laneWidth * 0.75, buttonSize * 0.9),
     [laneWidth, buttonSize],
   );
 
-  // Effective button height used for overlap judgment.
-  // We derive it from buttonSize (the actual rendered square), not the row.
   const buttonHeightForGeometry = buttonSize;
   const buttonTopForGeometry =
     buttonTopInLane + (buttonRowHeight - buttonSize) / 2;
@@ -156,13 +150,12 @@ export default function GameScreen(): React.ReactElement {
     onNoteHit,
   });
 
-  // Fix button top in the geometry — the engine places it at lane bottom.
-  // We want it where GameButtonRow actually renders it.
   useEffect(() => {
     engine.geometry.laneHeight = laneAreaHeight;
     engine.geometry.buttonHeight = buttonHeightForGeometry;
     engine.geometry.buttonTop = buttonTopForGeometry;
-    engine.geometry.buttonCenterY = buttonTopForGeometry + buttonHeightForGeometry / 2;
+    engine.geometry.buttonCenterY =
+      buttonTopForGeometry + buttonHeightForGeometry / 2;
     engine.geometry.noteHeight = noteSize;
   }, [
     engine,
@@ -182,9 +175,7 @@ export default function GameScreen(): React.ReactElement {
   const countdown = useCountdown(3, beginPlay, 700);
 
   useEffect(() => {
-    if (!song) {
-      return;
-    }
+    if (!song) return;
     let cancelled = false;
     const init = async (): Promise<void> => {
       if (!song.audioPath) {
@@ -214,12 +205,8 @@ export default function GameScreen(): React.ReactElement {
   }, [song?.id]);
 
   useEffect(() => {
-    if (!song) {
-      return;
-    }
-    if (!audioReady) {
-      return;
-    }
+    if (!song) return;
+    if (!audioReady) return;
     if (!countdown.isRunning && engine.status === 'idle') {
       setCountdownActive(true);
       countdown.start(3);
@@ -292,9 +279,7 @@ export default function GameScreen(): React.ReactElement {
   const handleLanePress = useCallback(
     (direction: Direction): void => {
       vibrate('light');
-      if (engine.status !== 'playing') {
-        return;
-      }
+      if (engine.status !== 'playing') return;
       engine.hit(direction);
     },
     [engine, vibrate],
@@ -317,9 +302,7 @@ export default function GameScreen(): React.ReactElement {
   );
 
   const feedbackColor = useMemo((): string => {
-    if (!feedback) {
-      return 'transparent';
-    }
+    if (!feedback) return 'transparent';
     switch (feedback.judgment) {
       case 'perfect':
         return colors.perfect;
@@ -397,8 +380,6 @@ export default function GameScreen(): React.ReactElement {
         </View>
 
         <View style={{ flex: 1 }}>
-          {/* Lane area extends all the way to the bottom of the screen.
-              The button row draws on top of the lower portion. */}
           <LaneArea
             width={laneAreaWidth}
             height={laneAreaHeight}
@@ -449,26 +430,26 @@ export default function GameScreen(): React.ReactElement {
           ) : null}
 
           <GameButtonRow
-  top={buttonRowTopInContainer}
-  bottomPadding={BUTTON_BOTTOM_PADDING}
-  buttonSize={buttonSize}
-  gap={BUTTON_GAP}
-  horizontalPadding={LANE_AREA_PADDING}
-  hotValues={{
-    left:  engine.lanes[0].hot,
-    down:  engine.lanes[1].hot,
-    up:    engine.lanes[2].hot,
-    right: engine.lanes[3].hot,
-  }}
-  heldValues={{
-    left:  engine.lanes[0].held,
-    down:  engine.lanes[1].held,
-    up:    engine.lanes[2].held,
-    right: engine.lanes[3].held,
-  }}
-  onPress={handleLanePress}
-  onRelease={handleLaneRelease}
-/>
+            top={buttonRowTopInContainer}
+            bottomPadding={BUTTON_BOTTOM_PADDING}
+            buttonSize={buttonSize}
+            gap={BUTTON_GAP}
+            horizontalPadding={LANE_AREA_PADDING}
+            hotValues={{
+              left: engine.lanes[0].hot,
+              down: engine.lanes[1].hot,
+              up: engine.lanes[2].hot,
+              right: engine.lanes[3].hot,
+            }}
+            heldValues={{
+              left: engine.lanes[0].held,
+              down: engine.lanes[1].held,
+              up: engine.lanes[2].held,
+              right: engine.lanes[3].held,
+            }}
+            onPress={handleLanePress}
+            onRelease={handleLaneRelease}
+          />
 
           <CountdownOverlay
             count={countdown.count}
@@ -488,6 +469,8 @@ export default function GameScreen(): React.ReactElement {
         />
 
         <PerfOverlay visible={true} />
+
+        <DevLogOverlay visible={devModeEnabled} />
       </SafeAreaView>
     </View>
   );
