@@ -1,9 +1,11 @@
+// src/components/LaneArea.tsx
 import React from 'react';
 import { View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import Lane from '@/components/Lane';
 import { NEON_PALETTE } from '@/theme/colors';
 import type { LaneSharedValues } from '@/hooks/useGameEngine';
+import type { LaneGeometry } from '@/types/game';
 
 export type LaneAreaProps = {
   width: number;
@@ -15,6 +17,8 @@ export type LaneAreaProps = {
   audioPosition: SharedValue<number>;
   fallDurationMs: number;
   lanes: [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues];
+  /** Where the button row lives inside the lane area — used to place notes. */
+  geometry: LaneGeometry;
 };
 
 function LaneAreaBase({
@@ -27,6 +31,7 @@ function LaneAreaBase({
   audioPosition,
   fallDurationMs,
   lanes,
+  geometry,
 }: LaneAreaProps): React.ReactElement {
   return (
     <View
@@ -58,6 +63,7 @@ function LaneAreaBase({
           laneTimeMs={lane.timeMs}
           laneDirection={lane.direction}
           laneHasNotes={lane.hasNotes}
+          geometry={geometry}
         />
       ))}
     </View>
