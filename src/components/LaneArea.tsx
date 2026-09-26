@@ -17,7 +17,6 @@ export type LaneAreaProps = {
   audioPosition: SharedValue<number>;
   fallDurationMs: number;
   lanes: [LaneSharedValues, LaneSharedValues, LaneSharedValues, LaneSharedValues];
-  /** Where the button row lives inside the lane area — used to place notes. */
   geometry: LaneGeometry;
 };
 
@@ -62,6 +61,7 @@ function LaneAreaBase({
           laneActive={lane.active}
           laneTimeMs={lane.timeMs}
           laneDirection={lane.direction}
+          laneDuration={lane.duration}
           laneHasNotes={lane.hasNotes}
           geometry={geometry}
         />
