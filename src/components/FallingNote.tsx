@@ -12,7 +12,7 @@ import type { Direction } from '@/types/song';
 import { NEON_PALETTE } from '@/theme/colors';
 import type { LaneGeometry } from '@/types/game';
 
-const SLOT_COUNT = 12;
+const SLOT_COUNT = 8;
 
 export { SLOT_COUNT };
 
