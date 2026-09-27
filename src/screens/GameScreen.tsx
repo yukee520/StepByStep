@@ -16,6 +16,7 @@ import ErrorState from '@/components/ErrorState';
 import PerfectPop from '@/components/PerfectPop';
 import PerfOverlay from '@/components/PerfOverlay';
 import DevLogOverlay from '@/components/DevLogOverlay';
+import EngineProbe from '@/components/EngineProbe';
 import { useSongs } from '@/hooks/useSongs';
 import { useGameEngine, type HitFeedback } from '@/hooks/useGameEngine';
 import { useAudio } from '@/hooks/useAudio';
