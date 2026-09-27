@@ -26,7 +26,7 @@ export default function DevLogOverlay({
     <View pointerEvents="box-none" style={styles.root}>
       <View style={styles.panel}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>DEV LOG</Text>
+          <Text style={styles.headerText}>DEV LOG ({lines.length})</Text>
           <Pressable onPress={clearLog} hitSlop={8}>
             <Text style={styles.clearText}>CLEAR</Text>
           </Pressable>
@@ -53,18 +53,19 @@ export default function DevLogOverlay({
 const styles = StyleSheet.create({
   root: {
     position: 'absolute',
-    top: 60,
-    left: 8,
-    right: 8,
+    top: 40,
+    left: 4,
+    right: 4,
+    bottom: 4,
     zIndex: 9999,
   },
   panel: {
-    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderColor: '#00E5FF',
     borderWidth: 1,
     borderRadius: 8,
     padding: 6,
-    maxHeight: 180,
   },
   header: {
     flexDirection: 'row',
@@ -75,26 +76,28 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: '#00E5FF',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
   },
   clearText: {
     color: '#FF6666',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
   },
   scroll: {
-    maxHeight: 150,
+    flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 4,
+    paddingBottom: 6,
   },
   line: {
     color: '#E0FFFF',
     fontSize: 10,
     fontFamily: 'monospace',
     lineHeight: 13,
+    marginBottom: 1,
   },
   emptyText: {
     color: '#666',
