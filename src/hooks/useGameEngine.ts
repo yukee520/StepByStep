@@ -247,6 +247,12 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
   const activeHoldsRef = useRef<Map<string, ActiveHold>>(new Map());
   const pressedLanesRef = useRef<boolean[]>([false, false, false, false]);
+  const pendingReleaseRef = useRef<Array<ReturnType<typeof setTimeout> | null>>([
+    null,
+    null,
+    null,
+    null,
+  ]);
 
   const statsRef = useRef<Stats>({
     score: 0, combo: 0, maxCombo: 0, perfect: 0, great: 0, good: 0, miss: 0,
@@ -285,6 +291,14 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     judgedRef.current = new Set();
     activeHoldsRef.current.clear();
     pressedLanesRef.current = [false, false, false, false];
+    // Cancel any pending releases.
+    for (let i = 0; i < pendingReleaseRef.current.length; i += 1) {
+      const t = pendingReleaseRef.current[i];
+      if (t !== null) {
+        clearTimeout(t);
+        pendingReleaseRef.current[i] = null;
+      }
+    }
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
     lastFrameAtRef.current = 0;
@@ -537,9 +551,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (buf.length < SLOT_COUNT) buf.push(note);
     }
 
-    // FAILSAFE: any currently-active hold MUST be in its lane's buffer so the
-    // bar keeps rendering while the player holds. If the normal filter dropped
-    // it (visibility window, timestamp edge case, etc.), force it back in.
+    // FAILSAFE: any currently-active hold MUST be in its lane's buffer.
     activeHoldsRef.current.forEach((hold) => {
       const laneIdx = hold.laneIndex;
       const buf = buffers[laneIdx];
@@ -677,6 +689,16 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
       const laneIdx = LANE_INDEX[direction];
       pressedLanesRef.current[laneIdx] = true;
+
+      // Cancel any pending release for this lane — this is what absorbs
+      // spurious release events fired mid-hold on some devices.
+      const pending = pendingReleaseRef.current[laneIdx];
+      if (pending !== null) {
+        clearTimeout(pending);
+        pendingReleaseRef.current[laneIdx] = null;
+        pushLog(`[HIT] pending-release-cancelled lane=${laneIdx}`);
+      }
+
       pushLog(`[HIT] press lane=${laneIdx} dir=${direction}`);
 
       const hitStart = Date.now();
@@ -782,8 +804,20 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
   const releaseInput = useCallback((direction: Direction): void => {
     const laneIdx = LANE_INDEX[direction];
-    pressedLanesRef.current[laneIdx] = false;
-    pushLog(`[HIT] release lane=${laneIdx} dir=${direction}`);
+    // Do NOT clear pressedLanesRef immediately. Defer by RELEASE_GRACE_MS so
+    // that spurious release events (mid-hold Android cancels) don't break the
+    // hold. If a new press arrives within the window, the pending release is
+    // cancelled in hit().
+    const existing = pendingReleaseRef.current[laneIdx];
+    if (existing !== null) {
+      clearTimeout(existing);
+    }
+    pendingReleaseRef.current[laneIdx] = setTimeout(() => {
+      pendingReleaseRef.current[laneIdx] = null;
+      pressedLanesRef.current[laneIdx] = false;
+      pushLog(`[HIT] release-confirm lane=${laneIdx}`);
+    }, RELEASE_GRACE_MS);
+    pushLog(`[HIT] release-scheduled lane=${laneIdx} dir=${direction}`);
   }, []);
 
   useEffect(() => {
@@ -792,6 +826,13 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (scoreRafRef.current !== null) {
         cancelAnimationFrame(scoreRafRef.current);
         scoreRafRef.current = null;
+      }
+      for (let i = 0; i < pendingReleaseRef.current.length; i += 1) {
+        const t = pendingReleaseRef.current[i];
+        if (t !== null) {
+          clearTimeout(t);
+          pendingReleaseRef.current[i] = null;
+        }
       }
     };
   }, [stopLoop]);
