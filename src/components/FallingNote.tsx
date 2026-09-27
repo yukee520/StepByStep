@@ -65,14 +65,16 @@ export default function FallingNote({
 
   const bodyStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
-    if (active === 0) {
+    const held = laneHeldSlot.value[slotIndex] ?? 0;
+
+    // Visible if the note is in the buffer OR is an active hold.
+    if (active === 0 && held === 0) {
       return { display: 'none' };
     }
     const dur = laneDuration.value[slotIndex] ?? 0;
     if (dur <= 0) {
       return { display: 'none' };
     }
-    const held = laneHeldSlot.value[slotIndex] ?? 0;
     const lengthPx = (dur / fallDurationMs) * geometry.laneHeight;
     return {
       display: 'flex',
@@ -85,7 +87,9 @@ export default function FallingNote({
 
   const headStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
-    if (active === 0) {
+    const held = laneHeldSlot.value[slotIndex] ?? 0;
+
+    if (active === 0 && held === 0) {
       return {
         display: 'none',
         transform: [{ translateY: -1000 }, { scale: 1 }],
