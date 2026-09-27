@@ -247,12 +247,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
   const activeHoldsRef = useRef<Map<string, ActiveHold>>(new Map());
   const pressedLanesRef = useRef<boolean[]>([false, false, false, false]);
-  const pendingReleaseRef = useRef<Array<ReturnType<typeof setTimeout> | null>>([
-    null,
-    null,
-    null,
-    null,
-  ]);
 
   const statsRef = useRef<Stats>({
     score: 0, combo: 0, maxCombo: 0, perfect: 0, great: 0, good: 0, miss: 0,
@@ -291,13 +285,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     judgedRef.current = new Set();
     activeHoldsRef.current.clear();
     pressedLanesRef.current = [false, false, false, false];
-    for (let i = 0; i < pendingReleaseRef.current.length; i += 1) {
-      const t = pendingReleaseRef.current[i];
-      if (t !== null) {
-        clearTimeout(t);
-        pendingReleaseRef.current[i] = null;
-      }
-    }
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
     lastFrameAtRef.current = 0;
@@ -539,16 +526,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     const loTime = now - fallDurationMs * VISIBLE_BEHIND;
     const hiTime = now + fallDurationMs * VISIBLE_AHEAD;
 
-    // Visibility rule that works for both taps and holds, short or long.
-    //
-    // A note is visible if EITHER:
-    //   (a) any part of [headTime, tailTime] overlaps [loTime, hiTime], OR
-    //   (b) `now` falls inside [headTime, tailTime] (mid-hold).
-    //
-    // For a tap, tailTime === headTime so this collapses to the old rule.
-    // For a short hold, both endpoints sit inside the window together.
-    // For a long hold, the head may leave [loTime, hiTime] while the tail
-    // is still upcoming, but the span check keeps it visible the whole time.
+    // Visibility rule that works for taps and holds of any length.
     for (let i = 0; i < notes.length; i += 1) {
       const note = notes[i];
       const headTime = note.timeMs;
@@ -567,8 +545,7 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (buf.length < SLOT_COUNT) buf.push(note);
     }
 
-    // Failsafe: any active hold MUST be in its lane's buffer so the bar
-    // keeps rendering while the player holds.
+    // Failsafe: active holds always stay in the buffer.
     activeHoldsRef.current.forEach((hold) => {
       const laneIdx = hold.laneIndex;
       const buf = buffers[laneIdx];
@@ -706,14 +683,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
       const laneIdx = LANE_INDEX[direction];
       pressedLanesRef.current[laneIdx] = true;
-
-      const pending = pendingReleaseRef.current[laneIdx];
-      if (pending !== null) {
-        clearTimeout(pending);
-        pendingReleaseRef.current[laneIdx] = null;
-        pushLog(`[HIT] pending-release-cancelled lane=${laneIdx}`);
-      }
-
       pushLog(`[HIT] press lane=${laneIdx} dir=${direction}`);
 
       const hitStart = Date.now();
@@ -819,16 +788,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
   const releaseInput = useCallback((direction: Direction): void => {
     const laneIdx = LANE_INDEX[direction];
-    const existing = pendingReleaseRef.current[laneIdx];
-    if (existing !== null) {
-      clearTimeout(existing);
-    }
-    pendingReleaseRef.current[laneIdx] = setTimeout(() => {
-      pendingReleaseRef.current[laneIdx] = null;
-      pressedLanesRef.current[laneIdx] = false;
-      pushLog(`[HIT] release-confirm lane=${laneIdx}`);
-    }, RELEASE_GRACE_MS);
-    pushLog(`[HIT] release-scheduled lane=${laneIdx} dir=${direction}`);
+    pressedLanesRef.current[laneIdx] = false;
+    pushLog(`[HIT] release lane=${laneIdx} dir=${direction}`);
   }, []);
 
   useEffect(() => {
@@ -837,13 +798,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (scoreRafRef.current !== null) {
         cancelAnimationFrame(scoreRafRef.current);
         scoreRafRef.current = null;
-      }
-      for (let i = 0; i < pendingReleaseRef.current.length; i += 1) {
-        const t = pendingReleaseRef.current[i];
-        if (t !== null) {
-          clearTimeout(t);
-          pendingReleaseRef.current[i] = null;
-        }
       }
     };
   }, [stopLoop]);
