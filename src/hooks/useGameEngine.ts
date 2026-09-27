@@ -1,4 +1,3 @@
-
 // src/hooks/useGameEngine.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
@@ -130,17 +129,6 @@ function findFirstNoteAtOrAfter(notes: Note[], target: number): number {
   return lo;
 }
 
-function bufHash(buf: Note[]): number {
-  let h = buf.length;
-  for (let i = 0; i < buf.length; i += 1) {
-    const n = buf[i];
-    h = (h * 31 + n.timeMs) | 0;
-    h = (h * 31 + (n.durationMs ?? 0)) | 0;
-    h = (h * 31 + DIRECTION_INDEX[n.direction]) | 0;
-  }
-  return h;
-}
-
 export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResult {
   const {
     song,
@@ -256,7 +244,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
   const lastElapsedUpdateRef = useRef<number>(0);
   const lastFrameAtRef = useRef<number>(0);
   const laneBuffersRef = useRef<Note[][]>([[], [], [], []]);
-  const lastBufHashRef = useRef<number[]>([-1, -1, -1, -1]);
 
   const activeHoldsRef = useRef<Map<string, ActiveHold>>(new Map());
   const pressedLanesRef = useRef<boolean[]>([false, false, false, false]);
@@ -298,7 +285,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     judgedRef.current = new Set();
     activeHoldsRef.current.clear();
     pressedLanesRef.current = [false, false, false, false];
-    lastBufHashRef.current = [-1, -1, -1, -1];
     missPointerRef.current = 0;
     lastElapsedUpdateRef.current = 0;
     lastFrameAtRef.current = 0;
@@ -555,28 +541,18 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     for (let l = 0; l < LANE_COUNT; l += 1) {
       const buf = buffers[l];
       const lane = lanes[l];
-      const hash = bufHash(buf);
-      const bufChanged = hash !== lastBufHashRef.current[l];
 
-      let maxOverlap = 0;
-      let laneHeld = 0;
-      for (let s = 0; s < buf.length; s += 1) {
-        const note = buf[s];
-        if (activeHoldsRef.current.has(note.id)) laneHeld = 1;
-        const ov = overlapAt(note, now);
-        if (ov > maxOverlap) maxOverlap = ov;
-      }
-      lane.hot.value = maxOverlap;
-      lane.held.value = laneHeld;
-
-      if (!bufChanged) continue;
-      lastBufHashRef.current[l] = hash;
-
+      // Rebuild all arrays fresh every frame. This eliminates any possibility
+      // of stale-state bugs at the cost of 5 small array allocations per lane
+      // per frame — a negligible amount of work.
       const newActive = new Array(SLOT_COUNT).fill(0);
       const newTime = new Array(SLOT_COUNT).fill(0);
       const newDir = new Array(SLOT_COUNT).fill(0);
       const newDur = new Array(SLOT_COUNT).fill(0);
       const newHeldSlot = new Array(SLOT_COUNT).fill(0);
+
+      let maxOverlap = 0;
+      let laneHeld = 0;
 
       for (let s = 0; s < buf.length; s += 1) {
         const note = buf[s];
@@ -584,7 +560,14 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
         newTime[s] = note.timeMs;
         newDir[s] = DIRECTION_INDEX[note.direction];
         newDur[s] = note.durationMs ?? 0;
-        if (activeHoldsRef.current.has(note.id)) newHeldSlot[s] = 1;
+
+        if (activeHoldsRef.current.has(note.id)) {
+          newHeldSlot[s] = 1;
+          laneHeld = 1;
+        }
+
+        const ov = overlapAt(note, now);
+        if (ov > maxOverlap) maxOverlap = ov;
       }
 
       lane.active.value = newActive;
@@ -593,6 +576,8 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       lane.duration.value = newDur;
       lane.heldSlot.value = newHeldSlot;
       lane.hasNotes.value = buf.length > 0 ? 1 : 0;
+      lane.hot.value = maxOverlap;
+      lane.held.value = laneHeld;
     }
 
     processMisses(now);
