@@ -79,21 +79,19 @@ export default function FallingNote({
     const delta = noteTimeMs - now;
     const ratio = 1 - delta / fallDurationMs;
 
-    // Compute the note's ideal (unpinned) top position.
     const idealCenterY =
       geometry.buttonCenterY - (1 - ratio) * geometry.laneHeight;
     const idealTop = idealCenterY - noteSize / 2;
 
-    // For hold notes, once the head reaches the button it stays pinned there
-    // until the hold completes. For taps, no pinning — falls through and
-    // disappears naturally.
-    const isHold = dur > 0;
-    const buttonTopInLane = geometry.buttonTop;
-    const pinnedTop = buttonTopInLane;
-    const y = isHold ? Math.max(idealTop, pinnedTop) : idealTop;
+    // Holds pin at the button. Math.min keeps the head at the button once
+    // it reaches it — idealTop continues to grow past buttonTop as time
+    // advances, but min clamps it.
+    const isHold = dur > 0 || held > 0;
+    const y = isHold ? Math.min(idealTop, geometry.buttonTop) : idealTop;
 
+    const fadeRatio = isHold ? Math.min(ratio, 1.0) : ratio;
     const fade = interpolate(
-      ratio,
+      fadeRatio,
       [-0.2, 0, 0.05, 1.05, 1.2],
       [0, 1, 1, 1, 0],
       Extrapolation.CLAMP,
@@ -113,12 +111,7 @@ export default function FallingNote({
     };
   });
 
-  // Bar — extends upward from the head to the tail.
-  //
-  // The tail descends with time. While the tail is above the button, the bar
-  // grows taller. Once the head pins at the button, the tail continues to
-  // fall toward the button and the bar shrinks. When the tail reaches the
-  // button, the bar height goes to 0 (hold complete).
+  // Bar — from head up to tail.
   const bodyStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
     const held = laneHeldSlot.value[slotIndex] ?? 0;
@@ -134,31 +127,30 @@ export default function FallingNote({
     const noteTimeMs = laneTimeMs.value[slotIndex] ?? 0;
     const tailTime = noteTimeMs + dur;
 
-    // Head Y (pinned if past the button, otherwise falling).
-    const headIdealCenterY =
-      geometry.buttonCenterY - (1 - (1 - (noteTimeMs - now) / fallDurationMs)) * geometry.laneHeight;
-    const headIdealTop = headIdealCenterY - noteSize / 2;
-    const headY = Math.max(headIdealTop, geometry.buttonTop);
+    // Head Y (pinned).
+    const headRatio = 1 - (noteTimeMs - now) / fallDurationMs;
+    const headIdealTop =
+      geometry.buttonCenterY -
+      (1 - headRatio) * geometry.laneHeight -
+      noteSize / 2;
+    const headY = Math.min(headIdealTop, geometry.buttonTop);
 
-    // Tail Y — the tail is where the note would be `dur` ms later in its fall.
+    // Tail Y (falls until pinned at button).
     const tailRatio = 1 - (tailTime - now) / fallDurationMs;
-    const tailIdealCenterY =
-      geometry.buttonCenterY - (1 - tailRatio) * geometry.laneHeight;
-    const tailIdealTop = tailIdealCenterY - noteSize / 2;
-    const tailY = Math.max(tailIdealTop, geometry.buttonTop);
+    const tailIdealTop =
+      geometry.buttonCenterY -
+      (1 - tailRatio) * geometry.laneHeight -
+      noteSize / 2;
+    const tailY = Math.min(tailIdealTop, geometry.buttonTop);
 
-    // Bar height = distance from tail down to head.
     const height = Math.max(0, headY - tailY);
-
-    const heldFill = held > 0;
 
     return {
       display: height > 0 ? 'flex' : 'none',
       height,
       opacity: 1,
-      backgroundColor: heldFill
-        ? 'rgba(255,255,255,0.55)'
-        : 'rgba(255,255,255,0.08)',
+      backgroundColor:
+        held > 0 ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.08)',
     };
   });
 
