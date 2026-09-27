@@ -470,7 +470,14 @@ export default function GameScreen(): React.ReactElement {
         />
 
         <PerfOverlay visible={true} />
-
+<EngineProbe
+  enabled={devModeEnabled}
+  audioPosition={engine.audioPosition}
+  lane0Active={engine.lanes[0].active}
+  lane0Duration={engine.lanes[0].duration}
+  lane0HeldSlot={engine.lanes[0].heldSlot}
+  lane0TimeMs={engine.lanes[0].timeMs}
+/>
         <DevLogOverlay visible={devModeEnabled} />
       </SafeAreaView>
     </View>
