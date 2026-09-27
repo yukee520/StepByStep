@@ -108,24 +108,13 @@ function ArrowRowBase({
     });
   }, []);
 
-  /**
-   * Claim-once semantics: the first time a touch lands inside the row, we
-   * claim a lane for it and never switch on move. The lane is only released
-   * on touch-up. This prevents horizontal finger jitter from firing a
-   * spurious release + re-press, which was breaking holds mid-sustain.
-   */
-  const processTouch = useCallback(
+  // Claim a touch on down. Once claimed, the lane never changes on move.
+  const processTouchDown = useCallback(
     (touch: TouchData): void => {
       const id = touch.id;
-
-      // Already claimed — do nothing on move.
-      if (activeTouchesRef.current.has(id)) {
-        return;
-      }
-
+      if (activeTouchesRef.current.has(id)) return;
       const index = hitTest(touch.absoluteX, touch.absoluteY);
       if (index === null) return;
-
       activeTouchesRef.current.set(id, index);
       onPressRef.current(LANE_ORDER[index]);
       setLanePressed(index, true);
@@ -146,16 +135,17 @@ function ArrowRowBase({
 
   const handleTouchesDown = useCallback(
     (e: GestureTouchEvent): void => {
-      for (const t of e.allTouches) processTouch(t);
+      for (const t of e.allTouches) processTouchDown(t);
     },
-    [processTouch],
+    [processTouchDown],
   );
 
+  // Movement is a strict no-op. Do not switch lanes, do not release.
   const handleTouchesMove = useCallback(
-    (e: GestureTouchEvent): void => {
-      for (const t of e.allTouches) processTouch(t);
+    (_e: GestureTouchEvent): void => {
+      // intentionally empty
     },
-    [processTouch],
+    [],
   );
 
   const handleTouchesUp = useCallback(
@@ -165,19 +155,23 @@ function ArrowRowBase({
     [releaseTouchById],
   );
 
+  // Cancellation is a strict no-op. Android can fire spurious cancels mid-hold
+  // when a system gesture or gesture-handler state machine deactivates the
+  // touch stream. Releasing on cancel breaks holds; we rely on onTouchesUp.
   const handleTouchesCancelled = useCallback(
-    (e: GestureTouchEvent): void => {
-      for (const t of e.changedTouches) releaseTouchById(t.id);
+    (_e: GestureTouchEvent): void => {
+      // intentionally empty
     },
-    [releaseTouchById],
+    [],
   );
 
-  const panGesture = React.useMemo(
+  // Gesture.Manual gives raw touch callbacks without the movement-based
+  // activation/cancellation logic that Gesture.Pan applies. Pan was
+  // cancelling our holds ~600ms in, when a small finger jitter or system
+  // gesture caused Pan to change state.
+  const manualGesture = React.useMemo(
     () =>
-      Gesture.Pan()
-        .minPointers(1)
-        .maxPointers(4)
-        .shouldCancelWhenOutside(false)
+      Gesture.Manual()
         .onTouchesDown(handleTouchesDown)
         .onTouchesMove(handleTouchesMove)
         .onTouchesUp(handleTouchesUp)
@@ -191,7 +185,7 @@ function ArrowRowBase({
   );
 
   return (
-    <GestureDetector gesture={panGesture}>
+    <GestureDetector gesture={manualGesture}>
       <View
         ref={rowRef}
         onLayout={handleLayout}
