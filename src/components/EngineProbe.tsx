@@ -12,10 +12,6 @@ export type EngineProbeProps = {
   lane0TimeMs: SharedValue<number[]>;
 };
 
-/**
- * Polls the given shared values on the JS thread every 200 ms and dumps them
- * into the dev log store. Purely diagnostic — remove once holds are verified.
- */
 export default function EngineProbe({
   enabled,
   audioPosition,
@@ -31,7 +27,6 @@ export default function EngineProbe({
 
     const id = setInterval(() => {
       const now = Date.now();
-      // Throttle to ~5 dumps per second.
       if (now - lastDumpRef.current < 200) return;
       lastDumpRef.current = now;
 
@@ -41,22 +36,29 @@ export default function EngineProbe({
       const held = lane0HeldSlot.value;
       const time = lane0TimeMs.value;
 
-      // Only dump slots that are active or held, to keep the log readable.
-      const rows: string[] = [];
-      for (let s = 0; s < active.length; s += 1) {
-        const isActive = active[s] === 1;
-        const isHeld = held[s] === 1;
-        if (!isActive && !isHeld) continue;
-        rows.push(
-          `s${s} act=${active[s]} dur=${dur[s]} held=${held[s]} t=${Math.round(
-            time[s] ?? 0,
-          )}`,
-        );
+      // Compact single-character-per-slot dump for the whole lane.
+      // Each column is a slot. Values shown only where active or held.
+      const actStr = active.map((v) => (v ? '1' : '.')).join('');
+      const heldStr = held.map((v) => (v ? '1' : '.')).join('');
+      const durStr = dur.map((v) => (v > 0 ? 'H' : '.')).join('');
+
+      // Also find the first slot that has a hold note (dur > 0), for detail.
+      let dslot = -1;
+      for (let s = 0; s < dur.length; s += 1) {
+        if (dur[s] > 0) {
+          dslot = s;
+          break;
+        }
       }
+      const detail =
+        dslot >= 0
+          ? ` s${dslot}[act=${active[dslot]} dur=${dur[dslot]} held=${held[dslot]} t=${Math.round(
+              time[dslot] ?? 0,
+            )}]`
+          : ' (no hold)';
+
       pushLog(
-        `[PROBE] now=${Math.round(pos)} | ${
-          rows.length > 0 ? rows.join(' | ') : '(no active slots)'
-        }`,
+        `P now=${Math.round(pos)} act=${actStr} held=${heldStr} dur=${durStr}${detail}`,
       );
     }, 100);
 
