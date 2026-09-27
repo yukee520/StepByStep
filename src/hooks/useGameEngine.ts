@@ -537,14 +537,26 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       if (buf.length < SLOT_COUNT) buf.push(note);
     }
 
+    // FAILSAFE: any currently-active hold MUST be in its lane's buffer so the
+    // bar keeps rendering while the player holds. If the normal filter dropped
+    // it (visibility window, timestamp edge case, etc.), force it back in.
+    activeHoldsRef.current.forEach((hold) => {
+      const laneIdx = hold.laneIndex;
+      const buf = buffers[laneIdx];
+      for (let i = 0; i < buf.length; i += 1) {
+        if (buf[i].id === hold.noteId) return;
+      }
+      const note = notes.find((n) => n.id === hold.noteId);
+      if (note && buf.length < SLOT_COUNT) {
+        buf.push(note);
+      }
+    });
+
     const lanes = lanesRef.current;
     for (let l = 0; l < LANE_COUNT; l += 1) {
       const buf = buffers[l];
       const lane = lanes[l];
 
-      // Rebuild all arrays fresh every frame. This eliminates any possibility
-      // of stale-state bugs at the cost of 5 small array allocations per lane
-      // per frame — a negligible amount of work.
       const newActive = new Array(SLOT_COUNT).fill(0);
       const newTime = new Array(SLOT_COUNT).fill(0);
       const newDir = new Array(SLOT_COUNT).fill(0);
