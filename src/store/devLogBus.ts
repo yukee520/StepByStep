@@ -1,22 +1,16 @@
 // src/store/devLogBus.ts
-//
-// Simple in-memory log bus for the on-screen dev overlay.
-// Deliberately does NOT use Zustand so it can be called from any thread/context
-// without dependency on store initialization order.
-
-const MAX_LINES = 40;
+const MAX_LINES = 100;
 
 let lines: string[] = [];
 const listeners = new Set<(l: string[]) => void>();
 
 function emit(): void {
-  // Emit a shallow copy so listeners can't mutate our internal array.
   const snapshot = lines.slice();
   listeners.forEach((fn) => {
     try {
       fn(snapshot);
     } catch {
-      // Swallow listener errors — they must not break the game loop.
+      // swallow
     }
   });
 }
