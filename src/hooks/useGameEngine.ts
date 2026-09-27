@@ -1,3 +1,4 @@
+
 // src/hooks/useGameEngine.ts
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
@@ -630,4 +631,14 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     wallClockPausedRef.current = 0;
     audioEndedAtRef.current = 0;
     audioPosition.value = 0;
-    set
+    setStatus('playing');
+    statusRef.current = 'playing';
+    stopLoop();
+    rafRef.current = requestAnimationFrame(loop);
+  }, [audioPosition, loop, resetStats, stopLoop]);
+
+  const pause = useCallback((): void => {
+    if (statusRef.current !== 'playing') return;
+    wallClockPausedRef.current = Date.now() - wallClockStartRef.current;
+    setStatus('paused');
+    statusRef.current = 'paused';
