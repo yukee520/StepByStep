@@ -63,32 +63,10 @@ export default function FallingNote({
 }: FallingNoteProps): React.ReactElement {
   const borderWidth = Math.max(2, noteSize * 0.06);
 
-  const bodyStyle = useAnimatedStyle(() => {
-    const active = laneActive.value[slotIndex] ?? 0;
-    const held = laneHeldSlot.value[slotIndex] ?? 0;
-
-    // Visible if the note is in the buffer OR is an active hold.
-    if (active === 0 && held === 0) {
-      return { display: 'none' };
-    }
-    const dur = laneDuration.value[slotIndex] ?? 0;
-    if (dur <= 0) {
-      return { display: 'none' };
-    }
-    const lengthPx = (dur / fallDurationMs) * geometry.laneHeight;
-    return {
-      display: 'flex',
-      height: lengthPx,
-      opacity: 1,
-      backgroundColor:
-        held > 0 ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.08)',
-    };
-  });
-
+  // Head — falls normally until it reaches the button, then pins.
   const headStyle = useAnimatedStyle(() => {
     const active = laneActive.value[slotIndex] ?? 0;
     const held = laneHeldSlot.value[slotIndex] ?? 0;
-
     if (active === 0 && held === 0) {
       return {
         display: 'none',
@@ -97,11 +75,22 @@ export default function FallingNote({
     }
     const now = audioPosition.value;
     const noteTimeMs = laneTimeMs.value[slotIndex] ?? 0;
+    const dur = laneDuration.value[slotIndex] ?? 0;
     const delta = noteTimeMs - now;
     const ratio = 1 - delta / fallDurationMs;
 
-    const centerY = geometry.buttonCenterY - (1 - ratio) * geometry.laneHeight;
-    const y = centerY - noteSize / 2;
+    // Compute the note's ideal (unpinned) top position.
+    const idealCenterY =
+      geometry.buttonCenterY - (1 - ratio) * geometry.laneHeight;
+    const idealTop = idealCenterY - noteSize / 2;
+
+    // For hold notes, once the head reaches the button it stays pinned there
+    // until the hold completes. For taps, no pinning — falls through and
+    // disappears naturally.
+    const isHold = dur > 0;
+    const buttonTopInLane = geometry.buttonTop;
+    const pinnedTop = buttonTopInLane;
+    const y = isHold ? Math.max(idealTop, pinnedTop) : idealTop;
 
     const fade = interpolate(
       ratio,
@@ -121,6 +110,55 @@ export default function FallingNote({
       display: 'flex',
       transform: [{ translateY: y }, { scale }],
       opacity: fade,
+    };
+  });
+
+  // Bar — extends upward from the head to the tail.
+  //
+  // The tail descends with time. While the tail is above the button, the bar
+  // grows taller. Once the head pins at the button, the tail continues to
+  // fall toward the button and the bar shrinks. When the tail reaches the
+  // button, the bar height goes to 0 (hold complete).
+  const bodyStyle = useAnimatedStyle(() => {
+    const active = laneActive.value[slotIndex] ?? 0;
+    const held = laneHeldSlot.value[slotIndex] ?? 0;
+    if (active === 0 && held === 0) {
+      return { display: 'none' };
+    }
+    const dur = laneDuration.value[slotIndex] ?? 0;
+    if (dur <= 0) {
+      return { display: 'none' };
+    }
+
+    const now = audioPosition.value;
+    const noteTimeMs = laneTimeMs.value[slotIndex] ?? 0;
+    const tailTime = noteTimeMs + dur;
+
+    // Head Y (pinned if past the button, otherwise falling).
+    const headIdealCenterY =
+      geometry.buttonCenterY - (1 - (1 - (noteTimeMs - now) / fallDurationMs)) * geometry.laneHeight;
+    const headIdealTop = headIdealCenterY - noteSize / 2;
+    const headY = Math.max(headIdealTop, geometry.buttonTop);
+
+    // Tail Y — the tail is where the note would be `dur` ms later in its fall.
+    const tailRatio = 1 - (tailTime - now) / fallDurationMs;
+    const tailIdealCenterY =
+      geometry.buttonCenterY - (1 - tailRatio) * geometry.laneHeight;
+    const tailIdealTop = tailIdealCenterY - noteSize / 2;
+    const tailY = Math.max(tailIdealTop, geometry.buttonTop);
+
+    // Bar height = distance from tail down to head.
+    const height = Math.max(0, headY - tailY);
+
+    const heldFill = held > 0;
+
+    return {
+      display: height > 0 ? 'flex' : 'none',
+      height,
+      opacity: 1,
+      backgroundColor: heldFill
+        ? 'rgba(255,255,255,0.55)'
+        : 'rgba(255,255,255,0.08)',
     };
   });
 
