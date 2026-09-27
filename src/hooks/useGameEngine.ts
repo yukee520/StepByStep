@@ -291,7 +291,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     judgedRef.current = new Set();
     activeHoldsRef.current.clear();
     pressedLanesRef.current = [false, false, false, false];
-    // Cancel any pending releases.
     for (let i = 0; i < pendingReleaseRef.current.length; i += 1) {
       const t = pendingReleaseRef.current[i];
       if (t !== null) {
@@ -539,19 +538,37 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
     const notes = sortedNotes.current;
     const loTime = now - fallDurationMs * VISIBLE_BEHIND;
     const hiTime = now + fallDurationMs * VISIBLE_AHEAD;
-    const startIdx = findFirstNoteAtOrAfter(notes, loTime);
 
-    for (let i = startIdx; i < notes.length; i += 1) {
+    // Visibility rule that works for both taps and holds, short or long.
+    //
+    // A note is visible if EITHER:
+    //   (a) any part of [headTime, tailTime] overlaps [loTime, hiTime], OR
+    //   (b) `now` falls inside [headTime, tailTime] (mid-hold).
+    //
+    // For a tap, tailTime === headTime so this collapses to the old rule.
+    // For a short hold, both endpoints sit inside the window together.
+    // For a long hold, the head may leave [loTime, hiTime] while the tail
+    // is still upcoming, but the span check keeps it visible the whole time.
+    for (let i = 0; i < notes.length; i += 1) {
       const note = notes[i];
-      if (note.timeMs > hiTime) break;
+      const headTime = note.timeMs;
+      const tailTime = note.timeMs + (note.durationMs ?? 0);
+
+      const overlapsWindow = tailTime >= loTime && headTime <= hiTime;
+      const spansNow = headTime <= now && tailTime >= now;
+
+      if (!overlapsWindow && !spansNow) continue;
+
       const isActiveHold = activeHoldsRef.current.has(note.id);
       if (judgedRef.current.has(note.id) && !isActiveHold) continue;
+
       const laneIdx = LANE_INDEX[note.direction];
       const buf = buffers[laneIdx];
       if (buf.length < SLOT_COUNT) buf.push(note);
     }
 
-    // FAILSAFE: any currently-active hold MUST be in its lane's buffer.
+    // Failsafe: any active hold MUST be in its lane's buffer so the bar
+    // keeps rendering while the player holds.
     activeHoldsRef.current.forEach((hold) => {
       const laneIdx = hold.laneIndex;
       const buf = buffers[laneIdx];
@@ -690,8 +707,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
       const laneIdx = LANE_INDEX[direction];
       pressedLanesRef.current[laneIdx] = true;
 
-      // Cancel any pending release for this lane — this is what absorbs
-      // spurious release events fired mid-hold on some devices.
       const pending = pendingReleaseRef.current[laneIdx];
       if (pending !== null) {
         clearTimeout(pending);
@@ -804,10 +819,6 @@ export function useGameEngine(options: UseGameEngineOptions): UseGameEngineResul
 
   const releaseInput = useCallback((direction: Direction): void => {
     const laneIdx = LANE_INDEX[direction];
-    // Do NOT clear pressedLanesRef immediately. Defer by RELEASE_GRACE_MS so
-    // that spurious release events (mid-hold Android cancels) don't break the
-    // hold. If a new press arrives within the window, the pending release is
-    // cancelled in hit().
     const existing = pendingReleaseRef.current[laneIdx];
     if (existing !== null) {
       clearTimeout(existing);
